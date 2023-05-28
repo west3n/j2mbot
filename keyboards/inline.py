@@ -2,16 +2,28 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 def main_menu(lang) -> InlineKeyboardMarkup:
-    balance, refill, withdrawal, structure, support, information = ["Баланс", "Пополнение", "Вывод", "Структура",
+    balance, refill, withdrawal, structure, support, information = ["Баланс", "Пополнение", "Вывод", "Рефералы",
                                                                     "Поддержка", "Информация"]
     if lang == "EN":
-        balance, refill, withdrawal, structure, support, information = ["Balance", "Refill", "Withdrawal", "Structure",
+        balance, refill, withdrawal, structure, support, information = ["Balance", "Refill", "Withdrawal", "Referral",
                                                                         "Support", "Information"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f'💵 {balance}', callback_data='balance'),
          InlineKeyboardButton(f'🪪 {structure}', callback_data='structure')],
         [InlineKeyboardButton(f'⬆️ {refill}', callback_data='refill'),
          InlineKeyboardButton(f'⬇️ {withdrawal}', callback_data='withdrawal')],
+        [InlineKeyboardButton(f'🧑‍💻 {support}', url='https://t.me/J2M_Support'),
+         InlineKeyboardButton(f'📒 {information}', callback_data='information')]
+    ])
+    return kb
+
+
+def main_menu_short(lang) -> InlineKeyboardMarkup:
+    balance, support, information = ["Кошелек", "Поддержка", "Информация"]
+    if lang == "EN":
+        balance, support, information = ["Wallet", "Support", "Information"]
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f'💵 {balance}', callback_data='balance')],
         [InlineKeyboardButton(f'🧑‍💻 {support}', url='https://t.me/J2M_Support'),
          InlineKeyboardButton(f'📒 {information}', callback_data='information')]
     ])
@@ -76,11 +88,12 @@ def information_menu(lang) -> InlineKeyboardMarkup:
     if lang == "EN":
         distribution, conditions, urls, docs, back = [
             "Distribution of profitability", "Terms of replenishment and withdrawal",
-            "Important links", "Documentation", "Go back"]
+            "Important links", "Documentation", "Main menu"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"{distribution}", callback_data="distribution")],
         [InlineKeyboardButton(f"{conditions}", callback_data="conditions")],
-        [InlineKeyboardButton(f"{urls}", callback_data=urls),
-         InlineKeyboardButton(f"{docs}", callback_data=docs)],
+        [InlineKeyboardButton(f"{urls}", callback_data="urls"),
+         InlineKeyboardButton(f"{docs}", callback_data="docs")],
+        [InlineKeyboardButton(f"◀️ {back}", callback_data="main_menu")]
     ])
     return kb

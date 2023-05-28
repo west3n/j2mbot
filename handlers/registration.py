@@ -27,12 +27,14 @@ async def language_handler(call: types.CallbackQuery, state: FSMContext):
             text_1 = "Please read the user agreement and accept the terms."
             text_2 = "Do you accept the terms of the user agreement?"
             document = decouple.config("USER_AGREEMENT_EN")
-        await call.message.edit_text(text_1)
+        message = await call.message.edit_text(text_1)
         await call.message.bot.send_chat_action(call.message.chat.id, "upload_document")
         await asyncio.sleep(2)
         await call.message.answer_document(document)
         await call.message.bot.send_chat_action(call.message.chat.id, "typing")
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
+        await call.bot.delete_message(chat_id=call.message.chat.id,
+                                      message_id=message.message_id)
         await call.message.answer(text_2, reply_markup=inline.user_terms(call.data.upper()))
         await Registration.next()
 

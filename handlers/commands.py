@@ -1,7 +1,7 @@
 import decouple
 from aiogram import Dispatcher, types
 from keyboards import inline
-from database import users
+from database import users, balance, referral
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
 
@@ -13,7 +13,8 @@ class Registration(StatesGroup):
 
 async def bot_start(msg: types.Message):
     user_status = await users.user_data(msg.from_user.id)
-    if user_status:
+    wallet = await balance.get_balance_status(msg.from_id)
+    if user_status and wallet:
         name = msg.from_user.first_name
         language = await users.user_data(msg.from_user.id)
         text = f"Привет, {name}! Здесь будет текст приветствия!"
@@ -25,6 +26,18 @@ async def bot_start(msg: types.Message):
             photo=photo,
             caption=text,
             reply_markup=inline.main_menu(language[4]))
+    elif user_status:
+        name = msg.from_user.first_name
+        language = await users.user_data(msg.from_user.id)
+        text = f"Привет, {name}! Здесь будет текст приветствия!"
+        photo = decouple.config("BANNER_MAIN")
+        if language[4] == 'EN':
+            text = f'Hello, {name}! There will be greetings text!'
+            photo = decouple.config("BANNER_MAIN_EN")
+        await msg.answer_photo(
+            photo=photo,
+            caption=text,
+            reply_markup=inline.main_menu_short(language[4]))
     else:
         await msg.answer("Выберете язык бота: / Select bot language:",
                          reply_markup=inline.language())
@@ -40,19 +53,27 @@ async def bot_start_call(call: types.CallbackQuery):
     photo = decouple.config("BANNER_MAIN")
     name = call.from_user.first_name
     language = await users.user_data(call.from_user.id)
+    wallet = await balance.get_balance_status(call.from_user.id)
     text = f"Привет, {name}! Здесь будет текст приветствия!"
     if language[4] == 'EN':
         text = f'Hello, {name}! There will be greetings text!'
         photo = decouple.config("BANNER_MAIN_EN")
-    await call.message.delete()
-    await call.message.answer_photo(
-        photo=photo,
-        caption=text,
-        reply_markup=inline.main_menu(language[4]))
+    if wallet:
+        await call.message.delete()
+        await call.message.answer_photo(
+            photo=photo,
+            caption=text,
+            reply_markup=inline.main_menu(language[4]))
+    else:
+        await call.message.delete()
+        await call.message.answer_photo(
+            photo=photo,
+            caption=text,
+            reply_markup=inline.main_menu_short(language[4]))
 
 
 async def select_language(msg: types.Message):
-    await msg.answer("Выберете язык бота: / Select bot language:",
+    await msg.answer("Выберете язык бота:\nSelect bot language:",
                      reply_markup=inline.language())
     await Registration.language.set()
 
