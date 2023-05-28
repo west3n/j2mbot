@@ -19,9 +19,9 @@ def main_menu(lang) -> InlineKeyboardMarkup:
 
 
 def back_button(lang) -> InlineKeyboardMarkup:
-    button = 'Вернуться назад'
+    button = 'Главное меню'
     if lang == "EN":
-        button = "Return"
+        button = "Main menu"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f'◀️ {button}', callback_data='main_menu')]
     ])
@@ -37,9 +37,9 @@ def language() -> InlineKeyboardMarkup:
 
 
 def balance_history(lang) -> InlineKeyboardMarkup:
-    refill_history, withdrawal_history, back = ["История пополнений", "История выводов", "Вернуться назад"]
+    refill_history, withdrawal_history, back = ["История пополнений", "История выводов", "Главное меню"]
     if lang == "EN":
-        refill_history, withdrawal_history, back = ["Refill history", "Withdrawal history", "Return"]
+        refill_history, withdrawal_history, back = ["Refill history", "Withdrawal history", "Main menu"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f'⬆️ {refill_history}', callback_data='refill_history'),
          InlineKeyboardButton(f'⬇️ {withdrawal_history}', callback_data='withdrawal_history')],
@@ -59,11 +59,9 @@ def user_terms(lang) -> InlineKeyboardMarkup:
 
 
 def user_terms_2(lang) -> InlineKeyboardMarkup:
-    text = "Принимаю"
-    text2 = "Подтвердить"
+    text, text2 = ["Принимаю", "Подтвердить"]
     if lang == "EN":
-        text = "Accept"
-        text2 = "Confirm"
+        text, text2 = ["Accept", "Confirm"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"✅ {text}", callback_data='terms_accept')],
         [InlineKeyboardButton(f"{text2}", callback_data="terms_done")]
@@ -74,7 +72,7 @@ def user_terms_2(lang) -> InlineKeyboardMarkup:
 def information_menu(lang) -> InlineKeyboardMarkup:
     distribution, conditions, urls, docs, back = [
         "Распределение доходности", "Условия пополнения и вывода",
-        "Важные ссылки", "Документация", "Вернуться назад"]
+        "Важные ссылки", "Документация", "Главное меню"]
     if lang == "EN":
         distribution, conditions, urls, docs, back = [
             "Distribution of profitability", "Terms of replenishment and withdrawal",

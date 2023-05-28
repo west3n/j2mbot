@@ -11,11 +11,6 @@ class Registration(StatesGroup):
     finish = State()
 
 
-async def file_id(msg: types.Message):
-    if msg.document:
-        await msg.answer(msg.document.file_id)
-
-
 async def bot_start(msg: types.Message):
     user_status = await users.user_data(msg.from_user.id)
     if user_status:
@@ -34,6 +29,11 @@ async def bot_start(msg: types.Message):
         await msg.answer("Выберете язык бота: / Select bot language:",
                          reply_markup=inline.language())
         await Registration.language.set()
+    if msg.get_args():
+        if int(msg.get_args()) == msg.from_id:
+            pass
+        else:
+            await referral.add_first_line(int(msg.get_args()), msg.from_id)
 
 
 async def bot_start_call(call: types.CallbackQuery):
@@ -58,8 +58,6 @@ async def select_language(msg: types.Message):
 
 
 def register(dp: Dispatcher):
-    dp.register_message_handler(file_id, content_types='document')
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
     dp.register_callback_query_handler(bot_start_call, text='main_menu')
-
