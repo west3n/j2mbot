@@ -39,3 +39,4 @@ async def get_balance_history(tg_id, transaction):
     finally:
         cur.close()
         db.close()
+

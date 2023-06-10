@@ -9,7 +9,6 @@ from database import users, balance
 async def balance_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_balance = await balance.get_balance(call.from_user.id)
-    print(user_balance)
     photo = decouple.config("BANNER_BALANCE")
 
     text = f"<b>Ваш баланс:</b> {user_balance[0]} USDT\n<b>Активный депозит:</b> {user_balance[1]} USDT"

@@ -1,7 +1,29 @@
+import asyncio
+import os
+
 import decouple
 from aiogram import Dispatcher, types
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import StatesGroup, State
+
 from keyboards import inline
-from database import users
+from database import users, documents, referral
+import shutup
+
+shutup.please()
+
+
+class DocsAccept(StatesGroup):
+    accept = State()
+    finish = State()
+    referral = State()
+    new_referral = State()
+
+
+class BigUser(StatesGroup):
+    binance = State()
+    kyc = State()
+    contract = State()
 
 
 async def refill_handler(call: types.CallbackQuery):
@@ -267,6 +289,39 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
         await BigUser.next()
 
 
+async def biguser_registration_step3(message: types.Message, state: FSMContext):
+
+    language = await users.user_data(message.from_user.id)
+    if message.document:
+        user_id = message.from_user.id
+        text = "Договор отправлен на проверку"
+        if language[4] == "EN":
+            text = "The contract has been sent"
+        folder_name = f'Договор_{user_id}'
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        file_name = os.path.join(folder_name, message.document.file_name)
+        await message.document.download(file_name)
+        await message.reply(text)
+        await message.bot.send_chat_action(message.chat.id, "typing")
+        await asyncio.sleep(3)
+    else:
+        text = "Нужно отправить документы или скриншоты в виде файла!\n\n" \
+                             "Попробуйте еще раз."
+        if language[4] == "EN":
+            text = "You need to send documents or screenshots as a file!\n\n" \
+                   "Try again."
+        await message.answer(text)
+
 
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(refill_handler, text='refill')
+    dp.register_callback_query_handler(docs_complete, state=DocsAccept.accept)
+    dp.register_callback_query_handler(finish_docs, state=DocsAccept.finish)
+    dp.register_callback_query_handler(processing_refill, state=DocsAccept.referral)
+    dp.register_message_handler(new_referral, state=DocsAccept.new_referral)
+    dp.register_callback_query_handler(biguser_registration, text="15000")
+    dp.register_callback_query_handler(biguser_registration_step_1, state=BigUser.binance)
+    dp.register_callback_query_handler(biguser_registration_step_2, state=BigUser.kyc)
+    dp.register_message_handler(biguser_registration_step3, content_types=['text', 'video', 'photo', 'document'],
+                                state=BigUser.contract)

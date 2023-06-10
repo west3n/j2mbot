@@ -81,6 +81,27 @@ def user_terms_2(lang) -> InlineKeyboardMarkup:
     return kb
 
 
+def user_docs(lang) -> InlineKeyboardMarkup:
+    text = "Принимаю"
+    if lang == "EN":
+        text = "Accept"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{text}", callback_data='docs_accept')]
+    ])
+    return kb
+
+
+def user_docs_2(lang) -> InlineKeyboardMarkup:
+    text, text2 = ["Принимаю", "Подтвердить"]
+    if lang == "EN":
+        text, text2 = ["Accept", "Confirm"]
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"✅ {text}", callback_data='docs_accept')],
+        [InlineKeyboardButton(f"{text2}", callback_data="docs_done")]
+    ])
+    return kb
+
+
 def information_menu(lang) -> InlineKeyboardMarkup:
     distribution, conditions, urls, docs, back = [
         "Распределение доходности", "Условия пополнения и вывода",

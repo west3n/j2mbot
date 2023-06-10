@@ -49,3 +49,23 @@ async def get_tg_username(tg_id):
         db.close()
         cur.close()
 
+
+async def get_tg_full_name(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_name FROM app_j2muser WHERE tg_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result[0]
+    finally:
+        db.close()
+        cur.close()
+
+
+async def get_all_tg_id():
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_id FROM app_j2muser")
+        return [tg_id[0] for tg_id in cur.fetchall()]
+    finally:
+        db.close()
+        cur.close()
