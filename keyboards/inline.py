@@ -97,3 +97,82 @@ def information_menu(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"◀️ {back}", callback_data="main_menu")]
     ])
     return kb
+
+
+def referral_statistic(lang) -> InlineKeyboardMarkup:
+    text, back = 'Подробная статистика', "Главное меню"
+    if lang == "EN":
+        text, back = "Detailed statistic", "Main menu"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"📊 {text}", callback_data='full_statistic')],
+        [InlineKeyboardButton(f"◀️ {back}", callback_data="main_menu")]
+    ])
+    return kb
+
+
+def referral_lines(lang) -> InlineKeyboardMarkup:
+    text1, text2, text3, back = "1 линия", "2 линия", "3 линия", "Вернуться назад"
+    if lang == "EN":
+        text1, text2, text3, back = "Line 1", "Line 2", "Line3", "Go Back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"🧍‍♂️ {text1}", callback_data='line1'),
+         InlineKeyboardButton(f"👬 {text2}", callback_data='line2'),
+         InlineKeyboardButton(f"👨‍👨‍👦 {text3}", callback_data='line3')],
+        [InlineKeyboardButton(f"🔙 {back}", callback_data="structure")]
+    ])
+    return kb
+
+
+def detailed_statistic(lang) -> InlineKeyboardMarkup:
+    back = "Вернуться назад"
+    if lang == "EN":
+        back = "Go back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"🔙 {back}", callback_data="full_statistic")]
+    ])
+    return kb
+
+
+def information_back(lang) -> InlineKeyboardMarkup:
+    back = "Вернуться назад"
+    if lang == "EN":
+        back = "Go back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"🔙 {back}", callback_data="information")]
+    ])
+    return kb
+
+
+def yesno(lang) -> InlineKeyboardMarkup:
+    yes_button, no_button = "Да", "Нет"
+    if lang == "EN":
+        yes_button, no_button = "Yes", "No"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"👍 {yes_button}", callback_data="yes"),
+         InlineKeyboardButton(f"👎 {no_button}", callback_data="no")]
+    ])
+    return kb
+
+
+def yesno_refill(lang) -> InlineKeyboardMarkup:
+    yes_button, no_button, skip_button = "Да", "Нет", "Пропустить"
+    if lang == "EN":
+        yes_button, no_button, skip_button = "Yes", "No", "Skip"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"👍 {yes_button}", callback_data="yes"),
+         InlineKeyboardButton(f"👎 {no_button}", callback_data="no")],
+        [InlineKeyboardButton(f"⏭️ {skip_button}", callback_data="yes")]
+    ])
+    return kb
+
+
+def refill_account(lang) -> InlineKeyboardMarkup:
+    first_button, second_button = "Личный аккаунт от 15000 USDT", "Коллективный аккаунт от 500 USDT"
+    if lang == "EN":
+        first_button, second_button = "Personal account starting from 15,000 USDT", \
+            "Collective account starting from 500 USDT."
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💰 {first_button}", callback_data="15000")],
+        [InlineKeyboardButton(f"💵 {second_button}", callback_data="500")]
+    ])
+    return kb

@@ -48,3 +48,4 @@ async def get_tg_username(tg_id):
     finally:
         db.close()
         cur.close()
+

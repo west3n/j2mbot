@@ -1,8 +1,15 @@
+import os
+
 import decouple
 from aiogram import Dispatcher, types
+from aiogram.dispatcher import FSMContext
+
 from keyboards import inline
 from database import users, balance, referral
 from aiogram.dispatcher.filters.state import StatesGroup, State
+import shutup
+
+shutup.please()
 
 
 class Registration(StatesGroup):
@@ -11,7 +18,13 @@ class Registration(StatesGroup):
     finish = State()
 
 
-async def bot_start(msg: types.Message):
+async def file_id(msg: types.Message):
+    if msg.document:
+        await msg.reply(msg.document.file_id)
+
+
+async def bot_start(msg: types.Message, state: FSMContext):
+    await state.finish()
     user_status = await users.user_data(msg.from_user.id)
     wallet = await balance.get_balance_status(msg.from_id)
     if user_status and wallet:
@@ -72,7 +85,8 @@ async def bot_start_call(call: types.CallbackQuery):
             reply_markup=inline.main_menu_short(language[4]))
 
 
-async def select_language(msg: types.Message):
+async def select_language(msg: types.Message, state: FSMContext):
+    await state.finish()
     await msg.answer("Выберете язык бота:\nSelect bot language:",
                      reply_markup=inline.language())
     await Registration.language.set()
@@ -82,3 +96,4 @@ def register(dp: Dispatcher):
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
     dp.register_callback_query_handler(bot_start_call, text='main_menu')
+
