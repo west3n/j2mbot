@@ -40,3 +40,12 @@ async def get_balance_history(tg_id, transaction):
         cur.close()
         db.close()
 
+
+async def insert_deposit(tg_id, deposit):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_balance SET deposit = deposit + %s WHERE tg_id_id = %s", (deposit, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()

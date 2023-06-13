@@ -69,3 +69,13 @@ async def get_all_tg_id():
     finally:
         db.close()
         cur.close()
+
+
+async def insert_alias(alias, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_j2muser SET alias = %s WHERE tg_id = %s", (alias, tg_id,))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()

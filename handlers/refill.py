@@ -2,13 +2,14 @@ import asyncio
 import os
 
 import decouple
+import shutup
+
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-
 from keyboards import inline
-from database import users, documents, referral
-import shutup
+from database import users, documents, referral, binance_db, balance
+from binance import actions as binance
 
 shutup.please()
 
@@ -24,7 +25,17 @@ class BigUser(StatesGroup):
     binance = State()
     kyc = State()
     contract = State()
+    finish = State()
 
+
+class BinanceAPI(StatesGroup):
+    alias = State()
+    api_key = State()
+    api_secret = State()
+
+
+class Refill(StatesGroup):
+    count = State()
 
 async def refill_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
@@ -266,7 +277,10 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
                  "cfo@sainatools.com\nСистема запросит подтверждение операции. " \
                  "После подтверждения система присвоит субсчету виртуальный адрес электронной почты (alias), " \
                  "который будет начинаться с указанного Вами ранее nickname.\n\nПодробная инструкция " \
-                 "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>ссылке</a>"
+                 "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
+                 "saina-instrukciya'>ссылке</a>\n\n" \
+                 "Обратите внимание! Документов не может быть менее двух! Отправьте заполненый документ и документ с подписью в одном сообщении!"
+
         if language[4] == "EN":
             text_2 = "We will transfer it to Binance. In 4 business days, Binance will notify you by email that " \
                      "you have access to managed sub-accounts functionality.\n After receiving the notification " \
@@ -282,36 +296,274 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
                      "specialists to identify you in the client database.\nSpecify our UID: 476589212 and " \
                      "our email: cfo@sainatools.com.\nThe system will request confirmation of the operation. " \
                      "After confirmation, the system will assign a virtual email address (alias) to the sub-account, " \
-                     "which will start with the nickname you provided earlier.\n\nDetailed instructions are available at " \
-                     "this <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>" \
-                     "link</a>."
+                     "which will start with the nickname you provided earlier.\n\n" \
+                     "Detailed instructions are available at this <a href='https://teletype.in/@lmarket/" \
+                     "podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
         await call.message.answer(text_2)
         await BigUser.next()
 
 
 async def biguser_registration_step3(message: types.Message, state: FSMContext):
-
     language = await users.user_data(message.from_user.id)
     if message.document:
         user_id = message.from_user.id
-        text = "Договор отправлен на проверку"
-        if language[4] == "EN":
-            text = "The contract has been sent"
         folder_name = f'Договор_{user_id}'
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
         file_name = os.path.join(folder_name, message.document.file_name)
         await message.document.download(file_name)
-        await message.reply(text)
-        await message.bot.send_chat_action(message.chat.id, "typing")
-        await asyncio.sleep(3)
+        async with state.proxy() as data:
+            if 'document_count' not in data:
+                data['document_count'] = 0
+                data['document_path'] = ''
+            data['document_count'] += 1
+            data['document_path'] += f"{file_name}; "
+        await BigUser.next()
     else:
         text = "Нужно отправить документы или скриншоты в виде файла!\n\n" \
-                             "Попробуйте еще раз."
+               "Попробуйте еще раз."
         if language[4] == "EN":
             text = "You need to send documents or screenshots as a file!\n\n" \
                    "Try again."
         await message.answer(text)
+
+    async with state.proxy() as data:
+        if 'document_count' in data and data['document_count'] == 1:
+            text = "Документы успешно сохранены!"
+            if language[4] == "EN":
+                text = "Documents successfully saved!"
+            await documents.save_contract_path(data.get('document_path'), message.from_user.id)
+            await message.answer(text)
+            await state.finish()
+            await binanceapi_step1_msg(message)
+        else:
+            await documents.save_contract_path(data.get('document_path'), message.from_user.id)
+
+
+async def binanceapi_step1_msg(message: types.Message):
+    language = await users.user_data(message.from_user.id)
+    text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
+           "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
+           "Подробная инструкция " \
+           "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
+           "saina-instrukciya'>ссылке</a>"
+
+    if language[4] == "EN":
+        text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
+               "system in a reply message.\n\nDetailed instructions are available at the following " \
+               "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
+    await message.answer(text)
+    await BinanceAPI.alias.set()
+
+
+async def binanceapi_step1_call(call: types.CallbackQuery):
+    x = await binance_db.check_binance_keys(call.from_user.id)
+    try:
+        x = x[0]
+    except TypeError:
+        x = None
+    if not x:
+        await call.message.delete()
+        language = await users.user_data(call.from_user.id)
+        text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
+               "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
+               "Подробная инструкция " \
+               "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
+               "saina-instrukciya'>ссылке</a>"
+
+        if language[4] == "EN":
+            text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
+                   "system in a reply message.\n\nDetailed instructions are available at the following " \
+                   "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
+        await call.message.answer(text)
+        await BinanceAPI.alias.set()
+    else:
+        await main_refill_menu(call)
+
+
+async def binanceapi_step2(msg: types.Message, state: FSMContext):
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    language = await users.user_data(msg.from_user.id)
+
+    if re.match(pattern, msg.text):
+        await users.insert_alias(msg.text, msg.from_id)
+        text = "Нам потребуется один рабочий день для его активации.\n" \
+               "После подтверждения нами, что счет настроен, и за один рабочий день до запуска, " \
+               "наш сотрудник свяжется с Вами, и оповестит Вас, что спот-счет управляемого субаккаунта можно пополнить " \
+               "и сообщить нам точную сумму.\n\n" \
+               "Мы сможем перевести ее внутри вашего счета Бинанс на торговлю фьючерсами." \
+               "После того, как наши специалисты активируют Ваш субаккаунт, в разделе управляемых субаккаунтов," \
+               " рядом с созданным аккаунтом у Вас появится зеленая галочка под пунктом “Фьючерсы”. " \
+               "Для пополнения субаккаунта нажмите “Перевести”\n\n" \
+               "Ответным сообщением пришлите в бота <b>API KEY</b>\n\n" \
+               "<a href='https://www.binance.com/ru/support/faq/%D0%BA%D0%B0%D0%BA-" \
+               "%D1%81%D0%BE%D0%B7%D0%B4%D0%B0%D0%B2%D0%B0%D1%82%D1%8C-api-%D0%BA%D0%BB%D1%8E%D1%87%D0%B8-" \
+               "%D0%BD%D0%B0-binance-360002502072'>" \
+               "Как получить API KEY?</a>"
+        if language[4] == "EN":
+            text = "We will need one business day to activate it. Once we confirm that the account is set up, " \
+                   "our representative will contact you one business day before the launch to inform you that " \
+                   "you can fund the managed sub-account and provide us with the exact amount.\n\nWe will be " \
+                   "able to transfer it within your Binance account for futures trading. After our specialists " \
+                   "activate your sub-account, you will see a green checkmark next to the 'Futures' option in " \
+                   "the Managed Sub-accounts section. To fund your sub-account, click on 'Transfer'." \
+                   "\n\nPlease send the <b>API KEY</b> in a reply message to the bot.\n\n" \
+                   "<a href='https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072'>" \
+                   "How to obtain API KEY?</a>"
+        await msg.answer(text)
+        await BinanceAPI.next()
+    else:
+        text = "Попробуйте ввести корректный e-mail."
+        if language[4] == "EN":
+            text = "Please try entering a valid email address."
+        await msg.answer(text)
+
+
+async def binance_step3(msg: types.Message, state: FSMContext):
+    language = await users.user_data(msg.from_user.id)
+    async with state.proxy() as data:
+        data['api_key'] = msg.text
+    text = "Пришлите <b>API Secret</b>\n\n" \
+           "<a href='https://www.binance.com/ru/support/faq/%D0%BA%D0%B0%D0%BA-" \
+           "%D1%81%D0%BE%D0%B7%D0%B4%D0%B0%D0%B2%D0%B0%D1%82%D1%8C-api-%D0%BA%D0%BB%D1%8E%D1%87%D0%B8-" \
+           "%D0%BD%D0%B0-binance-360002502072'>" \
+           "Как получить API SECRET?</a>"
+    if language[4] == "EN":
+        text = "Please provide the <b>API Secret</b>.\n\n" \
+               "<a href='https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072'>" \
+               "How to obtain API SECRET?</a>"
+    await msg.answer(text)
+    await BinanceAPI.next()
+
+
+async def binance_step4(msg: types.Message, state: FSMContext):
+    language = await users.user_data(msg.from_user.id)
+    async with state.proxy() as data:
+        data['api_secret'] = msg.text
+        credentials_valid = binance.check_credentials(data.get('api_key'), data.get('api_secret'))
+    if credentials_valid is True:
+        text = "Данные успешно сохранены!"
+        if language[4] == "EN":
+            text = "The data has been successfully saved!"
+        await msg.answer(text, reply_markup=inline.continue_refill(language[4]))
+        await binance_db.save_binance_keys(msg.from_user.id, data.get('api_key'), data.get('api_secret'))
+        await state.finish()
+    else:
+        text = f"Api Key: <em>{data.get('api_key')}</em> и Secret Key: <em>{data.get('api_secret')} " \
+               f"недействительны.</em>\nПопробуйте еще раз. Введите Api Key:\n\n" \
+               f"<a href='https://www.binance.com/ru/support/faq/%D0%BA%D0%B0%D0%BA-" \
+               "%D1%81%D0%BE%D0%B7%D0%B4%D0%B0%D0%B2%D0%B0%D1%82%D1%8C-api-%D0%BA%D0%BB%D1%8E%D1%87%D0%B8-" \
+               "%D0%BD%D0%B0-binance-360002502072'>" \
+               "Как получить API KEY?</a>"
+        if language[4] == "EN":
+            text = f"Api Key: <em>{data.get('api_key')}</em> and Secret Key: <em>{data.get('api_secret')}</em>" \
+                   f" are invalid.\nPlease try again. Enter the Api Key:\n\n" \
+                   "<a href='https://www.binance.com/en/support/faq/how-to-create-api-keys-on-binance-360002502072'>" \
+                   "How to obtain API KEY?</a>"
+        await msg.answer(text)
+        await state.set_state(BinanceAPI.api_key.state)
+
+
+async def main_refill_menu(call: types.CallbackQuery):
+    await call.message.delete()
+    language = await users.user_data(call.from_user.id)
+    text = f"<b>Введите сумму для пополнения:</b>"
+    if language[4] == "EN":
+        text = "Please enter the amount to deposit:"
+    await call.message.answer(text)
+    await Refill.count.set()
+
+
+async def count_refill(msg: types.Message, state: FSMContext):
+    language = await users.user_data(msg.from_user.id)
+    balance_binance = await binance.get_balance(tg_id=msg.from_id)
+    if msg.text.isdigit():
+        if int(msg.text) >= 15000:
+            async with state.proxy() as data:
+                data['count'] = msg.text
+            if balance_binance >= 15000:
+                await balance.insert_deposit(msg.from_id, int(msg.text))
+                deposit = await balance.get_balance(msg.from_id)
+                await balance.insert_balance_history(msg.from_id, int(msg.text))
+                text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
+                       f"Пополнение выполнено успешно.\n\n" \
+                       f"<b>Активный депозит J2M: {deposit[1]} USDT</b>\n\n" \
+                       f"<em>Мы сообщим Вам, когда запустим торговлю, и будем держать связь с Вами. " \
+                       f"Вы можете осуществлять вывод в любое время, по предварительной заявке. " \
+                       f"Это необходимо для того, чтобы мы закрыли открытые ордера и Вы не потеряли свою доходность.\n\n " \
+                       f"Заявку необходимо подавать в чат боте, в разделе “Вывод”. " \
+                       f"Мы дадим Вам рекомендацию по оптимальному моменту вывода для получения максимальной доходности. " \
+                       f"Срок рассмотрения заявки до 24 часов.\n\n" \
+                       f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от реферальной " \
+                       f"и мотивационной программы с последующим баном на полгода!</em>"
+                if language[4] == "EN":
+                    text = f"Your Binance Balance: {balance_binance}\n\n" \
+                           "Deposit successfully completed.\n\n<em>We will notify you when trading starts " \
+                           "and will stay in touch with you. You can make withdrawals at any time by " \
+                           "submitting a prior request. This is necessary for us to close open orders and ensure " \
+                           "that you do not lose your profitability.\n\nTo make a withdrawal request, please use " \
+                           "the chat bot in the 'Withdraw' section. We will provide you with a recommendation on the " \
+                           "optimal timing for withdrawal to maximize your returns. The processing time for withdrawal " \
+                           "requests is up to 24 hours.\n\nWhen making withdrawals without a request, the company " \
+                           "reserves the right to disable the account from the referral and incentive program, with " \
+                           "a subsequent ban for six months!</em>"
+                await msg.answer(text)
+            else:
+                text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>\n\n" \
+                       f"<em>Для продолжения пополните аккаунт на сумму {int(msg.text) - int(balance_binance)} USDT и создайте новую заявку!</em>"
+                if language[4] == "EN":
+                    text = ""
+                await msg.answer(text)
+        else:
+            deposit = await balance.get_balance(msg.from_id)
+            if int(deposit[1]) + int(msg.text) >= 15000:
+                if int(balance_binance) >= int(msg.text):
+                    await balance.insert_deposit(msg.from_id, int(msg.text))
+                    await balance.insert_balance_history(msg.from_id, int(msg.text))
+                    text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
+                           f"Пополнение выполнено успешно.\n\n" \
+                           f"<b>Активный депозит J2M: {int(deposit[1]) + int(msg.text)} USDT</b>\n\n" \
+                           f"<em>Мы сообщим Вам, когда запустим торговлю, и будем держать связь с Вами. " \
+                           f"Вы можете осуществлять вывод в любое время, по предварительной заявке. " \
+                           f"Это необходимо для того, чтобы мы закрыли открытые ордера и Вы не потеряли свою доходность.\n\n " \
+                           f"Заявку необходимо подавать в чат боте, в разделе “Вывод”. " \
+                           f"Мы дадим Вам рекомендацию по оптимальному моменту вывода для получения максимальной доходности. " \
+                           f"Срок рассмотрения заявки до 24 часов.\n\n" \
+                           f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от реферальной " \
+                           f"и мотивационной программы с последующим баном на полгода!</em>"
+                    if language[4] == "EN":
+                        text = f"Your Binance Balance: {balance_binance}\n\n" \
+                               "Deposit successfully completed.\n\n<em>We will notify you when trading starts " \
+                               "and will stay in touch with you. You can make withdrawals at any time by " \
+                               "submitting a prior request. This is necessary for us to close open orders and ensure " \
+                               "that you do not lose your profitability.\n\nTo make a withdrawal request, please use " \
+                               "the chat bot in the 'Withdraw' section. We will provide you with a recommendation on the " \
+                               "optimal timing for withdrawal to maximize your returns. The processing time for withdrawal " \
+                               "requests is up to 24 hours.\n\nWhen making withdrawals without a request, the company " \
+                               "reserves the right to disable the account from the referral and incentive program, with " \
+                               "a subsequent ban for six months!</em>"
+                    await msg.answer(text)
+                else:
+                    x = int(msg.text)
+                    if 15000 > int(msg.text):
+                        x = 15000
+
+                    text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>\n\n" \
+                       f"<em>Для продолжения пополните аккаунт на сумму {x - int(balance_binance)} USDT и создайте новую заявку!</em>"
+                    if language[4] == "EN":
+                        text = ""
+                    await msg.answer(text)
+
+            else:
+                text = f"<b>Сумма пополнения не может быть меньше, чем 15.000 USDT!</b>"
+                if language[4] == "EN":
+                    text = ""
+                await msg.answer(text)
+    else:
+        text = f"<b>Введите сумму целыми числами, без букв, запятых и прочего.</b>"
+        if language[4] == "EN":
+            text = ""
+        await msg.answer(text)
 
 
 def register(dp: Dispatcher):

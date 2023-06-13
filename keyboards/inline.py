@@ -197,3 +197,42 @@ def refill_account(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"💵 {second_button}", callback_data="500")]
     ])
     return kb
+
+
+def continue_refill(lang) -> InlineKeyboardMarkup:
+    button = "Продолжить"
+    if lang == "EN":
+        button = "Continue"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"⏩ {button}", callback_data="refill")]
+    ])
+    return kb
+
+
+def refill_500_choice(lang) -> InlineKeyboardMarkup:
+    button, button_2 = "от 500 USDT", "от 1000 USDT"
+    if lang == "EN":
+        button, button_2 = "from 500 USDT", "from 1000 USDT"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💵 {button}", callback_data="from_500")],
+        [InlineKeyboardButton(f"💰 {button_2}", callback_data="from_1000")]
+    ])
+    return kb
+
+
+def return_currencies() -> InlineKeyboardMarkup:
+    crypto_dict = {
+        'Bitcoin': 'BTC_BITCOIN',
+        'Ethereum': 'ETH_ETHEREUM',
+        'USDT TRC-20': 'USDT_TRON',
+        'USDT ERC-20': 'USDT_ETHEREUM',
+        'Tron': 'TRX_TRON',
+        'Litecoin': 'LTC_LITECOIN',
+        'Binance Coin': 'BNB_BSC',
+        'Binance USD': 'BUSD_BSC'
+    }
+    kb = InlineKeyboardMarkup()
+    for key, value in crypto_dict.items():
+        button = InlineKeyboardButton(key, callback_data=value)
+        kb.add(button)
+    return kb

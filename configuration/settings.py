@@ -9,6 +9,7 @@ from handlers.structure import register as reg_structure
 from handlers.withdrawal import register as reg_withdrawal
 from handlers.information import register as reg_information
 from handlers.registration import register as reg_registration
+from handlers.refill_500 import register as reg_refill_500
 
 
 bot_token = config("BOT_TOKEN")
@@ -30,3 +31,4 @@ def register_handlers(dp: Dispatcher):
     reg_withdrawal(dp)
     reg_information(dp)
     reg_registration(dp)
+    reg_refill_500(dp)
