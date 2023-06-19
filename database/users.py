@@ -79,3 +79,23 @@ async def insert_alias(alias, tg_id):
     finally:
         db.close()
         cur.close()
+
+
+async def save_wallet(wallet, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_j2muser SET wallet = %s WHERE tg_id = %s", (wallet, tg_id,))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()
+
+
+async def set_status(status, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_j2muser SET status = %s WHERE tg_id = %s", (status, tg_id,))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()

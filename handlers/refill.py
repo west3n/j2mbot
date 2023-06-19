@@ -361,7 +361,7 @@ async def biguser_registration_step3(message: types.Message, state: FSMContext):
 
     async with state.proxy() as data:
         if 'document_count' in data and data['document_count'] == 1:
-            text = "Документы успешно сохранены!"
+            text = "Документы успешно сохранены! "
             if language[4] == "EN":
                 text = "Documents successfully saved!"
             await documents.save_contract_path(data.get('document_path'), message.from_user.id)
@@ -373,30 +373,9 @@ async def biguser_registration_step3(message: types.Message, state: FSMContext):
 
 
 async def binanceapi_step1_msg(message: types.Message):
-    language = await users.user_data(message.from_user.id)
-    text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
-           "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
-           "Подробная инструкция " \
-           "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
-           "saina-instrukciya'>ссылке</a>"
-
-    if language[4] == "EN":
-        text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
-               "system in a reply message.\n\nDetailed instructions are available at the following " \
-               "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
-    await message.answer(text)
-    await BinanceAPI.alias.set()
-
-
-async def binanceapi_step1_call(call: types.CallbackQuery):
-    x = await binance_db.check_binance_keys(call.from_user.id)
-    try:
-        x = x[0]
-    except TypeError:
-        x = None
-    if not x:
-        await call.message.delete()
-        language = await users.user_data(call.from_user.id)
+    x = await documents.check_approve_contract(message.from_id)
+    if x is True:
+        language = await users.user_data(message.from_user.id)
         text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
                "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
                "Подробная инструкция " \
@@ -407,10 +386,43 @@ async def binanceapi_step1_call(call: types.CallbackQuery):
             text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
                    "system in a reply message.\n\nDetailed instructions are available at the following " \
                    "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
-        await call.message.answer(text)
+        await message.answer(text)
         await BinanceAPI.alias.set()
     else:
-        await main_refill_menu(call)
+        pass
+
+
+async def binanceapi_step1_call(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    y = await documents.check_approve_contract(call.from_user.id)
+    if y is True:
+        x = await binance_db.check_binance_keys(call.from_user.id)
+        try:
+            x = x[0]
+        except TypeError:
+            x = None
+        if not x:
+            await call.message.delete()
+            text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
+                   "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
+                   "Подробная инструкция " \
+                   "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
+                   "saina-instrukciya'>ссылке</a>"
+
+            if language[4] == "EN":
+                text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
+                       "system in a reply message.\n\nDetailed instructions are available at the following " \
+                       "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
+            await call.message.answer(text)
+            await BinanceAPI.alias.set()
+        else:
+            await main_refill_menu(call)
+    else:
+        await call.message.delete()
+        text = "Администратор еще проверяет ваши договор, пожалуйста ожидайте!"
+        if language[4] == "EN":
+            text = "The administrator is still reviewing your contracts, please wait!"
+        await call.message.answer(text)
 
 
 async def binanceapi_step2(msg: types.Message, state: FSMContext):

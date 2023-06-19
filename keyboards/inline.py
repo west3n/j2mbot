@@ -222,14 +222,14 @@ def refill_500_choice(lang) -> InlineKeyboardMarkup:
 
 def return_currencies() -> InlineKeyboardMarkup:
     crypto_dict = {
-        'Bitcoin': 'BTC_BITCOIN',
-        'Ethereum': 'ETH_ETHEREUM',
+        # 'Bitcoin': 'BTC_BITCOIN',
+        # 'Ethereum': 'ETH_ETHEREUM',
         'USDT TRC-20': 'USDT_TRON',
         'USDT ERC-20': 'USDT_ETHEREUM',
-        'Tron': 'TRX_TRON',
-        'Litecoin': 'LTC_LITECOIN',
-        'Binance Coin': 'BNB_BSC',
-        'Binance USD': 'BUSD_BSC'
+        # 'Tron': 'TRX_TRON',
+        # 'Litecoin': 'LTC_LITECOIN',
+        # 'Binance Coin': 'BNB_BSC',
+        # 'Binance USD': 'BUSD_BSC'
     }
     kb = InlineKeyboardMarkup()
     for key, value in crypto_dict.items():

@@ -1,11 +1,12 @@
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from database import users
+from database import users, balance, thedex_db
 from keyboards import inline
 
 
 class SmallUser(StatesGroup):
+    amount_1000 = State()
     amount = State()
 
 
@@ -23,14 +24,19 @@ async def deposit_500(call: types.CallbackQuery):
         text = 'Пожалуйста, напишите цифрами сумму депозита в USDT, которую хотели бы внести. \n\n' \
                'Минимальный вклад 500 USDT'
         if language[4] == 'EN':
-            text = "Please write the deposit amount in USDT as a number. \n\nMinimum deposit is 500 USDT."
+            text = "Enter the replenishment amount in USDT using digits.\n"
+            "Minimum amount - 500 USDT\n"
+            "Maximum amount - 999 USDT\n"
+            "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
         await call.message.edit_text(text)
         await SmallUser.amount.set()
     elif call.data == 'from_1000':
         text = 'Пожалуйста, напишите цифрами сумму депозита в USDT, которую хотели бы внести. \n\n' \
                'Минимальный вклад 1000 USDT'
         if language[4] == 'EN':
-            text = "Please write the deposit amount in USDT as a number. \n\nMinimum deposit is 1000 USDT."
+            text = "Enter the replenishment amount in USDT using digits.\n"
+            "Minimum amount - 1000 USDT\n"
+            "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
         await call.message.edit_text(text)
         await SmallUser.amount.set()
 

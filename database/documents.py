@@ -17,7 +17,7 @@ async def status_docs(tg_id):
 async def add_approve_docs(tg_id):
     db, cur = connect()
     try:
-        cur.execute("INSERT INTO app_documents (tg_id_id, documents_approve) VALUES (%s, True)", (tg_id,))
+        cur.execute("INSERT INTO app_documents (tg_id_id, documents_approve, approve_contract) VALUES (%s, TRUE, FALSE)", (tg_id,))
         db.commit()
     finally:
         db.close()
@@ -43,3 +43,13 @@ async def save_contract_path(path, tg_id):
         db.close()
         cur.close()
 
+
+async def check_approve_contract(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT approve_contract FROM app_documents WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result[0]
+    finally:
+        db.close()
+        cur.close()
