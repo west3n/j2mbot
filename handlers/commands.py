@@ -99,4 +99,3 @@ def register(dp: Dispatcher):
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
     dp.register_callback_query_handler(bot_start_call, text='main_menu')
-

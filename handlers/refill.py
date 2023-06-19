@@ -37,6 +37,7 @@ class BinanceAPI(StatesGroup):
 class Refill(StatesGroup):
     count = State()
 
+
 async def refill_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     photo = decouple.config("BANNER_REFILL")
@@ -84,12 +85,10 @@ async def refill_handler(call: types.CallbackQuery):
         await step_2_common(call)
 
 
-
-async def docs_complete(call: types.CallbackQuery, state: FSMContext):
+async def docs_complete(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    async with state.proxy() as data:
-        await call.message.edit_reply_markup(reply_markup=inline.user_docs_2(language[4]))
-        await DocsAccept.next()
+    await call.message.edit_reply_markup(reply_markup=inline.user_docs_2(language[4]))
+    await DocsAccept.next()
 
 
 async def finish_docs(call: types.CallbackQuery, state: FSMContext):
@@ -311,7 +310,8 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
                  "который будет начинаться с указанного Вами ранее nickname.\n\nПодробная инструкция " \
                  "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
                  "saina-instrukciya'>ссылке</a>\n\n" \
-                 "Обратите внимание! Документов не может быть менее двух! Отправьте заполненый документ и документ с подписью в одном сообщении!"
+                 "Обратите внимание! Документов не может быть менее двух! Отправьте заполненый документ " \
+                 "и документ с подписью в одном сообщении!"
 
         if language[4] == "EN":
             text_2 = "We will transfer it to Binance. In 4 business days, Binance will notify you by email that " \
@@ -349,7 +349,7 @@ async def biguser_registration_step3(message: types.Message, state: FSMContext):
                 data['document_count'] = 0
                 data['document_path'] = ''
             data['document_count'] += 1
-            data['document_path'] += f"{file_name}; "
+            data['document_path'] += f"http://89.223.121.160:8000/files/bot/{file_name}\n"
         await BigUser.next()
     else:
         text = "Нужно отправить документы или скриншоты в виде файла!\n\n" \
@@ -363,7 +363,7 @@ async def biguser_registration_step3(message: types.Message, state: FSMContext):
         if 'document_count' in data and data['document_count'] == 1:
             text = "Документы успешно сохранены! "
             if language[4] == "EN":
-                text = "Documents successfully saved!"
+                text = "Documents successfully saved! Wait for administrator confirmation!"
             await documents.save_contract_path(data.get('document_path'), message.from_user.id)
             await message.answer(text)
             await state.finish()
@@ -425,16 +425,15 @@ async def binanceapi_step1_call(call: types.CallbackQuery):
         await call.message.answer(text)
 
 
-async def binanceapi_step2(msg: types.Message, state: FSMContext):
+async def binanceapi_step2(msg: types.Message):
     pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
     language = await users.user_data(msg.from_user.id)
-
     if re.match(pattern, msg.text):
         await users.insert_alias(msg.text, msg.from_id)
         text = "Нам потребуется один рабочий день для его активации.\n" \
                "После подтверждения нами, что счет настроен, и за один рабочий день до запуска, " \
-               "наш сотрудник свяжется с Вами, и оповестит Вас, что спот-счет управляемого субаккаунта можно пополнить " \
-               "и сообщить нам точную сумму.\n\n" \
+               "наш сотрудник свяжется с Вами, и оповестит Вас, что спот-счет управляемого " \
+               "субаккаунта можно пополнить и сообщить нам точную сумму.\n\n" \
                "Мы сможем перевести ее внутри вашего счета Бинанс на торговлю фьючерсами." \
                "После того, как наши специалисты активируют Ваш субаккаунт, в разделе управляемых субаккаунтов," \
                " рядом с созданным аккаунтом у Вас появится зеленая галочка под пунктом “Фьючерсы”. " \
@@ -535,9 +534,11 @@ async def count_refill(msg: types.Message, state: FSMContext):
                        f"<b>Активный депозит J2M: {deposit[1]} USDT</b>\n\n" \
                        f"<em>Мы сообщим Вам, когда запустим торговлю, и будем держать связь с Вами. " \
                        f"Вы можете осуществлять вывод в любое время, по предварительной заявке. " \
-                       f"Это необходимо для того, чтобы мы закрыли открытые ордера и Вы не потеряли свою доходность.\n\n " \
+                       f"Это необходимо для того, чтобы мы закрыли открытые ордера и " \
+                       f"Вы не потеряли свою доходность.\n\n " \
                        f"Заявку необходимо подавать в чат боте, в разделе “Вывод”. " \
-                       f"Мы дадим Вам рекомендацию по оптимальному моменту вывода для получения максимальной доходности. " \
+                       f"Мы дадим Вам рекомендацию по оптимальному моменту вывода " \
+                       f"для получения максимальной доходности. " \
                        f"Срок рассмотрения заявки до 24 часов.\n\n" \
                        f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от реферальной " \
                        f"и мотивационной программы с последующим баном на полгода!</em>"
@@ -548,14 +549,16 @@ async def count_refill(msg: types.Message, state: FSMContext):
                            "submitting a prior request. This is necessary for us to close open orders and ensure " \
                            "that you do not lose your profitability.\n\nTo make a withdrawal request, please use " \
                            "the chat bot in the 'Withdraw' section. We will provide you with a recommendation on the " \
-                           "optimal timing for withdrawal to maximize your returns. The processing time for withdrawal " \
+                           "optimal timing for withdrawal to maximize your returns. " \
+                           "The processing time for withdrawal " \
                            "requests is up to 24 hours.\n\nWhen making withdrawals without a request, the company " \
                            "reserves the right to disable the account from the referral and incentive program, with " \
                            "a subsequent ban for six months!</em>"
                 await msg.answer(text)
             else:
                 text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>\n\n" \
-                       f"<em>Для продолжения пополните аккаунт на сумму {int(msg.text) - int(balance_binance)} USDT и создайте новую заявку!</em>"
+                       f"<em>Для продолжения пополните аккаунт на сумму " \
+                       f"{int(msg.text) - int(balance_binance)} USDT и создайте новую заявку!</em>"
                 if language[4] == "EN":
                     text = ""
                 await msg.answer(text)
@@ -571,23 +574,27 @@ async def count_refill(msg: types.Message, state: FSMContext):
                            f"<b>Активный депозит J2M: {int(deposit[1]) + int(msg.text)} USDT</b>\n\n" \
                            f"<em>Мы сообщим Вам, когда запустим торговлю, и будем держать связь с Вами. " \
                            f"Вы можете осуществлять вывод в любое время, по предварительной заявке. " \
-                           f"Это необходимо для того, чтобы мы закрыли открытые ордера и Вы не потеряли свою доходность.\n\n " \
+                           f"Это необходимо для того, чтобы мы закрыли открытые ордера и " \
+                           f"Вы не потеряли свою доходность.\n\n " \
                            f"Заявку необходимо подавать в чат боте, в разделе “Вывод”. " \
-                           f"Мы дадим Вам рекомендацию по оптимальному моменту вывода для получения максимальной доходности. " \
+                           f"Мы дадим Вам рекомендацию по оптимальному моменту вывода " \
+                           f"для получения максимальной доходности. " \
                            f"Срок рассмотрения заявки до 24 часов.\n\n" \
-                           f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от реферальной " \
-                           f"и мотивационной программы с последующим баном на полгода!</em>"
+                           f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от " \
+                           f"реферальной и мотивационной программы с последующим баном на полгода!</em>"
                     if language[4] == "EN":
                         text = f"Your Binance Balance: {balance_binance}\n\n" \
                                "Deposit successfully completed.\n\n<em>We will notify you when trading starts " \
                                "and will stay in touch with you. You can make withdrawals at any time by " \
                                "submitting a prior request. This is necessary for us to close open orders and ensure " \
                                "that you do not lose your profitability.\n\nTo make a withdrawal request, please use " \
-                               "the chat bot in the 'Withdraw' section. We will provide you with a recommendation on the " \
-                               "optimal timing for withdrawal to maximize your returns. The processing time for withdrawal " \
-                               "requests is up to 24 hours.\n\nWhen making withdrawals without a request, the company " \
-                               "reserves the right to disable the account from the referral and incentive program, with " \
-                               "a subsequent ban for six months!</em>"
+                               "the chat bot in the 'Withdraw' section. We will provide " \
+                               "you with a recommendation on the " \
+                               "optimal timing for withdrawal to maximize your returns. " \
+                               "The processing time for withdrawal " \
+                               "requests is up to 24 hours.\n\nWhen making withdrawals without a request, the " \
+                               "company reserves the right to disable the account from the referral " \
+                               "and incentive program, with a subsequent ban for six months!</em>"
                     await msg.answer(text)
                 else:
                     x = int(msg.text)
@@ -595,7 +602,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
                         x = 15000
 
                     text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>\n\n" \
-                       f"<em>Для продолжения пополните аккаунт на сумму {x - int(balance_binance)} USDT и создайте новую заявку!</em>"
+                           f"<em>Для продолжения пополните аккаунт на сумму " \
+                           f"{x - int(balance_binance)} USDT и создайте новую заявку!</em>"
                     if language[4] == "EN":
                         text = ""
                     await msg.answer(text)

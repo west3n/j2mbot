@@ -210,9 +210,9 @@ def continue_refill(lang) -> InlineKeyboardMarkup:
 
 
 def refill_500_choice(lang) -> InlineKeyboardMarkup:
-    button, button_2 = "от 500 USDT", "от 1000 USDT"
+    button, button_2 = "от 500 до 1000 USDT", "от 1000 USDT"
     if lang == "EN":
-        button, button_2 = "from 500 USDT", "from 1000 USDT"
+        button, button_2 = "from 500 to 1000 USDT", "from 1000 USDT"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="from_500")],
         [InlineKeyboardButton(f"💰 {button_2}", callback_data="from_1000")]
@@ -235,4 +235,49 @@ def return_currencies() -> InlineKeyboardMarkup:
     for key, value in crypto_dict.items():
         button = InlineKeyboardButton(key, callback_data=value)
         kb.add(button)
+    return kb
+
+
+def finish_transaction(lang) -> InlineKeyboardMarkup:
+    button = "Оплата завершена"
+    if lang == "EN":
+        button = "Payment completed"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"✅ {button}", callback_data="finish_payment")]
+    ])
+    return kb
+
+
+def transaction_status(lang) -> InlineKeyboardMarkup:
+    button = "Проверить еще раз"
+    button_2 = "Детали транзакции"
+    if lang == "EN":
+        button = "Please double-check again"
+        button_2 = "Transaction Detail"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"🔄 {button}", callback_data="transaction_status")],
+        [InlineKeyboardButton(f"🧩 {button_2}", callback_data="transaction_detail")]
+    ])
+    return kb
+
+
+def withdrawal_confirmation(lang) -> InlineKeyboardMarkup:
+    button, button_2 = "Вывести средства", "Отмена операции"
+    if lang == "EN":
+        button, button_2 = "Withdraw funds", "Cancel operation"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"✅ {button}", callback_data="withdrawal_confirmation")],
+        [InlineKeyboardButton(f"❌ {button_2}", callback_data="main_menu")]
+    ])
+    return kb
+
+
+def finish_withdrawal(lang) -> InlineKeyboardMarkup:
+    button, button_2 = "Подтвердить", "Отменить"
+    if lang == "EN":
+        button, button_2 = "Confirm", "Cancel"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"✅ {button}", callback_data="confirm_withdrawal"),
+         InlineKeyboardButton(f"❌ {button_2}", callback_data="cancel_withdrawal")]
+    ])
     return kb
