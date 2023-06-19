@@ -10,20 +10,37 @@ async def balance_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_balance = await balance.get_balance(call.from_user.id)
     photo = decouple.config("BANNER_BALANCE")
-
-    text = f"<b>Ваш баланс:</b> {user_balance[0]} USDT\n<b>Активный депозит:</b> {user_balance[1]} USDT"
+    balance_id = await balance.get_balance_status(call.from_user.id)
+    text = f"<b>Ваш индивидуальный номер участника DAO, зафиксированный в смарт-контракте:</b> {balance_id[0]}" \
+           f"\n<b>Ваш баланс:</b> {user_balance[0]} USDT\n<b>Активный депозит:</b> {user_balance[1]} USDT" \
+           f"\n<b>Партнерские начисления:</b> 0 USDT"
     text += f"\n<b>Сумма зарезервированная на вывод:</b> {user_balance[2]} USDT" if int(user_balance[2]) > 0 else ""
-    text += "\n\nНачисление процентов происходит на активный депозит каждый день в промежутке от " \
-            f"<b>22.00 до 24.00</b> московского времени. Мы начисляем процент от дневной доходности активного " \
-            f"депозита. Подробнее об условиях распределения процентов вы сможете узнать кликнув по кнопке " \
-            f"“Информация”."
+    text += f"\n\nВ данном меню расположены инструменты управления Вашим балансом" \
+            f"\n\nГрафик работы бота высокочастотной торговли:" \
+            f"\nВключение бота происходит в 18.00 МСК по понедельникам." \
+            f"\nВсе участники разместившие свои криптоактивы до 17.30 МСК попадают в сессию, участники " \
+            f"разместившие средства после 17.30 МСК попадают на начало сессии на следующей недели." \
+            f"\nВыключение и подведение итогов работы за неделю происходит каждое воскресенье во временном " \
+            f"промежутке с 17.00 до 22.00 МСК." \
+            f"\nАлгоритм рассчитывает прибыль и распределяет между участниками ДАО в воскресенье в 23:00 МСК. " \
+            f"После этого участники получают сообщение о начислениях и видят изменения в статистике своих балансов."
     if language[4] == "EN":
-        text = f"<b>Your balance:</b> {user_balance[0]} USDT\n<b>Active deposit:</b> {user_balance[1]} USDT"
+        text = f"<b>Your individual DAO participant number, recorded in the smart contract:</b> {balance_id[0]}" \
+               f"\n<b>Your balance:</b> {user_balance[0]} USDT\n<b>Active deposit:</b> {user_balance[1]} USDT" \
+               f"<b>Partnership earnings:</b> 0 USDT"
         text += f"\n<b>Reserved amount for withdrawal:</b> {user_balance[2]} USDT" if int(user_balance[2]) > 0 else ""
-        text += f"\n\nInterest accrual occurs on the active deposit every day within the period from " \
-                f"<b>22:00 to 24:00</b> Moscow time. We calculate interest based on the daily earnings " \
-                f"of the active deposit. For more information on interest distribution terms, you can click on the " \
-                f"“Information” button."
+        text += "\n\nIn this menu, you will find tools to manage your balance." \
+                "\n\nHigh-frequency trading bot schedule:" \
+                "\nThe bot is activated at 18:00 MSK (Moscow Standard Time) on Mondays." \
+                "\nParticipants who deposit their crypto assets before 17:30 MSK are included in the current session." \
+                "\nParticipants who deposit funds after 17:30 MSK are included in the session starting " \
+                "the following week." \
+                "\nThe bot is turned off, and weekly performance results are finalized every Sunday " \
+                "between 17:00 and 22:00 MSK." \
+                "\nThe algorithm calculates profits and distributes them among DAO participants at " \
+                "23:00 MSK on Sunday." \
+                "Participants receive notifications about their earnings and can see changes in " \
+                "their balance statistics."
         photo = decouple.config("BANNER_BALANCE_EN")
     await call.message.delete()
     try:

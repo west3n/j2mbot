@@ -42,3 +42,4 @@ async def save_contract_path(path, tg_id):
     finally:
         db.close()
         cur.close()
+

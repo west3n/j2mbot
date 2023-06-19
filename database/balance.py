@@ -49,3 +49,24 @@ async def insert_deposit(tg_id, deposit):
     finally:
         cur.close()
         db.close()
+
+
+async def get_withdrawal_history(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT COUNT (transaction) FROM app_balancehistory WHERE tg_id_id = %s AND transaction = %s",
+                    (tg_id, 'OUT',))
+        return cur.fetchone()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def save_withdrawal_amount(amount, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_balance SET withdrawal = %s WHERE tg_id_id = %s", (amount, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()

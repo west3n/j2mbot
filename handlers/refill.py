@@ -484,6 +484,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
             if balance_binance >= 15000:
                 await balance.insert_deposit(msg.from_id, int(msg.text))
                 deposit = await balance.get_balance(msg.from_id)
+                await users.set_status("15000", msg.from_id)
                 await balance.insert_balance_history(msg.from_id, int(msg.text))
                 text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
                        f"Пополнение выполнено успешно.\n\n" \
@@ -519,6 +520,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
             if int(deposit[1]) + int(msg.text) >= 15000:
                 if int(balance_binance) >= int(msg.text):
                     await balance.insert_deposit(msg.from_id, int(msg.text))
+                    await users.set_status("15000", msg.from_id)
                     await balance.insert_balance_history(msg.from_id, int(msg.text))
                     text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
                            f"Пополнение выполнено успешно.\n\n" \

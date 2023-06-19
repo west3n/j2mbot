@@ -30,10 +30,10 @@ async def bot_start(msg: types.Message, state: FSMContext):
     if user_status and wallet:
         name = msg.from_user.first_name
         language = await users.user_data(msg.from_user.id)
-        text = f"Привет, {name}! Здесь будет текст приветствия!"
+        text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
         photo = decouple.config("BANNER_MAIN")
         if language[4] == 'EN':
-            text = f'Hello, {name}! There will be greetings text!'
+            text = f"{name}, please select the section of interest by clicking one of the buttons below:"
             photo = decouple.config("BANNER_MAIN_EN")
         await msg.answer_photo(
             photo=photo,
@@ -42,17 +42,18 @@ async def bot_start(msg: types.Message, state: FSMContext):
     elif user_status:
         name = msg.from_user.first_name
         language = await users.user_data(msg.from_user.id)
-        text = f"Привет, {name}! Здесь будет текст приветствия!"
+        text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
         photo = decouple.config("BANNER_MAIN")
         if language[4] == 'EN':
-            text = f'Hello, {name}! There will be greetings text!'
+            text = f"{name}, please select the section of interest by clicking one of the buttons below:"
             photo = decouple.config("BANNER_MAIN_EN")
         await msg.answer_photo(
             photo=photo,
             caption=text,
             reply_markup=inline.main_menu_short(language[4]))
     else:
-        await msg.answer("Выберете язык бота: / Select bot language:",
+        await msg.answer("Для комфортной работы с ботом, выберите язык:"
+                         "\nTo ensure smooth interaction with the bot, please select a language:",
                          reply_markup=inline.language())
         await Registration.language.set()
     if msg.get_args():
@@ -67,9 +68,9 @@ async def bot_start_call(call: types.CallbackQuery):
     name = call.from_user.first_name
     language = await users.user_data(call.from_user.id)
     wallet = await balance.get_balance_status(call.from_user.id)
-    text = f"Привет, {name}! Здесь будет текст приветствия!"
+    text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
     if language[4] == 'EN':
-        text = f'Hello, {name}! There will be greetings text!'
+        text = f"{name}, please select the section of interest by clicking one of the buttons below:"
         photo = decouple.config("BANNER_MAIN_EN")
     if wallet:
         await call.message.delete()
@@ -87,12 +88,14 @@ async def bot_start_call(call: types.CallbackQuery):
 
 async def select_language(msg: types.Message, state: FSMContext):
     await state.finish()
-    await msg.answer("Выберете язык бота:\nSelect bot language:",
+    await msg.answer("Для комфортной работы с ботом, выберите язык:"
+                     "\nTo ensure smooth interaction with the bot, please select a language:",
                      reply_markup=inline.language())
     await Registration.language.set()
 
 
 def register(dp: Dispatcher):
+    dp.register_message_handler(file_id, content_types='document')
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
     dp.register_callback_query_handler(bot_start_call, text='main_menu')
