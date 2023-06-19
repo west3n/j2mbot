@@ -1,3 +1,5 @@
+import datetime
+
 from database.connection import connect
 
 
@@ -36,6 +38,18 @@ async def get_balance_history(tg_id, transaction):
         cur.execute("SELECT date, amount, description FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, transaction))
         return cur.fetchall()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def insert_balance_history(tg_id, amount):
+    db, cur = connect()
+    try:
+        now = datetime.datetime.now()
+        cur.execute("INSERT INTO app_balancehistory (tg_id_id, transaction, date, amount, status) "
+                    "VALUES (%s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True,))
+        db.commit()
     finally:
         cur.close()
         db.close()

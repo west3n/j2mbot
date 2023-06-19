@@ -27,8 +27,8 @@ async def add_approve_docs(tg_id):
 async def check_contract(tg_id):
     db, cur = connect()
     try:
-        cur.execute("SELECT сontract FROM app_documents WHERE tg_id_id=%s", (tg_id,))
-        return cur.fetchone()[0]
+        cur.execute("SELECT contract FROM app_documents WHERE tg_id_id=%s", (tg_id,))
+        return cur.fetchone()
     finally:
         db.close()
         cur.close()

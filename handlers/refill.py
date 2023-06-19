@@ -1,6 +1,6 @@
 import asyncio
 import os
-
+import re
 import decouple
 import shutup
 
@@ -40,7 +40,12 @@ class Refill(StatesGroup):
 async def refill_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     photo = decouple.config("BANNER_REFILL")
-    if not await documents.status_docs(call.from_user.id):
+    x = await documents.status_docs(call.from_user.id)
+    try:
+        x = x[0]
+    except TypeError:
+        x = False
+    if x is False:
         text = "Для продолжения вам нужно прочесть и " \
                "подтвердить 'Правила DAO J2M', 'Дисклеймер' и 'Правила использования продуктов'"
         text_2 = "После ознакомления с присланными документами, пожалуйста, подтвердите согласие с условиями."
@@ -75,8 +80,9 @@ async def refill_handler(call: types.CallbackQuery):
         await call.message.answer(text_2, reply_markup=inline.user_docs(language[4]))
         await DocsAccept.accept.set()
     else:
-        call.data = "15000"
-        await biguser_registration(call)
+        call.data = "yes"
+        await step_2_common(call)
+
 
 
 async def docs_complete(call: types.CallbackQuery, state: FSMContext):
@@ -144,10 +150,30 @@ async def processing_refill(call: types.CallbackQuery, state: FSMContext):
         await call.message.edit_text(text)
         await state.set_state(DocsAccept.new_referral.state)
     elif call.data == 'yes':
+        await state.finish()
         text = "Выберите один вариант:"
         if language[4] == "EN":
             text = "Please select one option:"
         await call.message.edit_text(text, reply_markup=inline.refill_account(language[4]))
+
+
+async def step_2_common(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    x = await documents.check_contract(call.from_user.id)
+    try:
+        x = x[0]
+        if x == "":
+            x = None
+    except TypeError:
+        x = None
+    if x is None:
+        text = "Выберите один вариант:"
+        if language[4] == "EN":
+            text = "Please select one option:"
+        await call.message.delete()
+        await call.message.answer(text, reply_markup=inline.refill_account(language[4]))
+    else:
+        await biguser_registration(call)
 
 
 async def new_referral(msg: types.Message, state: FSMContext):
@@ -189,7 +215,14 @@ async def new_referral(msg: types.Message, state: FSMContext):
 
 
 async def biguser_registration(call: types.CallbackQuery):
-    if await documents.check_contract(call.from_user.id) is None:
+    x = await documents.check_contract(call.from_user.id)
+    try:
+        x = x[0]
+        if x == "":
+            x = None
+    except TypeError:
+        x = None
+    if x is None:
         language = await users.user_data(call.from_user.id)
         text = 'Для того, чтобы воспользоваться данным предложением, необходимо:\n\n' \
                '- Заключить договор\n- Настроить субаккаунт\n- Подключить торгового бота'
@@ -201,13 +234,12 @@ async def biguser_registration(call: types.CallbackQuery):
         await call.message.delete()
         mess = await call.message.answer(text)
         await call.bot.send_chat_action(call.message.chat.id, "typing")
-        await asyncio.sleep(1)
-        await call.message.answer(text_2, reply_markup=inline.yesno(language[4]))
         await asyncio.sleep(3)
         await call.bot.delete_message(call.from_user.id, mess.message_id)
+        await call.message.answer(text_2, reply_markup=inline.yesno(language[4]))
         await BigUser.binance.set()
     else:
-        pass
+        await binanceapi_step1_call(call)
 
 
 async def biguser_registration_step_1(call: types.CallbackQuery, state: FSMContext):
@@ -579,3 +611,8 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(biguser_registration_step_2, state=BigUser.kyc)
     dp.register_message_handler(biguser_registration_step3, content_types=['text', 'video', 'photo', 'document'],
                                 state=BigUser.contract)
+    dp.register_message_handler(binanceapi_step1_msg, state=BigUser.finish)
+    dp.register_message_handler(binanceapi_step2, state=BinanceAPI.alias)
+    dp.register_message_handler(binance_step3, state=BinanceAPI.api_key)
+    dp.register_message_handler(binance_step4, state=BinanceAPI.api_secret)
+    dp.register_message_handler(count_refill, state=Refill.count)
