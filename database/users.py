@@ -99,3 +99,13 @@ async def set_status(status, tg_id):
     finally:
         db.close()
         cur.close()
+
+
+async def check_status(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT status FROM app_j2muser WHERE tg_id = %s", (tg_id,))
+        return cur.fetchone()
+    finally:
+        db.close()
+        cur.close()

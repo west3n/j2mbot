@@ -39,6 +39,7 @@ async def create_invoice(amount, tg_id, title):
 
     resp = requests.post(completeUrl, headers=headers, data=data_json)
     resp_json = json.dumps(resp.json(), sort_keys=True, indent=4)
+    print(resp)
     return json.loads(resp_json)['invoiceId']
 
 

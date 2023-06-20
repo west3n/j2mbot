@@ -35,3 +35,13 @@ async def insert_status(tg_id, invoice_id, status):
         db.close()
         cur.close()
 
+
+async def delete_transaction(t_id):
+    db, cur = connect()
+    try:
+        cur.execute("DELETE FROM app_thedex WHERE id=%s", (t_id,))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()
+

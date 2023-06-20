@@ -8,6 +8,7 @@ from binance import thedex
 
 class SmallUser(StatesGroup):
     amount_1000 = State()
+    hold = State()
     amount = State()
     currency = State()
     finish = State()
@@ -15,18 +16,48 @@ class SmallUser(StatesGroup):
 
 async def registration_500(call: types.CallbackQuery):
     rows = await thedex_db.get_transaction(call.from_user.id)
+    language = await users.user_data(call.from_user.id)
     try:
         await call.message.delete()
     except:
         pass
     if not rows:
-        language = await users.user_data(call.from_user.id)
-        text = 'Какую сумму Вы хотите разместить?\n\n' \
-               'Нажмите кнопку ниже, чтобы выбрать тот вариант, который вам подходит.'
-        if language[4] == 'EN':
-            text = 'What amount would you like to place?\n\n' \
-            'Click the button below to select the option that suits you.'
-        await call.message.answer(text, reply_markup=inline.refill_500_choice(language[4]))
+        status = await users.check_status(call.from_user.id)
+        try:
+            status = status[0]
+        except:
+            status = None
+        if status == "500":
+            # await call.message.delete()
+            text = "Введите сумму пополнения в USDT цифрами.\n" \
+                   "Минимальная сумма - 500 USDT\n" \
+                   "Максимальная сумма 999 USDT\n" \
+                   "При пополнении Вы также оплачиваете стоимость AML проверки в размере 0,5% от суммы пополнения"
+            if language[4] == 'EN':
+                text = "Enter the replenishment amount in USDT using digits.\n"
+                "Minimum amount - 500 USDT\n"
+                "Maximum amount - 999 USDT\n"
+                "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
+            await call.message.answer(text)
+            await SmallUser.amount.set()
+        elif status == "1000":
+            # await call.message.delete()
+            text = "Введите сумму пополнения в USDT цифрами\n." \
+                   "Минимальная сумма - 1000 USDT\n" \
+                   "При пополнении Вы также оплачиваете стоимость AML проверки в размере 0,5% от суммы пополнения"
+            if language[4] == 'EN':
+                text = "Enter the replenishment amount in USDT using digits.\n"
+                "Minimum amount - 1000 USDT\n"
+                "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
+            await call.message.answer(text)
+            await SmallUser.amount_1000.set()
+        else:
+            text = 'Какую сумму Вы хотите разместить?\n\n' \
+                   'Нажмите кнопку ниже, чтобы выбрать тот вариант, который вам подходит.'
+            if language[4] == 'EN':
+                text = 'What amount would you like to place?\n\n' \
+                       'Click the button below to select the option that suits you.'
+            await call.message.answer(text, reply_markup=inline.refill_500_choice(language[4]))
     if len(rows) == 1:
         row = rows[0]
         await smalluser_check(call, row)
@@ -69,6 +100,7 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
                 summary = int(msg.text) + (int(msg.text) * 0.005)
                 response = await thedex.create_invoice(round(summary, 2), msg.from_id, "Пополнение больше 500")
                 await state.update_data({'status': 500, 'amount': int(msg.text), 'invoiceId': response})
+                await users.set_status(status="500", tg_id=msg.from_id)
                 text = "Выберите сеть пополнения:"
                 if language[4] == "EN":
                     text = "Select deposit cryptocurrency:"
@@ -93,14 +125,15 @@ async def smalluser_amount_1000(msg: types.Message, state: FSMContext):
         if int(msg.text) >= 1000:
             async with state.proxy() as data:
                 summary = int(msg.text) + (int(msg.text) * 0.005)
-                response = await thedex.create_invoice(round(summary, 2), msg.from_id, "Пополнение больше 500")
+                response = await thedex.create_invoice(round(summary, 2), msg.from_id, "Пополнение больше 1000")
                 await state.update_data({'status': 1000, 'amount': int(msg.text), 'invoiceId': response})
                 await thedex_db.insert_transaction(msg.from_id, int(msg.text), response)
-                text = "Выберите сеть пополнения:"
+                await users.set_status(status="1000", tg_id=msg.from_id)
+                text = "Выберите длительность холда:"
                 if language[4] == "EN":
-                    text = "Select deposit cryptocurrency:"
-                await msg.answer(text, reply_markup=inline.return_currencies())
-                await state.set_state(SmallUser.currency.state)
+                    text = "Select hold time:"
+                await msg.answer(text, reply_markup=inline.hold_kb(language[4]))
+                await state.set_state(SmallUser.hold.state)
         else:
             text = "Сумма пополнения должна быть от 1000 USDT!"
             if language[4] == "EN":
@@ -111,6 +144,19 @@ async def smalluser_amount_1000(msg: types.Message, state: FSMContext):
         if language[4] == "EN":
             text = "Please enter the desired deposit amount as a number, without commas, letters, or other symbols!"
         await msg.answer(text)
+
+
+async def smalluser_hold(call: types.CallbackQuery, state: FSMContext):
+    await call.message.delete()
+    language = await users.user_data(call.from_user.id)
+    async with state.proxy() as data:
+        data['hold'] = int(call.data)
+        await balance.update_hold(int(call.data), call.from_user.id)
+        text = "Выберите сеть пополнения:"
+        if language[4] == "EN":
+            text = "Select deposit cryptocurrency:"
+        await call.message.answer(text, reply_markup=inline.return_currencies())
+        await state.set_state(SmallUser.currency.state)
 
 
 async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):
@@ -263,15 +309,22 @@ async def transiction_detail(call: types.CallbackQuery):
     row = rows[0]
     status = await thedex.invoice_one_2(row[2])
     count = status[3]
-    if "." in count:
-        count = count.replace(".", ",")
-    text = f"<b>Сумма к оплате:</b><em> {count} {status[2]} </em>\n" \
-           f"<b>Статус оплаты:</b><em> {status[0]}</em>\n" \
-           f"<b>Кошелек для оплаты:</b><em> {status[1]}</em>\n"
+    try:
+        if "." in count:
+            count = count.replace(".", ",")
+        text = f"<b>Сумма к оплате:</b><em> {count} {status[2]} </em>\n" \
+               f"<b>Статус оплаты:</b><em> {status[0]}</em>\n" \
+               f"<b>Кошелек для оплаты:</b><em> {status[1]}</em>\n"
 
-    if language[4] == "EN":
-        text = f""
-    await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
+        if language[4] == "EN":
+            text = f""
+        await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
+    except TypeError:
+        text = "Ошибка транзакции, попробуйте повторить еще раз!"
+        if language[4] == "EN":
+            text = f"Transaction error, please repeat one more time!"
+        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await thedex_db.delete_transaction(row[0])
 
 
 def register(dp: Dispatcher):
@@ -279,6 +332,7 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(deposit_500, lambda c: c.data in ['from_500', 'from_1000'])
     dp.register_message_handler(smalluser_amount_1000, state=SmallUser.amount_1000)
     dp.register_message_handler(smalluser_step1, state=SmallUser.amount)
+    dp.register_callback_query_handler(smalluser_hold, state=SmallUser.hold)
     dp.register_callback_query_handler(smalluser_step2, state=SmallUser.currency)
     dp.register_callback_query_handler(smalluser_finish, state=SmallUser.finish)
     dp.register_callback_query_handler(smalluser_check_2, text="transaction_status")

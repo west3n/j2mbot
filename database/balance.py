@@ -58,7 +58,7 @@ async def insert_balance_history(tg_id, amount):
 async def insert_deposit(tg_id, deposit):
     db, cur = connect()
     try:
-        cur.execute("UPDATE app_balance SET deposit = deposit + %s WHERE tg_id_id = %s", (deposit, tg_id,))
+        cur.execute("UPDATE app_balance SET balance = balance + %s WHERE tg_id_id = %s", (deposit, tg_id,))
         db.commit()
     finally:
         cur.close()
@@ -80,6 +80,46 @@ async def save_withdrawal_amount(amount, tg_id):
     db, cur = connect()
     try:
         cur.execute("UPDATE app_balance SET withdrawal = %s WHERE tg_id_id = %s", (amount, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_my_balance(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance FROM app_balance WHERE tg_id_id = %s", (tg_id,))
+        return cur.fetchone()[0]
+    finally:
+        cur.close()
+        db.close()
+
+
+async def update_hold(hold, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_balance SET hold = %s WHERE tg_id_id = %s", (hold, tg_id))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_first_transaction(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT * FROM app_balancehistory WHERE tg_id_id = %s AND transaction = %s", (tg_id, "IN"))
+        result = cur.fetchone()
+        return result
+    finally:
+        cur.close()
+        db.close()
+
+async def update_percentage(tg_id, settings):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_balance SET settings=%s WHERE tg_id_id=%s", (settings, tg_id,))
         db.commit()
     finally:
         cur.close()

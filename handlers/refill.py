@@ -7,6 +7,8 @@ import shutup
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
+
+import handlers.refill_500
 from keyboards import inline
 from database import users, documents, referral, binance_db, balance
 from binance import actions as binance
@@ -42,47 +44,55 @@ async def refill_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     photo = decouple.config("BANNER_REFILL")
     x = await documents.status_docs(call.from_user.id)
+    status = await users.check_status(call.from_user.id)
+    try:
+        status = status[0]
+    except TypeError:
+        status = None
     try:
         x = x[0]
     except TypeError:
         x = False
-    if x is False:
-        text = "Для продолжения вам нужно прочесть и " \
-               "подтвердить 'Правила DAO J2M', 'Дисклеймер' и 'Правила использования продуктов'"
-        text_2 = "После ознакомления с присланными документами, пожалуйста, подтвердите согласие с условиями."
-        dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES")
-        disclaimer_doc = decouple.config("DISCLAIMER")
-        product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS")
-        if language[4] == 'EN':
-            photo = decouple.config("BANNER_REFILL_EN")
-            text = "To continue, you need to read and confirm the 'DAO J2M Rules', " \
-                   "'Disclaimer' and 'Product Usage Terms'."
-            text_2 = "After reviewing the documents sent, please confirm your agreement to the terms."
-            dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES_EN")
-            disclaimer_doc = decouple.config("DISCLAIMER_EN")
-            product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS_EN")
-        await call.message.delete()
-        mess = await call.message.answer_photo(
-            photo=photo,
-            caption=text)
-        await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(2)
-        await call.message.answer_document(dao_j2m_rules_doc)
-        await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(1)
-        await call.message.answer_document(disclaimer_doc)
-        await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(1)
-        await call.message.answer_document(product_usage_terms_doc)
-        await call.bot.send_chat_action(call.message.chat.id, "typing")
-        await asyncio.sleep(4)
-        await call.bot.delete_message(chat_id=call.message.chat.id,
-                                      message_id=mess.message_id)
-        await call.message.answer(text_2, reply_markup=inline.user_docs(language[4]))
-        await DocsAccept.accept.set()
+    if status is None:
+        if x is False:
+            text = "Для продолжения вам нужно прочесть и " \
+                   "подтвердить 'Правила DAO J2M', 'Дисклеймер' и 'Правила использования продуктов'"
+            text_2 = "После ознакомления с присланными документами, пожалуйста, подтвердите согласие с условиями."
+            dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES")
+            disclaimer_doc = decouple.config("DISCLAIMER")
+            product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS")
+            if language[4] == 'EN':
+                photo = decouple.config("BANNER_REFILL_EN")
+                text = "To continue, you need to read and confirm the 'DAO J2M Rules', " \
+                       "'Disclaimer' and 'Product Usage Terms'."
+                text_2 = "After reviewing the documents sent, please confirm your agreement to the terms."
+                dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES_EN")
+                disclaimer_doc = decouple.config("DISCLAIMER_EN")
+                product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS_EN")
+            await call.message.delete()
+            mess = await call.message.answer_photo(
+                photo=photo,
+                caption=text)
+            await call.bot.send_chat_action(call.message.chat.id, "upload_document")
+            await asyncio.sleep(2)
+            await call.message.answer_document(dao_j2m_rules_doc)
+            await call.bot.send_chat_action(call.message.chat.id, "upload_document")
+            await asyncio.sleep(1)
+            await call.message.answer_document(disclaimer_doc)
+            await call.bot.send_chat_action(call.message.chat.id, "upload_document")
+            await asyncio.sleep(1)
+            await call.message.answer_document(product_usage_terms_doc)
+            await call.bot.send_chat_action(call.message.chat.id, "typing")
+            await asyncio.sleep(4)
+            await call.bot.delete_message(chat_id=call.message.chat.id,
+                                          message_id=mess.message_id)
+            await call.message.answer(text_2, reply_markup=inline.user_docs(language[4]))
+            await DocsAccept.accept.set()
+        else:
+            call.data = "yes"
+            await step_2_common(call)
     else:
-        call.data = "yes"
-        await step_2_common(call)
+        await handlers.refill_500.registration_500(call)
 
 
 async def docs_complete(call: types.CallbackQuery):

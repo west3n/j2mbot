@@ -281,3 +281,39 @@ def finish_withdrawal(lang) -> InlineKeyboardMarkup:
          InlineKeyboardButton(f"❌ {button_2}", callback_data="cancel_withdrawal")]
     ])
     return kb
+
+
+def hold_kb(lang) -> InlineKeyboardMarkup:
+    button, button_2, button_3 = "30 дней", "60 дней", "90 дней"
+    if lang == "EN":
+        button, button_2, button_3 = "30 days", "60 days", "90 days"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{button}", callback_data="30"),
+         InlineKeyboardButton(f"{button_2}", callback_data="60"),
+         InlineKeyboardButton(f"{button_3}", callback_data="90")]
+    ])
+    return kb
+
+
+def main_withdraw(lang) -> InlineKeyboardMarkup:
+    button, button_2, button_3 = "Вывод средств", "Изменить кошелек", "Изменить процент активного депозита"
+    if lang == "EN":
+        button, button_2, button_3 = "Withdraw funds", "Change wallet", "Change active deposit percentage"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{button}", callback_data="withdrawal_funds")],
+         [InlineKeyboardButton(f"{button_2}", callback_data="change_wallet")],
+         [InlineKeyboardButton(f"{button_3}", callback_data="change_percentage")]
+    ])
+    return kb
+
+
+def withdraw_percentage(lang) -> InlineKeyboardMarkup:
+    button, button_2, button_3 = "Ничего", "50%", "100%"
+    if lang == "EN":
+        button, button_2, button_3 = "None", "50%", "100%"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{button}", callback_data="0"),
+         InlineKeyboardButton(f"{button_2}", callback_data="50"),
+         InlineKeyboardButton(f"{button_3}", callback_data="100")]
+    ])
+    return kb
