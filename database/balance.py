@@ -105,6 +105,16 @@ async def update_hold(hold, tg_id):
         cur.close()
         db.close()
 
+async def get_hold(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT hold FROM app_balance WHERE tg_id_id = %s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        cur.close()
+        db.close()
+
 
 async def get_first_transaction(tg_id):
     db, cur = connect()

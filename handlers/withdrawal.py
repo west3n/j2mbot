@@ -1,4 +1,8 @@
+import datetime
+
 import decouple
+
+
 import handlers.commands
 
 from aiogram import Dispatcher, types
@@ -76,8 +80,8 @@ async def change_percentage_step2(call: types.CallbackQuery, state: FSMContext):
 
 async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
-    balance_history = await balance.get_withdrawal_history(call.from_user.id)
     withdrawal_balance = await balance.get_my_balance(call.from_user.id)
+    withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
     wallet = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
     status = await users.check_status(call.from_user.id)
