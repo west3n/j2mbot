@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
-        types.BotCommand("start", "Start bot"),
-        types.BotCommand("language", "Select language")
+        types.BotCommand("start", "Main Menu / Главное меню"),
+        types.BotCommand("language", "Select language / Выбрать язык")
     ])
 
 

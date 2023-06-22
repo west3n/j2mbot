@@ -12,7 +12,7 @@ def main_menu(lang) -> InlineKeyboardMarkup:
          InlineKeyboardButton(f'🪪 {structure}', callback_data='structure')],
         [InlineKeyboardButton(f'⬆️ {refill}', callback_data='refill'),
          InlineKeyboardButton(f'⬇️ {withdrawal}', callback_data='withdrawal')],
-        [InlineKeyboardButton(f'🧑‍💻 {support}', url='https://t.me/J2M_Support'),
+        [InlineKeyboardButton(f'🧑‍💻 {support}', callback_data='support'),
          InlineKeyboardButton(f'📒 {information}', callback_data='information')]
     ])
     return kb
@@ -24,7 +24,7 @@ def main_menu_short(lang) -> InlineKeyboardMarkup:
         balance, support, information = ["Wallet", "Support", "Information"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f'💵 {balance}', callback_data='balance')],
-        [InlineKeyboardButton(f'🧑‍💻 {support}', url='https://t.me/J2M_Support'),
+        [InlineKeyboardButton(f'🧑‍💻 {support}', callback_data='support_short'),
          InlineKeyboardButton(f'📒 {information}', callback_data='information')]
     ])
     return kb
@@ -309,9 +309,11 @@ def hold_kb(lang) -> InlineKeyboardMarkup:
 
 
 def main_withdraw(lang) -> InlineKeyboardMarkup:
-    button, button_2, button_3 = "Вывод средств", "Изменить кошелек", "Изменить процент активного депозита"
+    button, button_2, button_3, button_4 = "Вывод средств", "Изменить кошелек", \
+        "Изменить процент реинвестирования", "Вернуться в главное меню"
     if lang == "EN":
-        button, button_2, button_3 = "Withdraw funds", "Change wallet", "Change active deposit percentage"
+        button, button_2, button_3, button_4 = "Withdraw funds", "Change wallet", \
+            "Change reinvestment percentage", "Back to main menu"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"🔽 {button}", callback_data="withdrawal_funds")],
         [InlineKeyboardButton(f"🔀 {button_2}", callback_data="change_wallet")],

@@ -79,6 +79,7 @@ async def change_percentage_step2(call: types.CallbackQuery, state: FSMContext):
 
 
 async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
+
     language = await users.user_data(call.from_user.id)
     withdrawal_balance = await balance.get_my_balance(call.from_user.id)
     withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
@@ -109,7 +110,8 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             text = f"Первое пополнение было выполнено {date_first}\n\n" \
                                    f"Доступная дата вывода: {date_first + datetime.timedelta(days=14)}"
                             if language[4] == 'EN':
-                                text = ""
+                                text = f"The first top-up was made on {date_first}\n\n"
+                                f"Available withdrawal date: {date_first + datetime.timedelta(days=14)}"
                             await call.message.delete()
                             await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
                         elif not wallet[6]:
@@ -171,7 +173,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                     await call.message.delete()
                     await state.finish()
                     await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
-        if status == "500":
+        elif status == "500":
             if first_trans:
                 now = datetime.datetime.now()
                 if now.tzinfo is None:
@@ -180,11 +182,12 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                 withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
                 if withdrawal_balance > 1000:
                         difference = date_first - now
-                        if difference.total_seconds() < 14 * 24 * 60 * 60:
+                        if difference.total_seconds() >= 14 * 24 * 60 * 60:
                             text = f"Первое пополнение было выполнено {date_first}\n\n" \
                                    f"Доступная дата вывода: {date_first + datetime.timedelta(days=14)}"
                             if language[4] == 'EN':
-                                text = ""
+                                text = f"The first top-up was made on {date_first}\n\n"
+                                f"Available withdrawal date: {date_first + datetime.timedelta(days=14)}"
                             await call.message.delete()
                             await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
                         elif not wallet[6]:

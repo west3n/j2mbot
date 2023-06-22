@@ -575,7 +575,9 @@ async def count_refill(msg: types.Message, state: FSMContext):
                        f"<em>Для продолжения пополните аккаунт на сумму " \
                        f"{int(msg.text) - int(balance_binance)} USDT и создайте новую заявку!</em>"
                 if language[4] == "EN":
-                    text = ""
+                    text = f"<b>The amount in your Binance account cannot be less than the top-up amount!</b>\n\n" \
+                           "<em>To proceed, please top up your account with an amount of " \
+                           "{int(msg.text) - int(balance_binance)} USDT and create a new request!</em>"
                 await msg.answer(text)
         else:
             deposit = await balance.get_balance(msg.from_id)
@@ -620,18 +622,21 @@ async def count_refill(msg: types.Message, state: FSMContext):
                            f"<em>Для продолжения пополните аккаунт на сумму " \
                            f"{x - int(balance_binance)} USDT и создайте новую заявку!</em>"
                     if language[4] == "EN":
-                        text = ""
+                        text = f"<b>The amount in your Binance account cannot be less than the top-up amount!</b>\n\n" \
+                               f"<em>To proceed, please top up your account with an amount of " \
+                               f"{x - int(balance_binance)} USDT and create a new request!</em>"
+
                     await msg.answer(text)
 
             else:
                 text = f"<b>Сумма пополнения не может быть меньше, чем 15.000 USDT!</b>"
                 if language[4] == "EN":
-                    text = ""
+                    text = f"<b>The top-up amount cannot be less than 15,000 USDT!</b>"
                 await msg.answer(text)
     else:
         text = f"<b>Введите сумму целыми числами, без букв, запятых и прочего.</b>"
         if language[4] == "EN":
-            text = ""
+            text = f"<b>Enter the sum in whole numbers, without letters, commas, etc.</b>"
         await msg.answer(text)
 
 

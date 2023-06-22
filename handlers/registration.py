@@ -3,11 +3,13 @@ import asyncio
 
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import StatesGroup, State
 
-from database import users
+from database import users, referral, nft
+from binance import thedex, microservice
 from handlers import commands
 from keyboards import inline
-from handlers.commands import Registration
+from handlers.commands import Registration, SmartContract
 
 
 async def language_handler(call: types.CallbackQuery, state: FSMContext):
@@ -123,10 +125,125 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
             await call.message.edit_reply_markup(reply_markup=inline.user_terms(data.get('language')))
             await state.set_state(Registration.accept.state)
         else:
+            await state.set_state(SmartContract.mint_nft.state)
             await users.add_new_user(call.from_user.id, call.from_user.username,
                                      call.from_user.full_name, data.get('language'))
-            await state.finish()
-            await commands.bot_start_call(call)
+            # await commands.bot_start_call(call)
+            language = data.get('language')
+            try:
+                ref_tg = await referral.get_id_from_line_1_id(call.from_user.id)
+                ref_full_name = await users.get_tg_full_name(ref_tg[0])
+            except TypeError:
+                ref_tg = None
+            if ref_tg:
+                text = f"Мы стремимся создать сообщество, основанное на взаимодействии и сотрудничестве между нашими " \
+                       f"участниками.\n\n" \
+                       f"Согласно нашим правилам, которые Вы приняли, прежде чем вы сможете воспользоваться всеми " \
+                       f"возможностями, " \
+                       f"предоставляемыми нашим ДАО, мы просим Вас подтвердить, что информация о возможности " \
+                       f"присоединиться к нашему сообществу была передана вам от " \
+                       f"{ref_full_name}. Это обеспечивает дополнительный уровень доверия и помогает нам подтвердить " \
+                       f"вашу легитимность в нашем ДАО.\n\n" \
+                       f"Примечание: После данного подтверждения изменение этой информации будет невозможным, " \
+                       f"поскольку на следующем этапе регистрации эти данные будут внесены в смарт-контракт ДАО."
+                if language == "EN":
+                    text = f"We strive to create a community based on interaction and collaboration among our " \
+                           f"members.\n\n" \
+                           f"According to our rules, which you have accepted before you can take advantage of all the " \
+                           f"opportunities" \
+                           f"provided by our DAO, we kindly ask you to confirm that the information about the possibility of " \
+                           f"joining" \
+                           f"our community was passed to you by {ref_full_name}. This ensures an additional level of trust " \
+                           f"and helps us" \
+                           f"confirm your legitimacy in our DAO.\n\n" \
+                           f"Note: After this confirmation, it will be impossible to change this information, as in the next " \
+                           f"registration stage, these data will be entered into the DAO smart contract."
+                await call.message.answer(text, reply_markup=inline.yesno_refill(language))
+            else:
+                text = f"Мы стремимся создать сообщество, основанное на взаимодействии и сотрудничестве между нашими " \
+                       f"участниками.\n\n" \
+                       f"Согласно нашим правилам, которые Вы приняли, прежде чем вы сможете воспользоваться всеми " \
+                       f"возможностями, " \
+                       f"предоставляемыми нашим ДАО, мы просим Вас подтвердить, что информация о возможности " \
+                       f"присоединиться к нашему сообществу была найдена самостоятельно. Это обеспечивает " \
+                       f"дополнительный уровень доверия и помогает нам подтвердить " \
+                       f"вашу легитимность в нашем ДАО.\n\n" \
+                       f"Примечание: После данного подтверждения изменение этой информации будет невозможным, " \
+                       f"поскольку на следующем этапе регистрации эти данные будут внесены в смарт-контракт ДАО."
+                if language == "EN":
+                    text = f"We strive to create a community based on interaction and collaboration among our members.\n\n"
+                    f"According to our rules, which you have accepted, before you can take advantage of all the opportunities "
+                    f"provided by our DAO, we kindly ask you to confirm that the information about the possibility of joining "
+                    f"our community was found independently by you. This ensures an additional level of trust and helps us "
+                    f"confirm your legitimacy in our DAO.\n\n"
+                    f"Note: After this confirmation, it will be impossible to change this information, as in the next "
+                    f"registration stage, these data will be entered into the DAO smart contract."
+                await call.message.edit_text(text, reply_markup=inline.yesno_refill(language))
+
+
+async def processing_registration(call: types.CallbackQuery, state: FSMContext):
+    language = await users.user_data(call.from_user.id)
+    if call.data == "no":
+        text = "Уточните у того, кто Вас пригласил его ID участника ДАО и отправьте нам этот номер."
+        if language[4] == 'EN':
+            text = "Please clarify with the person who invited you for their " \
+                   "DAO participant ID and send us that number."
+        await call.message.edit_text(text)
+        await state.set_state(SmartContract.new_referral.state)
+    elif call.data == 'yes':
+        count = await nft.check_nft_count()
+        text = "Вы приняли условия работы с DAO J2M! Теперь, чтобы официально стать участником и получить " \
+               "полный доступ к нашим возможностям и привилегиям, вам необходимо приобрести NFT (невзаимозаменяемый" \
+               " токен), который будет служить подтверждением вашего участия в нашем ДАО." \
+               "\n\nNFT является уникальным цифровым активом, зарегистрированным в блокчейне. Приобретение этого " \
+               "токена позволит нам записать в смарт контракт информацию о вашем статусе участника и о том, " \
+               "кто вас пригласил. Это поможет нам подтвердить вашу легитимность в нашем ДАО и обеспечить " \
+               "прозрачность взаимодействия между участниками. " \
+               "\n\nПриобретение NFT участия имеет несколько преимуществ:" \
+               "\n- Возможность принимать активное участие в жизни нашего сообщества." \
+               "\n- Различные привилегии и вознаграждения для участников." \
+               "\n- Доступ к таким преимуществам, которые включают в себя эксклюзивную возможности " \
+               "использовать ПО наших партнеров, образовательный контент и многое другое." \
+               "\n- Идентификация Вас как участника ДАО" \
+               "\n- Прозрачность и надежность в работе нашего сообщества." \
+               "\n\nСпасибо за ваше понимание и готовность принять участие в нашем ДАО! Мы рады " \
+               "приветствовать вас в нашем активном и развивающемся сообществе!"
+        text_2 = "В рамках нашего ДАО мы предлагаем особое преимущество первым 555 участникам. " \
+                 "Они могут приобрести NFT всего за 5 USDT (US Dollar Tether)!" \
+                 "\n\nЭто уникальная возможность стать частью нашего ДАО на более выгодных условиях. " \
+                 "NFT участия не только даст вам полный доступ к нашим активностям, но и откроет двери к ряду " \
+                 "привилегий, вознаграждений и участию в развитии нашего сообщества." \
+                 "\n\nПосле распределения первых 555 NFT, право участия в ДАО можно будет приобрести за  50 USDT." \
+                 "\n\nУ Вас есть возможность стать одним из первых участников нашего ДАО и воспользоваться " \
+                 f"преимуществами этого предложения! Осталось {555 - int(count)} NFT за 1 USDT."
+        if language[4] == "EN":
+            text = "You have accepted the terms of working with DAO J2M! Now, to officially become a participant " \
+                   "and gain full access to our capabilities and privileges, you need to acquire an NFT " \
+                   "(non-fungible token), which will serve as confirmation of your participation in our DAO." \
+                   "\n\nAn NFT is a unique digital asset registered on the blockchain. Acquiring this token " \
+                   "will allow us to record information about your participant status and who invited you in a " \
+                   "smart contract. This will help us verify your legitimacy in our DAO and ensure transparency " \
+                   "of interactions among participants.\n\nAcquiring the participation NFT has several advantages:" \
+                   "\n- The opportunity to actively participate in our community's life." \
+                   "\n- Various privileges and rewards for participants." \
+                   "\n- Access to exclusive benefits, including the use of our partners' software, educational " \
+                   "content, and more.\n- Identification of you as a DAO participant." \
+                   "\n- Transparency and reliability in the operation of our community." \
+                   "\n\nThank you for your understanding and willingness to participate in our DAO! " \
+                   "We are delighted to welcome you to our active and growing community!"
+            text_2 = "As part of our DAO, we offer a special advantage to the first 555 participants. " \
+                     "They can acquire the NFT for only 5 USDT (US Dollar Tether)!" \
+                     "\n\nThis is a unique opportunity to become part of our DAO on more favorable terms. " \
+                     "The participation NFT will not only grant you full access to our activities but also " \
+                     "open doors to a range of privileges, rewards, and participation in the development of " \
+                     "our community.\n\nAfter the distribution of the first 555 NFTs, the right to participate " \
+                     "in the DAO can be acquired for 50 USDT.\n\nYou have the opportunity to become one of the " \
+                     "first participants in our DAO and take advantage of this offer! " \
+                     f"There are {555 - int(count)} NFTs left for 1 USDT."
+        await call.message.edit_text(text)
+        await call.message.answer(text_2, reply_markup=inline.get_nft(language[4]))
+        await SmartContract.next()
+
 
 async def new_referral(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)

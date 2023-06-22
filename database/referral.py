@@ -39,16 +39,6 @@ async def get_all_line_1():
         cur.close()
 
 
-async def get_all_line_1():
-    db, cur = connect()
-    try:
-        cur.execute("SELECT line_1 FROM app_referral")
-        return [tg_id[0] for tg_id in cur.fetchall()]
-    finally:
-        db.close()
-        cur.close()
-
-
 async def get_all_line_2():
     db, cur = connect()
     try:

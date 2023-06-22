@@ -3,15 +3,16 @@ import asyncio
 import decouple
 from aiogram import Dispatcher, types
 from keyboards import inline
-from database import users, balance
+from database import users, balance, nft
 
 
 async def balance_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_balance = await balance.get_balance(call.from_user.id)
     photo = decouple.config("BANNER_BALANCE")
+    dao = await nft.nft_id(call.from_user.id)
     balance_id = await balance.get_balance_status(call.from_user.id)
-    text = f"<b>Ваш индивидуальный номер участника DAO, зафиксированный в смарт-контракте:</b> {balance_id[0]}" \
+    text = f"<b>Ваш индивидуальный номер участника DAO, зафиксированный в смарт-контракте:</b> {dao}" \
            f"\n<b>Ваш баланс:</b> {user_balance[0]} USDT\n<b>Активный депозит:</b> {user_balance[1]} USDT" \
            f"\n<b>Партнерские начисления:</b> 0 USDT"
     text += f"\n<b>Сумма зарезервированная на вывод:</b> {user_balance[2]} USDT" if int(user_balance[2]) > 0 else ""

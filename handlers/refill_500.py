@@ -81,7 +81,8 @@ async def deposit_500(call: types.CallbackQuery):
             text = "Enter the replenishment amount in USDT using digits.\n"
             "Minimum amount - 500 USDT\n"
             "Maximum amount - 999 USDT\n"
-            "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
+            "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment " \
+            "amount."
         await call.message.edit_text(text)
         await SmallUser.amount.set()
     elif call.data == 'from_1000':
@@ -91,7 +92,8 @@ async def deposit_500(call: types.CallbackQuery):
         if language[4] == 'EN':
             text = "Enter the replenishment amount in USDT using digits.\n"
             "Minimum amount - 1000 USDT\n"
-            "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
+            "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment " \
+            "amount."
         await call.message.edit_text(text)
         await SmallUser.amount_1000.set()
 
@@ -184,11 +186,13 @@ async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):
         if "." in count:
             count = count.replace(".", ",")
         text = f"Отправьте {count} {currency_str} на указанный адрес:\n\n`{wallet[0]}`\n\n" \
-               f"Перед совершением транзакции внимательно проверьте адрес получателя и сумму перевода, оба значения должны совпадать со значениями в сообщении"
+               f"Перед совершением транзакции внимательно проверьте адрес получателя и сумму перевода, оба значения " \
+               f"должны совпадать со значениями в сообщении"
 
         if language[4] == "EN":
             text = f"Please send {count} {currency_str} to the provided address:\n\n{wallet[0]}\n\n" \
-                   f"Before making the transaction, carefully verify the recipient's address and the transfer amount. Both values should match the ones in the message."
+                   f"Before making the transaction, carefully verify the recipient's address and the transfer amount. " \
+                   f"Both values should match the ones in the message."
         await call.message.answer(text, reply_markup=inline.finish_transaction(language[4]),
                                   parse_mode=types.ParseMode.MARKDOWN_V2)
     await SmallUser.next()
@@ -202,7 +206,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     if status == "Waiting":
         text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
         if language[4] == "EN":
-            text = ""
+            text = "We need a little more time for verification. Please try again later"
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
     if status == "Unpaid":
         text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n" \
@@ -239,7 +243,7 @@ async def smalluser_check(call: types.CallbackQuery, row):
     if status == "Waiting":
         text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
         if language[4] == "EN":
-            text = ""
+            text = "We need a little more time for verification. Please try again later."
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
 
     elif status == "Unpaid":
@@ -277,7 +281,7 @@ async def smalluser_check_2(call: types.CallbackQuery):
     if status == "Waiting":
         text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
         if language[4] == "EN":
-            text = ""
+            text = "We need a little more time for verification. Please try again later."
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
 
     elif status == "Unpaid":
@@ -321,7 +325,9 @@ async def transiction_detail(call: types.CallbackQuery):
                f"<b>Кошелек для оплаты:</b><em> {status[1]}</em>\n"
 
         if language[4] == "EN":
-            text = f""
+            text = f"<b>Payment amount:</b><em> {count} {status[2]} </em>\n" \
+                   "<b>Payment status:</b><em> {status[0]}</em>\n" \
+                   "<b>Payment wallet:</b><em> {status[1]}</em>\n"
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
     except TypeError:
         text = "Ошибка транзакции, попробуйте повторить еще раз!"
