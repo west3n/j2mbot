@@ -32,23 +32,27 @@ async def registration_500(call: types.CallbackQuery):
             text = "Введите сумму пополнения в USDT цифрами.\n" \
                    "Минимальная сумма - 500 USDT\n" \
                    "Максимальная сумма 999 USDT\n" \
-                   "При пополнении Вы также оплачиваете стоимость AML проверки в размере 0,5% от суммы пополнения"
+                   "\n\nПри пополнении Вы также оплачиваете стоимость AML проверки. " \
+                   "Сумма комиссии рассчитывается в зависимости от сети пополнения."
             if language[4] == 'EN':
-                text = "Enter the replenishment amount in USDT using digits.\n"
-                "Minimum amount - 500 USDT\n"
-                "Maximum amount - 999 USDT\n"
-                "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
+                text = "Enter the replenishment amount in USDT using digits.\n" \
+                       "Minimum amount - 500 USDT\n" \
+                       "Maximum amount - 999 USDT\n" \
+                       "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
+                       "The commission amount is calculated based on the network used for the deposit."
             await call.message.answer(text)
             await SmallUser.amount.set()
         elif status == "1000":
             # await call.message.delete()
             text = "Введите сумму пополнения в USDT цифрами\n." \
                    "Минимальная сумма - 1000 USDT\n" \
-                   "При пополнении Вы также оплачиваете стоимость AML проверки в размере 0,5% от суммы пополнения"
+                   "\n\nПри пополнении Вы также оплачиваете стоимость AML проверки в размере. " \
+                   "Сумма комиссии рассчитывается в зависимости от сети пополнения."
             if language[4] == 'EN':
-                text = "Enter the replenishment amount in USDT using digits.\n"
-                "Minimum amount - 1000 USDT\n"
-                "When replenishing, you also pay for the cost of AML verification, which is 0.5% of the replenishment amount."
+                text = "Enter the replenishment amount in USDT using digits.\n" \
+                       "Minimum amount - 1000 USDT\n" \
+                       "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
+                       "The commission amount is calculated based on the network used for the deposit."
             await call.message.answer(text)
             await SmallUser.amount_1000.set()
         else:

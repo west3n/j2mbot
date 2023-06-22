@@ -2,11 +2,11 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 
 def main_menu(lang) -> InlineKeyboardMarkup:
-    balance, refill, withdrawal, structure, support, information = ["Баланс", "Пополнение", "Вывод", "Рефералы",
-                                                                    "Поддержка", "Информация"]
+    balance, refill, withdrawal, structure, support, information = ["Баланс", "Пополнение", "Вывод",
+                                                                    "Партнерская программа", "Поддержка", "Информация"]
     if lang == "EN":
-        balance, refill, withdrawal, structure, support, information = ["Balance", "Refill", "Withdrawal", "Referral",
-                                                                        "Support", "Information"]
+        balance, refill, withdrawal, structure, support, information = ["Balance", "Refill", "Withdrawal",
+                                                                        "Affiliate program", "Support", "Information"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f'💵 {balance}', callback_data='balance'),
          InlineKeyboardButton(f'🪪 {structure}', callback_data='structure')],
@@ -121,11 +121,12 @@ def information_menu(lang) -> InlineKeyboardMarkup:
 
 
 def referral_statistic(lang) -> InlineKeyboardMarkup:
-    text, back = 'Подробная статистика', "Главное меню"
+    text, data, back = 'Подробная статистика', "Личные данные", "Главное меню"
     if lang == "EN":
-        text, back = "Detailed statistic", "Main menu"
+        text, data, back = "Detailed statistic", "Personal data", "Main menu"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"📊 {text}", callback_data='full_statistic')],
+        [InlineKeyboardButton(f"🧘 {data}", callback_data="user_data")],
         [InlineKeyboardButton(f"◀️ {back}", callback_data="main_menu")]
     ])
     return kb
@@ -188,6 +189,18 @@ def yesno_refill(lang) -> InlineKeyboardMarkup:
 
 
 def refill_account(lang) -> InlineKeyboardMarkup:
+    first_button, second_button = "Личный аккаунт от 15000 USDT", "Коллективный аккаунт от 500 USDT"
+    if lang == "EN":
+        first_button, second_button = "Personal account starting from 15,000 USDT", \
+            "Collective account starting from 500 USDT."
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💰 {first_button}", callback_data="active_15000")],
+        [InlineKeyboardButton(f"💵 {second_button}", callback_data="active_500")]
+    ])
+    return kb
+
+
+def refill_account_2(lang) -> InlineKeyboardMarkup:
     first_button, second_button = "Личный аккаунт от 15000 USDT", "Коллективный аккаунт от 500 USDT"
     if lang == "EN":
         first_button, second_button = "Personal account starting from 15,000 USDT", \
@@ -300,9 +313,10 @@ def main_withdraw(lang) -> InlineKeyboardMarkup:
     if lang == "EN":
         button, button_2, button_3 = "Withdraw funds", "Change wallet", "Change active deposit percentage"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"{button}", callback_data="withdrawal_funds")],
-         [InlineKeyboardButton(f"{button_2}", callback_data="change_wallet")],
-         [InlineKeyboardButton(f"{button_3}", callback_data="change_percentage")]
+        [InlineKeyboardButton(f"🔽 {button}", callback_data="withdrawal_funds")],
+        [InlineKeyboardButton(f"🔀 {button_2}", callback_data="change_wallet")],
+        [InlineKeyboardButton(f"🧮 {button_3}", callback_data="change_percentage")],
+        [InlineKeyboardButton(f"◀️ {button_4}", callback_data="main_menu")]
     ])
     return kb
 
@@ -315,5 +329,97 @@ def withdraw_percentage(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"{button}", callback_data="0"),
          InlineKeyboardButton(f"{button_2}", callback_data="50"),
          InlineKeyboardButton(f"{button_3}", callback_data="100")]
+    ])
+    return kb
+
+
+def get_nft(lang) -> InlineKeyboardMarkup:
+    button, support = "Приобрести NFT", "Связаться с поддержкой"
+    if lang == "EN":
+        button, support = "Get NFT", "Connect with support"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{button}", callback_data="get_nft")],
+        [InlineKeyboardButton(f'🧑‍💻 {support}', callback_data="support_nft")]])
+    return kb
+
+
+def check_nft_status(lang) -> InlineKeyboardMarkup:
+    button, button_2 = "Обновить", "Детали транзакции"
+    if lang == "EN":
+        button, button_2 = "Refresh", "Transaction Details"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{button}", callback_data="refresh_nft"),
+         InlineKeyboardButton(f"{button_2}", callback_data="transaction_details_nft")]])
+    return kb
+
+
+def refill_main_menu(lang) -> InlineKeyboardMarkup:
+    button, button_2, button_3 = "Изучить условия", "Пополнить баланс", "Вернуться в главное меню"
+    if lang == "EN":
+        button, button_2, button_3 = "To review the terms", "To deposit funds", "Return to main menu"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"‍🎓️ {button}", callback_data="review_terms"),
+         InlineKeyboardButton(f"💵 {button_2}", callback_data="deposit_funds")],
+        [InlineKeyboardButton(f"◀️ {button_3}", callback_data="main_menu")]
+    ])
+    return kb
+
+
+def distribution(lang) -> InlineKeyboardMarkup:
+    button = "Распределение доходности"
+    if lang == "EN":
+        button = "The distribution of profitability"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"👪 {button}", callback_data="distribution")]])
+    return kb
+
+
+def active_500(lang) -> InlineKeyboardMarkup:
+    button, button_2 = "Разместить активы", "Условия от 15000 USDT"
+    if lang == "EN":
+        button = "To deposit assets", "Conditions from 15000 USDT"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💵 {button}", callback_data="500")],
+        [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_15000")]])
+    return kb
+
+
+def active_15000(lang) -> InlineKeyboardMarkup:
+    button, button_2 = "Разместить активы", "Условия от 500 USDT"
+    if lang == "EN":
+        button = "To deposit assets", "Conditions from 500 USDT"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💵 {button}", callback_data="15000")],
+        [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_500")]])
+    return kb
+
+
+def emailing_documents(lang) -> InlineKeyboardMarkup:
+    button = "Документы отправлены"
+    if lang == "EN":
+        button = "The documents have been sent"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"📨 {button}", callback_data="emailing_documents")]])
+    return kb
+
+
+def support_menu(status) -> InlineKeyboardMarkup:
+    button_1, button_2, button3 = "Support Sonera", "Support J2M", "Back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{button_1}", url="https://t.me/sonera_help")],
+        [InlineKeyboardButton(f"{button_2}", url="https://t.me/J2M_Support")],
+        [InlineKeyboardButton(f"{button3}", callback_data=status)]
+    ])
+    return kb
+
+
+def change_data(lang) -> InlineKeyboardMarkup:
+    button_1, button_2, back = "Изменить имя", "Изменить соц.сети", "Вернуться назад"
+    if lang == 'EN':
+        button_1, button_2, back = "Change name", "Change socials", "Go back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"🚶 {button_1}", callback_data="change_name")],
+        [InlineKeyboardButton(f"🌐 {button_2}", callback_data='change_socials')],
+        [InlineKeyboardButton(f"◀️ {back}", callback_data='structure')]
     ])
     return kb

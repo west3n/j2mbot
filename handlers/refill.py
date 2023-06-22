@@ -42,185 +42,176 @@ class Refill(StatesGroup):
 
 async def refill_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    photo = decouple.config("BANNER_REFILL")
-    x = await documents.status_docs(call.from_user.id)
-    status = await users.check_status(call.from_user.id)
-    try:
-        status = status[0]
-    except TypeError:
-        status = None
-    try:
-        x = x[0]
-    except TypeError:
-        x = False
-    if status is None:
-        if x is False:
-            text = "Для продолжения вам нужно прочесть и " \
-                   "подтвердить 'Правила DAO J2M', 'Дисклеймер' и 'Правила использования продуктов'"
-            text_2 = "После ознакомления с присланными документами, пожалуйста, подтвердите согласие с условиями."
-            dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES")
-            disclaimer_doc = decouple.config("DISCLAIMER")
-            product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS")
-            if language[4] == 'EN':
-                photo = decouple.config("BANNER_REFILL_EN")
-                text = "To continue, you need to read and confirm the 'DAO J2M Rules', " \
-                       "'Disclaimer' and 'Product Usage Terms'."
-                text_2 = "After reviewing the documents sent, please confirm your agreement to the terms."
-                dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES_EN")
-                disclaimer_doc = decouple.config("DISCLAIMER_EN")
-                product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS_EN")
-            await call.message.delete()
-            mess = await call.message.answer_photo(
-                photo=photo,
-                caption=text)
-            await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-            await asyncio.sleep(2)
-            await call.message.answer_document(dao_j2m_rules_doc)
-            await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-            await asyncio.sleep(1)
-            await call.message.answer_document(disclaimer_doc)
-            await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-            await asyncio.sleep(1)
-            await call.message.answer_document(product_usage_terms_doc)
-            await call.bot.send_chat_action(call.message.chat.id, "typing")
-            await asyncio.sleep(4)
-            await call.bot.delete_message(chat_id=call.message.chat.id,
-                                          message_id=mess.message_id)
-            await call.message.answer(text_2, reply_markup=inline.user_docs(language[4]))
-            await DocsAccept.accept.set()
-        else:
-            call.data = "yes"
-            await step_2_common(call)
-    else:
-        await handlers.refill_500.registration_500(call)
-
-
-async def docs_complete(call: types.CallbackQuery):
-    language = await users.user_data(call.from_user.id)
-    await call.message.edit_reply_markup(reply_markup=inline.user_docs_2(language[4]))
-    await DocsAccept.next()
-
-
-async def finish_docs(call: types.CallbackQuery, state: FSMContext):
-    language = await users.user_data(call.from_user.id)
-    async with state.proxy() as data:
-        if call.data == "docs_accept":
-            language = await users.user_data(call.from_user.id)
-            await call.message.edit_reply_markup(reply_markup=inline.user_docs(language[4]))
-            await state.set_state(DocsAccept.accept.state)
-        else:
-            await call.message.delete()
-            try:
-                ref_tg = await referral.get_id_from_line_1_id(call.from_user.id)
-                ref_full_name = await users.get_tg_full_name(ref_tg[0])
-            except TypeError:
-                ref_tg = None
-            if ref_tg:
-                text = f"<b>DAO J2M</b> является сообществом," \
-                       f"которое подразумевает взаимодействие между его участниками.\n\n" \
-                       f"Прежде чем Вы воспользуетесь любым из наших предложений," \
-                       f" мы просим Вас подтвердить, что информацией о возможности участия в DAO" \
-                       f" с вами поделился/лась: <b>{ref_full_name}</b>.\n\n" \
-                       f"<em>После этого подтверждения изменить данную информацию будет нельзя</em>"
-                if language[4] == "EN":
-                    text = f"<b>DAO J2M</b> is a community," \
-                           f"which occurs among its members.\n\n" \
-                           f"Before you take advantage of our offers", \
-                        f" we ask you to check that the information about the possibility of participating in the DAO" \
-                        f"shared/became: <b>{ref_full_name}</b>.\n\n" \
-                        f"<em>After this confirmation, it will be impossible to change the illustration</em>"
-                await call.message.answer(text, reply_markup=inline.yesno_refill(language[4]))
-            else:
-                text = f"<b>DAO J2M</b> является сообществом ….. " \
-                       f"которое подразумевает взаимодействие между его участниками.\n\n" \
-                       f"Прежде чем Вы воспользуетесь любым из наших предложений," \
-                       f" мы просим Вас подтвердить, что информацию о возможности участия в DAO " \
-                       f"вы получили самостоятельно.\n\n" \
-                       f"<em>После этого подтверждения изменить данную информацию будет нельзя</em>"
-                if language[4] == "EN":
-                    text = f"<b>DAO J2M</b> is a community" \
-                           f"which implies interaction between its participants.\n\n" \
-                           f"Before you use any of our offers," \
-                           f" we ask you to confirm that the information about the possibility of participating in " \
-                           f"the DAO " \
-                           f"you got yourself.\n\n" \
-                           f"<em>After this confirmation, you will not be able to change this information</em>"
-                await call.message.answer(text, reply_markup=inline.yesno_refill(language[4]))
-            await documents.add_approve_docs(call.from_user.id)
-            await DocsAccept.next()
-
-
-async def processing_refill(call: types.CallbackQuery, state: FSMContext):
-    language = await users.user_data(call.from_user.id)
-    if call.data == "no":
-        text = "Уточните ID пользователя, который вас пригласил и отправьте его сообщением"
-        if language[4] == 'EN':
-            text = "Please provide the user ID of the person who invited you and send it via message."
-        await call.message.edit_text(text)
-        await state.set_state(DocsAccept.new_referral.state)
-    elif call.data == 'yes':
-        await state.finish()
-        text = "Выберите один вариант:"
+    status = await documents.status_docs(call.from_user.id)
+    if not status:
+        photo = decouple.config("BANNER_REFILL")
+        text = 'Условия участия зависят от суммы размещенных криптоактивов. Мы рекомендуем изучить подробную ' \
+               'информацию  о каждом варианте, до пополнения баланса. ' \
+               'Если Вы уже знаете все условия, то можете переходить к пополнению.'
         if language[4] == "EN":
-            text = "Please select one option:"
-        await call.message.edit_text(text, reply_markup=inline.refill_account(language[4]))
-
-
-async def step_2_common(call: types.CallbackQuery):
-    language = await users.user_data(call.from_user.id)
-    x = await documents.check_contract(call.from_user.id)
-    try:
-        x = x[0]
-        if x == "":
-            x = None
-    except TypeError:
-        x = None
-    if x is None:
-        text = "Выберите один вариант:"
-        if language[4] == "EN":
-            text = "Please select one option:"
+            text = "The terms of participation depend on the amount of crypto assets you have deposited. " \
+                   "We recommend reviewing detailed information about each option before depositing funds. " \
+                   "If you are already familiar with all the terms, you can proceed with the deposit."
         await call.message.delete()
-        await call.message.answer(text, reply_markup=inline.refill_account(language[4]))
+        await call.message.answer_photo(photo, text, reply_markup=inline.refill_main_menu(language[4]))
     else:
-        await biguser_registration(call)
+        contract = await documents.check_approve_contract(call.from_user.id)
+        if contract is False:
+            text = 'Документы пока еще не подтверждены, ожидайте'
+            if language[4] == "EN":
+                text = "The documents are not yet confirmed. Please wait."
+            await call.message.delete()
+            await call.message.answer(text)
 
 
-async def new_referral(msg: types.Message, state: FSMContext):
-    language = await users.user_data(msg.from_user.id)
-    await msg.bot.send_chat_action(msg.chat.id, "typing")
-    if msg.text.isdigit():
-        if int(msg.text) in await users.get_all_tg_id():
-            async with state.proxy() as data:
-                data["line_1"] = msg.text
-            await referral.update_line_1(msg.from_user.id, data.get('line_1'))
-            user_name = await users.get_tg_full_name(data.get('line_1'))
-            text = f"Данные успешно сохранены! \n\n" \
-                   f"Вы указали в качестве пригласившего вас пользователя <b>{user_name}</b>"
-            text_2 = "Выберите один вариант:"
-            if language[4] == 'EN':
-                text = f"The data has been successfully saved!\n\n"
-                f"You have indicated <b>{user_name}</b> as the user who invited you."
-                text_2 = "Please select one option:"
-            await msg.answer(text)
-            await state.finish()
-            await msg.bot.send_chat_action(msg.chat.id, "typing")
-            await asyncio.sleep(2)
-            await msg.answer(text_2, reply_markup=inline.refill_account(language[4]))
-        else:
-            text = f"Данный пользователь не зарегистрирован в системе!\n\n" \
-                   f"<em> Если вы не знаете эти цифры, уточните у пользователя (Раздел Реферальная программа)</em>"
-            if language[4] == 'EN':
-                text = f"This user is not registered in the system!\n\n"
-                f"<em>If you don't know these digits, please clarify with the user (Referral Program section).</em>"
-            await msg.answer(text)
-    else:
-        text = "Пожалуйста, укажите уникальный идентификатор пользователя цифрами.\n\n" \
-               "<em> Если вы не знаете эти цифры, уточните у пользователя (Раздел Реферальная программа)</em>"
+async def handle_deposit_funds(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = 'Выберите один из вариантов:'
+    if language[4] == "EN":
+        text = 'Select at least one option:'
+    await call.message.delete()
+    await call.message.answer(text, reply_markup=inline.refill_account_2(language[4]))
+
+
+async def handle_review_terms(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = 'DAO J2M предоставляет возможность своим партнерам использовать ПО компании партнера Sonera.' \
+           '\n\nОсновы размещения крипто активов в любых новых инструментах:' \
+           '\n- осведомленность' \
+           '\n- своевременность' \
+           '\n- умеренный авантюризм' \
+           '\n\nПрежде чем принимать решения о совершении действий с цифровыми и крипто сервисами, ' \
+           'важно изучить полную информацию о рисках и затратах, связанных с волатильностью рынков, ' \
+           'формированием законодательной базы в мире и другими особенностями развивающейся цифровой экономики .' \
+           '\n\nМы рекомендуем отказаться от идей брать кредиты, продавать имущество, привлекать заемные ' \
+           'средства или использовать не свободные средства.' \
+           '\n\nПравильно оцените цели участия, свои возможности и допустимый уровень риска.' \
+           '\n\nДля большей уверенности обратитесь к нам или к своему пригласителю за консультацией.'
+    if language[4] == "EN":
+        text = "DAO J2M provides partners with the opportunity to utilize the software of the partner company, " \
+               "Sonera.\n\nFundamentals of depositing crypto assets in any new instruments:" \
+               "\n- Awareness" \
+               "\n- Timeliness" \
+               "\n- Moderate risk-taking" \
+               "\n\nBefore making decisions regarding actions with digital and crypto services, it is " \
+               "important to thoroughly understand the complete information about the risks and costs associated " \
+               "with market volatility, the development of legislative frameworks worldwide, and other " \
+               "aspects of the evolving digital economy.\n\nWe recommend refraining from taking loans, " \
+               "selling assets, borrowing funds, or using non-free funds." \
+               "\n\nProperly assess your participation goals, capabilities, and acceptable risk levels." \
+               "\n\nFor greater confidence, you can reach out to us or your inviter for consultation."
+    await call.message.delete()
+    await call.message.answer(text, reply_markup=inline.distribution(language[4]))
+
+
+async def handle_distribution(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = 'Доходность рассчитывается еженедельно от прибыли коллективного актива. Процент дохода участника' \
+           ' ДАО зависит от суммы его личного актива.' \
+           '\n\nУчастники с личным криптоактивом от 500 USDT до 5000 USDT' \
+           'получают вознаграждение в размере 40% от прибыли своего активного депозита' \
+           '\n\nУчастники с личным криптоактивом от 5000 USDT до 15000 USDT' \
+           'получают вознаграждение в размере 45% от прибыли своего активного депозита' \
+           '\n\nУчастники с личным криптоактивом от 15000 USDT' \
+           'получают вознаграждение в размере 50% от прибыли своего активного депозита собственного ' \
+           'субаккаунта Binance.\n\nБолее детальные условия для какой суммы криптоактивов Вам интересны?'
+    if language[4] == "EN":
+        text = "The profitability is calculated weekly based on the collective asset's profits. The percentage \
+               of income for a DAO participant depends on the amount of their personal asset." \
+               "\n\nParticipants with a personal crypto asset ranging from 500 USDT to 5000 USDT receive a " \
+               "reward of 40% of the profits from their active deposit." \
+               "\n\nParticipants with a personal crypto asset ranging from 5000 USDT to 15000 USDT " \
+               "receive a reward of 45% of the profits from their active deposit." \
+               "Participants with a personal crypto asset of 15000 USDT or more receive a reward of 50% of the " \
+               "profits from their active deposit in their own Binance sub-account." \
+               "For more detailed conditions regarding specific amounts of crypto assets, please let me " \
+               "know which range you are interested in."
+    await call.message.edit_text(text, reply_markup=inline.refill_account(language[4]))
+
+
+async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
+    language = await users.user_data(call.from_user.id)
+    if call.data == 'active_500':
+        text = 'Преимущества формата участия:' \
+               '\n- Повышенный процент возможной доходности за счет того, что больший размер единого коллективного' \
+               ' актива позволяет использовать большее количество стратегий торговых бота.' \
+               '- Возможность использовать современные технологии высокочастотного алгоритмического трейдинга ' \
+               'коллективно, с минимальным размещением личных активов.' \
+               '\n\nПри размещении  активов от 500 USDT возможность вывода замораживается до того момента, ' \
+               'пока сумма депозита не достигнет объема в 1000 USDT.' \
+               '\n\nВарианты размещения активов от 1000 USDT:' \
+               '\n- Холд тела на 1 месяц с минимальной прогнозируемой доходностью от 3%' \
+               '\n- Холд тела на 3 месяца с минимальной  прогнозируемой доходностью от 12%' \
+               '\n- Холд тела на 6 месяцев с минимальной прогнозируемой доходностью от 30%' \
+               '\n\nПравила участия:' \
+               '\n- Вывод процентов дохода осуществляется 1 раз в две недели.' \
+               '\n- Минимальная сумма вывода 50$.' \
+               '\n- Вывод в течении 24 часов. Расчетный день вывода Понедельник.' \
+               '\n- Введенные средства поступают в работу раз в неделю в понедельник, в момент открытия торговой ' \
+               'недели.' \
+               '\n- День вывода тела депозита в соответствии с выбранным сроком холда рассчитывается с момента, ' \
+               'когда криптоактив поступил в работу.' \
+               '\n- Компания имеет право вернуть средства на кошелек пользователя и не взять их в работу если ' \
+               'они не пройдут AML проверку.'
         if language[4] == "EN":
-            text = "Please provide a unique user identifier using digits.\n\n<em>If you don't know this information, " \
-                   "please ask the user (Referral Program section) for clarification</em>"
-        await msg.delete()
-        await msg.answer(text)
+            text = "Advantages of participation format:" \
+                   "\n- Increased potential profitability due to a larger size of the collective asset, allowing " \
+                   "for the use of more trading bot strategies." \
+                   "\n- The opportunity to collectively utilize modern high-frequency algorithmic trading " \
+                   "technologies with minimal placement of personal assets." \
+                   "\n\nWhen placing assets starting from 500 USDT, the withdrawal option is frozen until " \
+                   "the deposit amount reaches 1000 USDT." \
+                   "\n\nOptions for placing assets starting from 1000 USDT:" \
+                   "\n- Hold period of 1 month with a minimum projected profitability of 3%." \
+                   "\n- Hold period of 3 months with a minimum projected profitability of 12%." \
+                   "\n- Hold period of 6 months with a minimum projected profitability of 30%." \
+                   "\n\nParticipation rules:" \
+                   "\n\n- Income percentages are withdrawn once every two weeks." \
+                   "\n- Minimum withdrawal amount is $50." \
+                   "\n- Withdrawals are processed within 24 hours. Withdrawal day is Monday." \
+                   "\n- Deposited funds are put into operation once a week on Monday at the beginning of " \
+                   "the trading week.\n- The withdrawal day for the deposit principal is calculated based on the " \
+                   "chosen hold period, starting from the moment the crypto asset starts operating." \
+                   "\n- The company has the right to return funds to the user's wallet and not put them into " \
+                   "operation if they fail AML verification."
+        await call.message.edit_text(text, reply_markup=inline.active_500(language[4]))
+    elif call.data == 'active_15000':
+        text = "Преимущества формата участия:" \
+               "\n- Минимальная прогнозируемая доходность от 3% в месяц." \
+               "\n- Ваши криптоактивы находятся в Вашем постоянном доступе на Вашем субаккаунте Binance." \
+               "\n- Только Вы имеете возможность пополнять и выводить активы в любой момент." \
+               "\n\nПравила участия:" \
+               "\n- Работа по инструкции." \
+               "\n- Активация аккаунта 1 рабочая неделя (2-5 рабочих дней)." \
+               "\n- Запуск партнерского ПО на Вашем субаккаунте 48 часов." \
+               "\n- Расчет недельной доходности производится по воскресеньям." \
+               "\n- Распределение доходности между участником программы и DAO - 50/50." \
+               "\n- Участник еженедельно получает информацию о сумме доходности и размере вознаграждения в " \
+               "DAO за предоставленное ПО в воскресенье и обязуется осуществить перевод в понедельник." \
+               "\n- Вывод активного депозита возможен в любое время, по предварительной обязательной заявке " \
+               "в этом боте.\n- Согласование момента вывода для получения максимальной доходности. Срок " \
+               "рассмотрения до 24 часов.\n- При нарушении условий со стороны участника DAO, компания оставляет " \
+               "за собой право отключить аккаунт от партнерской и мотивационной программы с " \
+               "последующим баном на полгода."
+        if language[4] == 'EN':
+            text = "Advantages of participation format:" \
+                   "\n-Minimum projected profitability of 3% per month." \
+                   "\n- Your crypto assets are accessible on your Binance sub-account." \
+                   "\n- Only you have the ability to deposit and withdraw assets at any time." \
+                   "\n\nParticipation rules:" \
+                   "\n- Follow the instructions provided." \
+                   "\n- Account activation takes 1 working week (2-5 working days)." \
+                   "\n- Partner software is launched on your sub-account within 48 hours." \
+                   "\n- Weekly profitability calculation is done on Sundays." \
+                   "\n- Profit distribution between the program participant and DAO is 50/50." \
+                   "\n- Participants receive information about the profitability amount and the size of the " \
+                   "reward in DAO for providing the software on Sundays and are required to make the " \
+                   "transfer on Monday.\n- Withdrawal of the active deposit is possible at any time, with a " \
+                   "mandatory request in this bot.\n- Agreement on the withdrawal timing is necessary to maximize " \
+                   "profitability. Processing time is up to 24 hours.\n- In case of violation of the conditions " \
+                   "by the DAO participant, the company reserves the right to deactivate the account from the " \
+                   "partner and incentive program, with subsequent banning for six months."
+        await call.message.edit_text(text, reply_markup=inline.active_15000(language[4]))
 
 
 async def biguser_registration(call: types.CallbackQuery):
@@ -234,16 +225,18 @@ async def biguser_registration(call: types.CallbackQuery):
     if x is None:
         language = await users.user_data(call.from_user.id)
         text = 'Для того, чтобы воспользоваться данным предложением, необходимо:\n\n' \
-               '- Заключить договор\n- Настроить субаккаунт\n- Подключить торгового бота'
+               '1. Заключить договор\n2. Создать субаккаунт.\n3. Настроить субаккаунт' \
+               '\n4. Пополнить баланс субаккаунта.\n5. Подключить торгового бота'
         text_2 = 'Зарегистрирован ли у Вас аккаунт на бирже Binance?'
         if language[4] == "EN":
             text = "To take advantage of this offer, you need to:\n\n" \
-                   "- Sign a contract\n- Set up a subaccount\n- Connect the trading bot."
+                   "1. Sign a contract.\n2. Create a sub-account.\n3. Configure the sub-account." \
+                   "\n4. Deposit funds into the sub-account.\n5. Connect the trading bot."
             text_2 = "Do you have an account registered on the Binance exchange?"
         await call.message.delete()
         mess = await call.message.answer(text)
         await call.bot.send_chat_action(call.message.chat.id, "typing")
-        await asyncio.sleep(3)
+        await asyncio.sleep(5)
         await call.bot.delete_message(call.from_user.id, mess.message_id)
         await call.message.answer(text_2, reply_markup=inline.yesno(language[4]))
         await BigUser.binance.set()
@@ -285,16 +278,19 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
         await call.message.edit_text(text, reply_markup=inline.main_menu(language[4]))
         await state.finish()
     else:
-        text = 'Ознакомьтесь с договором, скачайте его, заполните все поля отмеченные желтым цветом, ' \
-               'поменяйте цвет выделения текста на белый, ' \
-               'распечатайте и подпишите. Отправьте нам заполненный договор без подписи ' \
-               'в электронном виде и фото, либо скан подписанного документа в виде файла!'
+        text = "Изучите договор, Вам нужно скачать его, заполнить все желтые поля в нём. После этого, " \
+               "распечатайте договор и подпишите его. Отправьте скан, либо фото подписанного " \
+               "документа по почте blablabla@bla.com, затем нажмите на кнопку 'Документы отправлены'" \
+               " и ждите подтверждение от администратора, подтверждение придёт вам в сообщении от бота." \
+               "\n\nДопустимые форматы файла: JPG,PDF."
         contract = decouple.config("CONTRACT")
         if language[4] == "EN":
-            text = "Please review the contract, download it, fill in all the fields marked in yellow, " \
-                   "change the text highlight color to white, print it out, and sign it. Send us the " \
-                   "completed contract without the signature in electronic format and a " \
-                   "photo or scan of the signed document."
+            text = "Please review the contract. You need to download it and fill in all the yellow fields. " \
+                   "After that, print the contract, sign it, and send a scanned copy or a photo of the signed " \
+                   "document, as well as the completed electronic document to our email blablabla@bla.com, then " \
+                   "press 'The documents have been sent' button and wait" \
+                   "for confirmation from administrator, bot will send you message after approve." \
+                   "\n\nAcceptable file formats: JPG, PDF."
             contract = decouple.config("CONTRACT_EN")
         await call.message.delete()
         await call.message.answer(text)
@@ -303,7 +299,8 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
         await call.message.answer_document(contract)
         await call.bot.send_chat_action(call.message.chat.id, "typing")
         await asyncio.sleep(2)
-        text_2 = "Мы передадим его в Binance. Через 4 рабочих дня Binance оповестит Вас по электронной почте о том, " \
+        text_2 = "После проверки документа администратором, мы передадим его в Binance. Через 4 рабочих дня " \
+                 "Binance оповестит Вас по электронной почте о том, " \
                  "что Вам доступен функционал управляемых субсчетов\n" \
                  "После получения уведомления от Binance, Вам нужно совершить следующие шаги:\n\n" \
                  "Зайдите в свой профиль (иконка Вашего профиля вверху справа)\n." \
@@ -322,7 +319,6 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
                  "saina-instrukciya'>ссылке</a>\n\n" \
                  "Обратите внимание! Документов не может быть менее двух! Отправьте заполненый документ " \
                  "и документ с подписью в одном сообщении!"
-
         if language[4] == "EN":
             text_2 = "We will transfer it to Binance. In 4 business days, Binance will notify you by email that " \
                      "you have access to managed sub-accounts functionality.\n After receiving the notification " \
@@ -341,65 +337,73 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
                      "which will start with the nickname you provided earlier.\n\n" \
                      "Detailed instructions are available at this <a href='https://teletype.in/@lmarket/" \
                      "podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
-        await call.message.answer(text_2)
-        await BigUser.next()
+        await documents.add_approve_docs(call.from_user.id)
+        await call.message.answer(text_2, reply_markup=inline.emailing_documents(language[4]))
+        await state.finish()
 
 
-async def biguser_registration_step3(message: types.Message, state: FSMContext):
-    language = await users.user_data(message.from_user.id)
-    if message.document:
-        user_id = message.from_user.id
-        folder_name = f'Договор_{user_id}'
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-        file_name = os.path.join(folder_name, message.document.file_name)
-        await message.document.download(file_name)
-        async with state.proxy() as data:
-            if 'document_count' not in data:
-                data['document_count'] = 0
-                data['document_path'] = ''
-            data['document_count'] += 1
-            data['document_path'] += f"http://89.223.121.160:8000/files/bot/{file_name}\n"
-        await BigUser.next()
-    else:
-        text = "Нужно отправить документы или скриншоты в виде файла!\n\n" \
-               "Попробуйте еще раз."
-        if language[4] == "EN":
-            text = "You need to send documents or screenshots as a file!\n\n" \
-                   "Try again."
-        await message.answer(text)
-
-    async with state.proxy() as data:
-        if 'document_count' in data and data['document_count'] == 1:
-            text = "Документы успешно сохранены! "
-            if language[4] == "EN":
-                text = "Documents successfully saved! Wait for administrator confirmation!"
-            await documents.save_contract_path(data.get('document_path'), message.from_user.id)
-            await message.answer(text)
-            await state.finish()
-            await binanceapi_step1_msg(message)
-        else:
-            await documents.save_contract_path(data.get('document_path'), message.from_user.id)
+async def handle_emailing_documents(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = 'Оповещение администратору отправлено, ожидайте подтверждения!'
+    if language[4] == "EN":
+        text = "Notification sent to the administrator. Please await confirmation!"
+    await call.message.edit_text(text)
 
 
-async def binanceapi_step1_msg(message: types.Message):
-    x = await documents.check_approve_contract(message.from_id)
-    if x is True:
-        language = await users.user_data(message.from_user.id)
-        text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
-               "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
-               "Подробная инструкция " \
-               "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
-               "saina-instrukciya'>ссылке</a>"
+# async def biguser_registration_step3(message: types.Message, state: FSMContext):
+#     language = await users.user_data(message.from_user.id)
+#     if message.document:
+#         user_id = message.from_user.id
+#         folder_name = f'Договор_{user_id}'
+#         if not os.path.exists(folder_name):
+#             os.makedirs(folder_name)
+#         file_name = os.path.join(folder_name, message.document.file_name)
+#         await message.document.download(file_name)
+#         async with state.proxy() as data:
+#             if 'document_count' not in data:
+#                 data['document_count'] = 0
+#                 data['document_path'] = ''
+#             data['document_count'] += 1
+#             data['document_path'] += f"http://89.223.121.160:8000/files/bot/{file_name}\n"
+#         await BigUser.next()
+#     else:
+#         text = "Нужно отправить документы или скриншоты в виде файла!\n\n" \
+#                "Попробуйте еще раз."
+#         if language[4] == "EN":
+#             text = "You need to send documents or screenshots as a file!\n\n" \
+#                    "Try again."
+#         await message.answer(text)
+#
+#     async with state.proxy() as data:
+#         if 'document_count' in data and data['document_count'] == 1:
+#             text = "Документы успешно сохранены! Ожидайте подтверждения от администратора!"
+#             if language[4] == "EN":
+#                 text = "Documents successfully saved! Wait for administrator confirmation!"
+#             await documents.save_contract_path(data.get('document_path'), message.from_user.id)
+#             await message.answer(text)
+#             await state.finish()
+#         else:
+#             await documents.save_contract_path(data.get('document_path'), message.from_user.id)
 
-        if language[4] == "EN":
-            text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
-                   "system in a reply message.\n\nDetailed instructions are available at the following " \
-                   "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
-        await message.answer(text)
-        await BinanceAPI.alias.set()
-    else:
-        pass
+
+# async def binanceapi_step1_msg(message: types.Message):
+#     x = await documents.check_approve_contract(message.from_id)
+#     if x is True:
+#         language = await users.user_data(message.from_user.id)
+#         text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
+#                "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
+#                "Подробная инструкция " \
+#                "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
+#                "saina-instrukciya'>ссылке</a>"
+#
+#         if language[4] == "EN":
+#             text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
+#                    "system in a reply message.\n\nDetailed instructions are available at the following " \
+#                    "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
+#         await message.answer(text)
+#         await BinanceAPI.alias.set()
+#     else:
+#         pass
 
 
 async def binanceapi_step1_call(call: types.CallbackQuery):
@@ -422,7 +426,8 @@ async def binanceapi_step1_call(call: types.CallbackQuery):
             if language[4] == "EN":
                 text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
                        "system in a reply message.\n\nDetailed instructions are available at the following " \
-                       "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
+                       "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-" \
+                       "sonera-saina-instrukciya'>link</a>."
             await call.message.answer(text)
             await BinanceAPI.alias.set()
         else:
@@ -632,16 +637,17 @@ async def count_refill(msg: types.Message, state: FSMContext):
 
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(refill_handler, text='refill')
-    dp.register_callback_query_handler(docs_complete, state=DocsAccept.accept)
-    dp.register_callback_query_handler(finish_docs, state=DocsAccept.finish)
-    dp.register_callback_query_handler(processing_refill, state=DocsAccept.referral)
-    dp.register_message_handler(new_referral, state=DocsAccept.new_referral)
+    dp.register_callback_query_handler(handle_deposit_funds, text='deposit_funds')
+    dp.register_callback_query_handler(handle_review_terms, text='review_terms')
+    dp.register_callback_query_handler(handle_distribution, text='distribution')
+    dp.register_callback_query_handler(handle_500_15000, lambda c: c.data in ['active_500', 'active_15000'])
+    dp.register_callback_query_handler(handle_emailing_documents, text='emailing_documents')
     dp.register_callback_query_handler(biguser_registration, text="15000")
     dp.register_callback_query_handler(biguser_registration_step_1, state=BigUser.binance)
     dp.register_callback_query_handler(biguser_registration_step_2, state=BigUser.kyc)
-    dp.register_message_handler(biguser_registration_step3, content_types=['text', 'video', 'photo', 'document'],
-                                state=BigUser.contract)
-    dp.register_message_handler(binanceapi_step1_msg, state=BigUser.finish)
+    # dp.register_message_handler(biguser_registration_step3, content_types=['text', 'video', 'photo', 'document'],
+    #                             state=BigUser.contract)
+    # dp.register_message_handler(binanceapi_step1_msg, state=BigUser.finish)
     dp.register_message_handler(binanceapi_step2, state=BinanceAPI.alias)
     dp.register_message_handler(binance_step3, state=BinanceAPI.api_key)
     dp.register_message_handler(binance_step4, state=BinanceAPI.api_secret)

@@ -47,7 +47,7 @@ async def language_handler(call: types.CallbackQuery, state: FSMContext):
                  "\n\nЕсли у вас возникнут вопросы или потребуется дополнительная информация, не стесняйтесь " \
                  "обратиться к нашей поддержке. Мы всегда готовы помочь вам в процессе присоединения к нашему ДАО." \
                  "\n\nЖелаем вам взаимовыгодного участия в нашем DAO J2M!"
-        text_2 = "Принимаете условия пользовательского соглашения?"
+        text_2 = "Принимаете условия, указанные в документах?"
         document_1 = decouple.config("USER_AGREEMENT")
         privacy_policy_doc = decouple.config("PRIVACY_POLICY")
         dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES")
@@ -83,7 +83,7 @@ async def language_handler(call: types.CallbackQuery, state: FSMContext):
                      "feel free to reach out to our support. We are always ready to assist you in the process of " \
                      "joining our DAO." \
                      "\n\nWe wish you a mutually beneficial participation in our DAO J2M!"
-            text_2 = "Do you accept the terms of the user agreement?"
+            text_2 = "Do you accept the terms specified in the documents?"
             document_1 = decouple.config("USER_AGREEMENT_EN")
             privacy_policy_doc = decouple.config("PRIVACY_POLICY_EN")
             dao_j2m_rules_doc = decouple.config("J2M_DAO_RULES_EN")
@@ -91,22 +91,22 @@ async def language_handler(call: types.CallbackQuery, state: FSMContext):
             product_usage_terms_doc = decouple.config("PRODUCT_USAGE_TERMS_EN")
         await call.message.edit_text(text_1)
         await call.message.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await call.message.answer_document(document_1)
         await call.message.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await call.message.answer_document(privacy_policy_doc)
         await call.message.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await call.message.answer_document(dao_j2m_rules_doc)
         await call.message.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await call.message.answer_document(disclaimer_doc)
         await call.message.bot.send_chat_action(call.message.chat.id, "upload_document")
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await call.message.answer_document(product_usage_terms_doc)
         await call.message.bot.send_chat_action(call.message.chat.id, "typing")
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
         await call.message.answer(text_2, reply_markup=inline.user_terms(call.data.upper()))
         await Registration.next()
 
@@ -128,8 +128,216 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
             await state.finish()
             await commands.bot_start_call(call)
 
+async def new_referral(msg: types.Message, state: FSMContext):
+    language = await users.user_data(msg.from_user.id)
+    await msg.bot.send_chat_action(msg.chat.id, "typing")
+    if msg.text.isdigit():
+        if int(msg.text) in await users.get_all_tg_id():
+            async with state.proxy() as data:
+                data["line_1"] = msg.text
+            await referral.update_line_1(msg.from_user.id, data.get('line_1'))
+            user_name = await users.get_tg_full_name(data.get('line_1'))
+            count = await nft.check_nft_count()
+            text = f"Данные успешно сохранены! \n\n" \
+                   f"Вы указали в качестве пригласившего вас пользователя <b>{user_name}</b>"
+            text_2 = "Вы приняли условия работы с DAO J2M! Теперь, чтобы официально стать участником и получить " \
+                     "полный доступ к нашим возможностям и привилегиям, вам необходимо приобрести NFT (невзаимозаменяемый" \
+                     " токен), который будет служить подтверждением вашего участия в нашем ДАО." \
+                     "\n\nNFT является уникальным цифровым активом, зарегистрированным в блокчейне. Приобретение этого " \
+                     "токена позволит нам записать в смарт контракт информацию о вашем статусе участника и о том, " \
+                     "кто вас пригласил. Это поможет нам подтвердить вашу легитимность в нашем ДАО и обеспечить " \
+                     "прозрачность взаимодействия между участниками. " \
+                     "\n\nПриобретение NFT участия имеет несколько преимуществ:" \
+                     "\n- Возможность принимать активное участие в жизни нашего сообщества." \
+                     "\n- Различные привилегии и вознаграждения для участников." \
+                     "\n- Доступ к таким преимуществам, которые включают в себя эксклюзивную возможности " \
+                     "использовать ПО наших партнеров, образовательный контент и многое другое." \
+                     "\n- Идентификация Вас как участника ДАО" \
+                     "\n- Прозрачность и надежность в работе нашего сообщества." \
+                     "\n\nСпасибо за ваше понимание и готовность принять участие в нашем ДАО! Мы рады " \
+                     "приветствовать вас в нашем активном и развивающемся сообществе!"
+            text_3 = "В рамках нашего ДАО мы предлагаем особое преимущество первым 555 участникам. " \
+                     "Они могут приобрести NFT всего за 5 USDT (US Dollar Tether)!" \
+                     "\n\nЭто уникальная возможность стать частью нашего ДАО на более выгодных условиях. " \
+                     "NFT участия не только даст вам полный доступ к нашим активностям, но и откроет двери к ряду " \
+                     "привилегий, вознаграждений и участию в развитии нашего сообщества." \
+                     "\n\nПосле распределения первых 555 NFT, право участия в ДАО можно будет приобрести за  50 USDT." \
+                     "\n\nУ Вас есть возможность стать одним из первых участников нашего ДАО и воспользоваться\n " \
+                     f"преимуществами этого предложения! Осталось {555 - int(count)} NFT за 5 USDT."
+            if language[4] == 'EN':
+                text = f"The data has been successfully saved!\n\n"
+                f"You have indicated <b>{user_name}</b> as the user who invited you."
+                text_2 = "You have accepted the terms of working with DAO J2M! Now, to officially become a participant " \
+                         "and gain full access to our capabilities and privileges, you need to acquire an NFT " \
+                         "(non-fungible token), which will serve as confirmation of your participation in our DAO." \
+                         "\n\nAn NFT is a unique digital asset registered on the blockchain. Acquiring this token " \
+                         "will allow us to record information about your participant status and who invited you in a " \
+                         "smart contract. This will help us verify your legitimacy in our DAO and ensure transparency " \
+                         "of interactions among participants.\n\nAcquiring the participation NFT has several advantages:" \
+                         "\n- The opportunity to actively participate in our community's life." \
+                         "\n- Various privileges and rewards for participants." \
+                         "\n- Access to exclusive benefits, including the use of our partners' software, educational " \
+                         "content, and more.\n- Identification of you as a DAO participant." \
+                         "\n- Transparency and reliability in the operation of our community." \
+                         "\n\nThank you for your understanding and willingness to participate in our DAO! " \
+                         "We are delighted to welcome you to our active and growing community!"
+                text_3 = "As part of our DAO, we offer a special advantage to the first 555 participants. " \
+                         "They can acquire the NFT for only 5 USDT (US Dollar Tether)!" \
+                         "\n\nThis is a unique opportunity to become part of our DAO on more favorable terms. " \
+                         "The participation NFT will not only grant you full access to our activities but also " \
+                         "open doors to a range of privileges, rewards, and participation in the development of " \
+                         "our community.\n\nAfter the distribution of the first 555 NFTs, the right to participate " \
+                         "in the DAO can be acquired for 50 USDT.\n\nYou have the opportunity to become one of the " \
+                         "first participants in our DAO and take advantage of this offer! " \
+                         f"There are {555 - int(count)} NFTs left for 5 USDT."
+            await msg.answer(text)
+            await msg.bot.send_chat_action(msg.chat.id, "typing")
+            await asyncio.sleep(1)
+            await msg.answer(text_2)
+            await msg.bot.send_chat_action(msg.chat.id, "typing")
+            await asyncio.sleep(1)
+            await msg.answer(text_3, reply_markup=inline.get_nft(language[4]))
+            await state.set_state(SmartContract.start_minting.state)
+        else:
+            text = f"Данный пользователь не зарегистрирован в системе!\n\n" \
+                   f"<em> Если вы не знаете эти цифры, уточните у пользователя (Раздел Реферальная программа)</em>"
+            if language == 'EN':
+                text = f"This user is not registered in the system!\n\n"
+                f"<em>If you don't know these digits, please clarify with the user (Referral Program section).</em>"
+            await msg.answer(text)
+    else:
+        text = "Пожалуйста, укажите уникальный идентификатор пользователя цифрами.\n\n" \
+               "<em> Если вы не знаете эти цифры, уточните у пользователя (Раздел Реферальная программа)</em>"
+        if language == "EN":
+            text = "Please provide a unique user identifier using digits.\n\n<em>If you don't know this information, " \
+                   "please ask the user (Referral Program section) for clarification</em>"
+        await msg.delete()
+        await msg.answer(text)
+
+
+async def mint_nft(call: types.CallbackQuery, state: FSMContext):
+    await state.finish()
+    language = await users.user_data(call.from_user.id)
+    count = await nft.check_nft_count()
+    summ = 48
+    if count <= 555:
+        summ = 3.475
+    invoiceId = await thedex.create_invoice(summ, int(call.from_user.id), "Покупка NFT")
+    purse, amount = await thedex.pay_invoice('USDT_TRON', invoiceId)
+    if "." in amount:
+        amount = amount.replace(".", ",")
+    await nft.create_nft(call.from_user.id, invoiceId)
+    text = f"Для регистрации в DAO и получения NFT отправьте на указанный адрес {amount} USDT TRC\-20:" \
+           f"\n\n`{purse}`" \
+           "\n\nОбновить и ознакомится со статусом транзакции Вы можете с помощью кнопок ниже\."
+    if language[4] == "EN":
+        text = f"To register in the DAO and receive the NFT, please send {amount} USDT TRC\-20 to " \
+               f"the provided address: \n\n`{purse}`" \
+               "\n\nYou can update and check the status of your transaction using the buttons below\."
+    await call.message.edit_text(text, parse_mode=types.ParseMode.MARKDOWN_V2,
+                                 reply_markup=inline.check_nft_status(language[4]))
+
+
+async def nft_refresh(call: types.CallbackQuery):
+    await call.message.delete()
+    language = await users.user_data(call.from_user.id)
+    invoiceId = await nft.check_nft_status(call.from_user.id)
+    status = await thedex.invoice_one(invoiceId[5])
+    if status == "Waiting":
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
+        if language[4] == "EN":
+            text = "Further time is needed for verification. Please try again later."
+        await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
+
+    elif status == "Unpaid":
+        text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
+        if language[4] == "EN":
+            text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
+        await call.message.answer(text)
+        await nft.delete_error(call.from_user.id)
+
+    elif status == "Successful":
+        animation = decouple.config("NFT_ANIMATION")
+        invitor = await referral.get_id_from_line_1_id(call.from_user.id)
+        try:
+            invitor = invitor[0]
+        except TypeError:
+            invitor = 1
+        try:
+            resp, private_key, address = await microservice.microservice_(call.from_user.id, invitor)
+            dao = await nft.update_nft(call.from_user.id, address, private_key, "Successful")
+        except TypeError:
+            resp = None
+            address = None
+            private_key = None
+            dao = None
+        if resp:
+            text = f"Транзакция прошла успешно!" \
+                   f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
+                   f"\nВаш индивидуальный номер участника DAO: {dao}" \
+                   f"\nТеперь вам доступен полный функционал бота." \
+                   f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
+                   f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
+                   f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
+                   f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                   f"развитии совместно с DAO J2M!" \
+                   f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
+                   f"\nАдрес кошелька с NFT: {address}" \
+                   f"\nПриватный ключ: {private_key}" \
+                   f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
+                   f"Подробнее об этом Вы узнаете в разделе 'Информация'"
+            if language[4] == "EN":
+                text = f"Transaction completed successfully!" \
+                       f"\n\nCongratulations on acquiring the participation NFT in our DAO!" \
+                       f"\nYour unique DAO participant number is {dao}.\nYou now have full access to the " \
+                       f"bot functionality.\n\nYou have become part of our active and growing organization. " \
+                       f"Your NFT will serve as confirmation of your status and rights within our DAO." \
+                       f"\n\nTogether, we choose sustainable solutions to increase our digital assets, " \
+                       f"create the future, and consciously utilize modern technologies. " \
+                       f"Best of luck in your further development alongside DAO J2M!" \
+                       f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
+                       f"\nWallet address with NFT: {address}" \
+                       f"\nPrivate key: {private_key}" \
+                       f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
+                       f"You can find more information about this in the 'Information' section."
+            await call.message.answer_animation(animation=animation,
+                                                caption=text,
+                                                reply_markup=inline.main_menu_short(language[4]))
+        else:
+
+            text = "Произошла ошибка, обратитесь в поддержку"
+            if language[4] == "EN":
+                text = "An error occurred. Please contact support."
+        await call.message.answer(text, reply_markup=inline.main_menu_short(language[4]))
+    elif status == "Rejected":
+        text = "Произошла ошибка. Деньги вернуться к вам на счет."
+        if language[4] == "EN":
+            text = "An error occurred. The money will be refunded to your account."
+        await call.message.answer(text)
+        await nft.delete_error(call.from_user.id)
+
+
+async def nft_detail(call: types.CallbackQuery):
+    await call.message.delete()
+    language = await users.user_data(call.from_user.id)
+    invoiceId = await nft.check_nft_status(call.from_user.id)
+    status, purse, curr, amount = await thedex.invoice_one_2(invoiceId[5])
+    text = f"Cумма к оплате: {amount} USDT-20\n" \
+           f"Кошелек для оплаты: {purse}"
+    if language[4] == "EN":
+        text = f"The payment amount is: {amount} USDT-20\n"
+        f"Wallet for payment: {purse}"
+    await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
+
+
+
 
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(language_handler, state=Registration.language)
     dp.register_callback_query_handler(handle_user_terms_kb, state=Registration.accept)
     dp.register_callback_query_handler(finish_registration, state=Registration.finish)
+    dp.register_callback_query_handler(processing_registration, state=SmartContract.mint_nft)
+    dp.register_message_handler(new_referral, state=SmartContract.new_referral)
+    dp.register_callback_query_handler(mint_nft, state=SmartContract.start_minting)
+    dp.register_callback_query_handler(nft_refresh, text="refresh_nft")
+    dp.register_callback_query_handler(nft_detail, text="transaction_details_nft")

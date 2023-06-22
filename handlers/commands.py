@@ -19,8 +19,13 @@ class Registration(StatesGroup):
 
 
 async def file_id(msg: types.Message):
-    if msg.document:
-        await msg.reply(msg.document.file_id)
+    if str(msg.from_id) in ['254465569', '15362825']:
+        if msg.document:
+            await msg.reply(msg.document.file_id)
+        if msg.photo:
+            await msg.reply(msg.photo[-1].file_id)
+        if msg.animation:
+            await msg.reply(msg.animation.file_id)
 
 
 async def bot_start(msg: types.Message, state: FSMContext):
@@ -95,7 +100,7 @@ async def select_language(msg: types.Message, state: FSMContext):
 
 
 def register(dp: Dispatcher):
-    dp.register_message_handler(file_id, content_types='document')
+    dp.register_message_handler(file_id, content_types=['photo', 'document', 'animation'], state="*")
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
     dp.register_callback_query_handler(bot_start_call, text='main_menu')
