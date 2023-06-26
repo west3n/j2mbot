@@ -49,6 +49,7 @@ async def refill_handler(call: types.CallbackQuery):
                'информацию  о каждом варианте, до пополнения баланса. ' \
                'Если Вы уже знаете все условия, то можете переходить к пополнению.'
         if language[4] == "EN":
+            photo = decouple.config("BANNER_REFILL_EN")
             text = "The terms of participation depend on the amount of crypto assets you have deposited. " \
                    "We recommend reviewing detailed information about each option before depositing funds. " \
                    "If you are already familiar with all the terms, you can proceed with the deposit."
@@ -75,12 +76,12 @@ async def handle_deposit_funds(call: types.CallbackQuery):
 
 async def handle_review_terms(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    text = 'DAO J2M предоставляет возможность своим партнерам использовать ПО компании партнера Sonera.' \
+    text = 'DAO J2M предоставляет возможность своим участникам использовать IT продукт партнера Sonera.' \
            '\n\nОсновы размещения крипто активов в любых новых инструментах:' \
            '\n- осведомленность' \
            '\n- своевременность' \
            '\n- умеренный авантюризм' \
-           '\n\nПрежде чем принимать решения о совершении действий с цифровыми и крипто сервисами, ' \
+           '\n\nПрежде чем принимать решения о совершении действий с цифровыми и крипто-сервисами, ' \
            'важно изучить полную информацию о рисках и затратах, связанных с волатильностью рынков, ' \
            'формированием законодательной базы в мире и другими особенностями развивающейся цифровой экономики .' \
            '\n\nМы рекомендуем отказаться от идей брать кредиты, продавать имущество, привлекать заемные ' \
@@ -88,7 +89,7 @@ async def handle_review_terms(call: types.CallbackQuery):
            '\n\nПравильно оцените цели участия, свои возможности и допустимый уровень риска.' \
            '\n\nДля большей уверенности обратитесь к нам или к своему пригласителю за консультацией.'
     if language[4] == "EN":
-        text = "DAO J2M provides partners with the opportunity to utilize the software of the partner company, " \
+        text = "DAO J2M provides participants with the opportunity to utilize the software of the partner company, " \
                "Sonera.\n\nFundamentals of depositing crypto assets in any new instruments:" \
                "\n- Awareness" \
                "\n- Timeliness" \
@@ -106,8 +107,8 @@ async def handle_review_terms(call: types.CallbackQuery):
 
 async def handle_distribution(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    text = 'Доходность рассчитывается еженедельно от прибыли коллективного актива. Процент дохода участника' \
-           ' ДАО зависит от суммы его личного актива.' \
+    text = 'По условиям применения IT продукта, доходность рассчитывается еженедельно от результатов его работы.' \
+           ' Процент дохода участника ДАО зависит от суммы его личного актива.' \
            '\n\nУчастники с личным криптоактивом от 500 USDT до 5000 USDT' \
            'получают вознаграждение в размере 40% от прибыли своего активного депозита' \
            '\n\nУчастники с личным криптоактивом от 5000 USDT до 15000 USDT' \
@@ -116,7 +117,8 @@ async def handle_distribution(call: types.CallbackQuery):
            'получают вознаграждение в размере 50% от прибыли своего активного депозита собственного ' \
            'субаккаунта Binance.\n\nБолее детальные условия для какой суммы криптоактивов Вам интересны?'
     if language[4] == "EN":
-        text = "The profitability is calculated weekly based on the collective asset's profits. The percentage \
+        text = "According to the terms of use of the IT product, profitability is calculated on a weekly basis " \
+               "based on its performance. The percentage \
                of income for a DAO participant depends on the amount of their personal asset." \
                "\n\nParticipants with a personal crypto asset ranging from 500 USDT to 5000 USDT receive a " \
                "reward of 40% of the profits from their active deposit." \
@@ -152,7 +154,9 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                '\n- День вывода тела депозита в соответствии с выбранным сроком холда рассчитывается с момента, ' \
                'когда криптоактив поступил в работу.' \
                '\n- Компания имеет право вернуть средства на кошелек пользователя и не взять их в работу если ' \
-               'они не пройдут AML проверку.'
+               'они не пройдут AML проверку.' \
+               '\n\nМаксимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, ' \
+               'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
         if language[4] == "EN":
             text = "Advantages of participation format:" \
                    "\n- Increased potential profitability due to a larger size of the collective asset, allowing " \
@@ -173,7 +177,10 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                    "the trading week.\n- The withdrawal day for the deposit principal is calculated based on the " \
                    "chosen hold period, starting from the moment the crypto asset starts operating." \
                    "\n- The company has the right to return funds to the user's wallet and not put them into " \
-                   "operation if they fail AML verification."
+                   "operation if they fail AML verification." \
+                   "\n\nThe detailed conditions are described in Appendix No. 1 to the Terms of Use of the IT " \
+                   "product, which you have accepted. You can review the document again in the " \
+                   "'Information' section of the bot."
         await call.message.edit_text(text, reply_markup=inline.active_500(language[4]))
     elif call.data == 'active_15000':
         text = "Преимущества формата участия:" \
@@ -192,7 +199,9 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                "в этом боте.\n- Согласование момента вывода для получения максимальной доходности. Срок " \
                "рассмотрения до 24 часов.\n- При нарушении условий со стороны участника DAO, компания оставляет " \
                "за собой право отключить аккаунт от партнерской и мотивационной программы с " \
-               "последующим баном на полгода."
+               "последующим баном на полгода." \
+               "\n\n Максимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, " \
+               'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
         if language[4] == 'EN':
             text = "Advantages of participation format:" \
                    "\n-Minimum projected profitability of 3% per month." \
@@ -210,7 +219,10 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                    "mandatory request in this bot.\n- Agreement on the withdrawal timing is necessary to maximize " \
                    "profitability. Processing time is up to 24 hours.\n- In case of violation of the conditions " \
                    "by the DAO participant, the company reserves the right to deactivate the account from the " \
-                   "partner and incentive program, with subsequent banning for six months."
+                   "partner and incentive program, with subsequent banning for six months." \
+                   "\n\nThe detailed conditions are described in Appendix No. 1 to the Terms of Use of the IT " \
+                   "product, which you have accepted. You can review the " \
+                   "document again in the 'Information' section of the bot."
         await call.message.edit_text(text, reply_markup=inline.active_15000(language[4]))
 
 

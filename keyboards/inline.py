@@ -368,9 +368,9 @@ def refill_main_menu(lang) -> InlineKeyboardMarkup:
 
 
 def distribution(lang) -> InlineKeyboardMarkup:
-    button = "Распределение доходности"
+    button = "Условия применения ПО"
     if lang == "EN":
-        button = "The distribution of profitability"
+        button = "Terms of software usage"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"👪 {button}", callback_data="distribution")]])
     return kb
@@ -423,5 +423,16 @@ def change_data(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"🚶 {button_1}", callback_data="change_name")],
         [InlineKeyboardButton(f"🌐 {button_2}", callback_data='change_socials')],
         [InlineKeyboardButton(f"◀️ {back}", callback_data='structure')]
+    ])
+    return kb
+
+
+def new_information_menu(lang) -> InlineKeyboardMarkup:
+    button, back = 'Документы компании', 'Вернуться в главное меню'
+    if lang == 'EN':
+        button, back = "Company Documents", "Return to main menu"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💼 {button}", callback_data='company_documents')],
+        [InlineKeyboardButton(f"◀️ {back}", callback_data='main_menu')]
     ])
     return kb
