@@ -82,10 +82,10 @@ async def withdrawal_refill_history(call: types.CallbackQuery):
     all_user_data = await balance.get_balance_history(call.from_user.id, history_type)
     for user_data in all_user_data:
         text = f"<b>Дата:</b> {str(user_data[0]).split('+')[0]}\n<b>Cумма:</b> {user_data[1]}" \
-               f"\n<b>Комментарий:</b> {user_data[2]}"
+               f"\n<b>Хэш транзакции:</b> {user_data[2]}"
         if language[4] == "EN":
             text = f"<b>Date:</b> {str(user_data[0]).split('+')[0]}\n<b>Amount:</b> {user_data[1]}" \
-                   f"\n<b>Comment:</b> {user_data[2]}"
+                   f"\n<b>Transaction Hash:</b> {user_data[2]}"
         await call.message.answer(text)
     if not all_user_data:
         text = f'У вас нет истории {history_text}!'

@@ -226,7 +226,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         if language[4] == "EN":
             text = "Payment was successful."
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
-        await balance.insert_balance_history(call.from_user.id, data.get("amount"))
+        await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'))
         await state.finish()
         await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
 
@@ -260,7 +260,7 @@ async def smalluser_check(call: types.CallbackQuery, row):
         if language[4] == "EN":
             text = "Payment was successful."
         await balance.insert_deposit(call.from_user.id, row[1])
-        await balance.insert_balance_history(call.from_user.id, row[1])
+        await balance.insert_balance_history(call.from_user.id, row[1], row[2])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
 
@@ -298,7 +298,7 @@ async def smalluser_check_2(call: types.CallbackQuery):
         if language[4] == "EN":
             text = "Payment was successful."
         await balance.insert_deposit(call.from_user.id, row[1])
-        await balance.insert_balance_history(call.from_user.id, row[1])
+        await balance.insert_balance_history(call.from_user.id, row[1], row[2])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
 

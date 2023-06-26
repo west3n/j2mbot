@@ -43,12 +43,12 @@ async def get_balance_history(tg_id, transaction):
         db.close()
 
 
-async def insert_balance_history(tg_id, amount):
+async def insert_balance_history(tg_id, amount, hash):
     db, cur = connect()
     try:
         now = datetime.datetime.now()
-        cur.execute("INSERT INTO app_balancehistory (tg_id_id, transaction, date, amount, status) "
-                    "VALUES (%s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True,))
+        cur.execute("INSERT INTO app_balancehistory (tg_id_id, transaction, date, amount, status, description) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True, hash))
         db.commit()
     finally:
         cur.close()

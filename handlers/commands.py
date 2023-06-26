@@ -242,6 +242,10 @@ async def nft_start_call(call: types.CallbackQuery):
 
 
 async def bot_start_call(call: types.CallbackQuery):
+    try:
+        await call.message.delete()
+    except:
+        pass
     nft_ = await nft.check_nft_status(call.from_user.id)
     user_status = await users.user_data(call.from_user.id)
     wallet = await balance.get_balance_status(call.from_user.id)

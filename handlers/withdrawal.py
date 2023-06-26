@@ -86,7 +86,14 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
     withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
     wallet = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
+    date_first = first_trans[2]
     status = await users.check_status(call.from_user.id)
+    hold = await balance.get_hold(call.from_user.id)
+    bal_user, deposit, withdraw = await balance.get_balance(call.from_user.id)
+    try:
+        hold = hold[0]
+    except TypeError:
+        hold = None
     try:
         status = status[0]
     except TypeError:
@@ -97,15 +104,8 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                 now = datetime.datetime.now()
                 if now.tzinfo is None:
                     now = now.replace(tzinfo=datetime.timezone.utc)
-                date_first = first_trans[2]
-                hold = await balance.get_hold(call.from_user.id)
-                try:
-                    hold = hold[0]
-                except TypeError:
-                    hold = None
                 if hold:
                     if date_first + datetime.timedelta(days=int(hold)) <= now:
-                        print(True)
                         difference = date_first - now
                         if difference.total_seconds() >= 14 * 24 * 60 * 60:
                             text = f"Первое пополнение было выполнено {date_first}\n\n" \
@@ -159,7 +159,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             await NewWallet.wallet.set()
                         else:
                             text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance is not None else 0} USDT\n\n" \
-                                   f"Блидайшая дата возможного вывода: {date_first + datetime.timedelta(days=int(hold))}"
+                                   f"Ближайшая дата возможного вывода: {date_first + datetime.timedelta(days=int(hold))}"
                             if language[4] == 'EN':
                                 text = f"<b>The balance available for withdrawal:</b> " \
                                        f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
@@ -167,7 +167,14 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             await state.finish()
                             await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
                 else:
-                    text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+                    text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit} USDT" \
+                           f"Доступные активы к выводу: {withdrawal_balance} USDT" \
+                           f"Заявки на вывод, ожидающие обработки: {withdraw}" \
+                           f"Минимальная сумма вывода: 50 USDT" \
+                           f"Ближайшая дата доступная к выводу: {date_first + datetime.timedelta(days=int(hold))}" \
+                           f"Ваш номер кошелька для вывода: {wallet[6]}" \
+                           f"Если это верный номер кошелька, подтвердите вывод на него." \
+                           f"Если Нужно вывести активы на другой кошелек, измените его адрес."
                     if language[4] == 'EN':
                         text = f"<b>The balance available for withdrawal:</b> " \
                                f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
@@ -242,7 +249,14 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                         await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
 
     else:
-        text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+        text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit } USDT" \
+               f"Доступные активы к выводу: {withdrawal_balance} USDT" \
+               f"Заявки на вывод, ожидающие обработки: {withdraw}" \
+               f"Минимальная сумма вывода: 50 USDT" \
+               f"Ближайшая дата доступная к выводу: {date_first + datetime.timedelta(days=int(hold))}" \
+               f"Ваш номер кошелька для вывода: {wallet[6]}" \
+               f"Если это верный номер кошелька, подтвердите вывод на него." \
+               f"Если Нужно вывести активы на другой кошелек, измените его адрес."
         if language[4] == 'EN':
             text = f"<b>The balance available for withdrawal:</b> " \
                    f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"

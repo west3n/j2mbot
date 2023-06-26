@@ -1,5 +1,4 @@
 import asyncio
-import os
 import re
 import decouple
 import shutup
@@ -8,12 +7,17 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
-import handlers.refill_500
+
 from keyboards import inline
-from database import users, documents, referral, binance_db, balance
+from database import users, documents, binance_db, balance
 from binance import actions as binance
 
 shutup.please()
+
+
+class NewDoc(StatesGroup):
+    docs = State()
+    docs_2 = State()
 
 
 class DocsAccept(StatesGroup):
@@ -43,26 +47,82 @@ class Refill(StatesGroup):
 async def refill_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     status = await documents.status_docs(call.from_user.id)
-    if not status:
-        photo = decouple.config("BANNER_REFILL")
-        text = 'Условия участия зависят от суммы размещенных криптоактивов. Мы рекомендуем изучить подробную ' \
-               'информацию  о каждом варианте, до пополнения баланса. ' \
-               'Если Вы уже знаете все условия, то можете переходить к пополнению.'
-        if language[4] == "EN":
-            photo = decouple.config("BANNER_REFILL_EN")
-            text = "The terms of participation depend on the amount of crypto assets you have deposited. " \
-                   "We recommend reviewing detailed information about each option before depositing funds. " \
-                   "If you are already familiar with all the terms, you can proceed with the deposit."
-        await call.message.delete()
-        await call.message.answer_photo(photo, text, reply_markup=inline.refill_main_menu(language[4]))
-    else:
-        contract = await documents.check_approve_contract(call.from_user.id)
-        if contract is False:
-            text = 'Документы пока еще не подтверждены, ожидайте'
+    docs_status = await balance.get_document_status(call.from_user.id)
+    try:
+        docs_status = docs_status[0]
+    except TypeError:
+        docs_status = None
+    if docs_status:
+
+        if not status:
+
+            photo = decouple.config("BANNER_REFILL")
+            text = 'Условия участия зависят от суммы размещенных криптоактивов. Мы рекомендуем изучить подробную ' \
+                   'информацию  о каждом варианте, до пополнения баланса. ' \
+                   'Если Вы уже знаете все условия, то можете переходить к пополнению.'
             if language[4] == "EN":
-                text = "The documents are not yet confirmed. Please wait."
+                text = "The terms of participation depend on the amount of crypto assets you have deposited. " \
+                       "We recommend reviewing detailed information about each option before depositing funds. " \
+                       "If you are already familiar with all the terms, you can proceed with the deposit."
+            try:
+                await call.message.delete()
+            except:
+                pass
+            await call.message.answer_photo(photo, text, reply_markup=inline.refill_main_menu(language[4]))
+        else:
+
+            contract = await documents.check_approve_contract(call.from_user.id)
+
+            if contract is False:
+                text = 'Документы пока еще не подтверждены, ожидайте'
+                if language[4] == "EN":
+                    text = "The documents are not yet confirmed. Please wait."
+                await call.message.delete()
+                await call.message.answer(text)
+            else:
+                await binanceapi_step1_call(call)
+
+    else:
+
+        await call.message.delete()
+        await new_docs(call)
+
+
+async def new_docs(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    document = decouple.config('BALANCE_DOCUMENT')
+    text = f"Условия участия зависят от суммы размещенных криптоактивов.\n\n" \
+           f"Чтобы воспользоваться IT продуктами партнеров DAO необходимо " \
+           f"изучить и подтвердить подробные условия в документе: " \
+           f"Приложение No 1 к Условиям применения IT продукта."
+    if language[4] == "EN":
+        text = "Participation conditions depend on the amount of placed crypto assets.\n\n" \
+               "To access IT products of DAO partners, it is necessary to review and confirm the detailed conditions in the document: " \
+               "Appendix No. 1 to the Terms of Application of the IT Product."
+    await call.bot.send_chat_action(chat_id=call.from_user.id, action="upload_document")
+    await asyncio.sleep(2)
+    await call.bot.send_document(chat_id=call.from_user.id, document=document)
+    await call.message.answer(text, reply_markup=inline.user_terms(language[4]))
+    await NewDoc.docs.set()
+
+
+async def new_docs_2(call: types.CallbackQuery, state: FSMContext):
+    language = await users.user_data(call.from_user.id)
+    await call.message.edit_reply_markup(reply_markup=inline.user_terms_2(language[4]))
+    await NewDoc.next()
+
+
+async def new_docs_3(call: types.CallbackQuery, state: FSMContext):
+    async with state.proxy() as data:
+        language = await users.user_data(call.from_user.id)
+        if call.data == "terms_accept":
+            await call.message.edit_reply_markup(reply_markup=inline.user_terms(language[4]))
+            await state.set_state(NewDoc.docs.state)
+        else:
+            await state.finish()
             await call.message.delete()
-            await call.message.answer(text)
+            await balance.update_document(call.from_user.id)
+            await refill_handler(call)
 
 
 async def handle_deposit_funds(call: types.CallbackQuery):
@@ -560,7 +620,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                 await balance.insert_deposit(msg.from_id, int(msg.text))
                 deposit = await balance.get_balance(msg.from_id)
                 await users.set_status("15000", msg.from_id)
-                await balance.insert_balance_history(msg.from_id, int(msg.text))
+                await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
                 text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
                        f"Пополнение выполнено успешно.\n\n" \
                        f"<b>Активный депозит J2M: {deposit[1]} USDT</b>\n\n" \
@@ -593,8 +653,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
                        f"{int(msg.text) - int(balance_binance)} USDT и создайте новую заявку!</em>"
                 if language[4] == "EN":
                     text = f"<b>The amount in your Binance account cannot be less than the top-up amount!</b>\n\n" \
-                           "<em>To proceed, please top up your account with an amount of " \
-                           "{int(msg.text) - int(balance_binance)} USDT and create a new request!</em>"
+                           f"<em>To proceed, please top up your account with an amount of " \
+                           f"{int(msg.text) - int(balance_binance)} USDT and create a new request!</em>"
                 await msg.answer(text)
         else:
             deposit = await balance.get_balance(msg.from_id)
@@ -602,7 +662,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                 if int(balance_binance) >= int(msg.text):
                     await balance.insert_deposit(msg.from_id, int(msg.text))
                     await users.set_status("15000", msg.from_id)
-                    await balance.insert_balance_history(msg.from_id, int(msg.text))
+                    await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
                     text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
                            f"Пополнение выполнено успешно.\n\n" \
                            f"<b>Активный депозит J2M: {int(deposit[1]) + int(msg.text)} USDT</b>\n\n" \
@@ -657,6 +717,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
         await msg.answer(text)
 
 
+
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(refill_handler, text='refill')
     dp.register_callback_query_handler(handle_deposit_funds, text='deposit_funds')
@@ -674,3 +735,5 @@ def register(dp: Dispatcher):
     dp.register_message_handler(binance_step3, state=BinanceAPI.api_key)
     dp.register_message_handler(binance_step4, state=BinanceAPI.api_secret)
     dp.register_message_handler(count_refill, state=Refill.count)
+    dp.register_callback_query_handler(new_docs_2, state=NewDoc.docs)
+    dp.register_callback_query_handler(new_docs_3, state=NewDoc.docs_2)
