@@ -103,15 +103,15 @@ def user_docs_2(lang) -> InlineKeyboardMarkup:
 
 
 def information_menu(lang) -> InlineKeyboardMarkup:
-    distribution, conditions, urls, docs, back = [
+    name, conditions, urls, docs, back = [
         "Распределение доходности", "Условия пополнения и вывода",
         "Важные ссылки", "Документация", "Главное меню"]
     if lang == "EN":
-        distribution, conditions, urls, docs, back = [
+        name, conditions, urls, docs, back = [
             "Distribution of profitability", "Terms of replenishment and withdrawal",
             "Important links", "Documentation", "Main menu"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"{distribution}", callback_data="distribution")],
+        [InlineKeyboardButton(f"{name}", callback_data="distribution")],
         [InlineKeyboardButton(f"{conditions}", callback_data="conditions")],
         [InlineKeyboardButton(f"{urls}", callback_data="urls"),
          InlineKeyboardButton(f"{docs}", callback_data="docs")],

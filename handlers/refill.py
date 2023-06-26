@@ -134,7 +134,8 @@ async def handle_distribution(call: types.CallbackQuery):
 async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     if call.data == 'active_500':
-        text = 'Преимущества формата участия:' \
+        text = '<b>Условия формата участия от 500 USDT:</b>' \
+               '\n\nПреимущества формата участия:' \
                '\n- Повышенный процент возможной доходности за счет того, что больший размер единого коллективного' \
                ' актива позволяет использовать большее количество стратегий торговых бота.' \
                '- Возможность использовать современные технологии высокочастотного алгоритмического трейдинга ' \
@@ -158,7 +159,8 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                '\n\nМаксимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, ' \
                'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
         if language[4] == "EN":
-            text = "Advantages of participation format:" \
+            text = "Conditions of '500' participation format:" \
+                   "\n\nAdvantages of participation format:" \
                    "\n- Increased potential profitability due to a larger size of the collective asset, allowing " \
                    "for the use of more trading bot strategies." \
                    "\n- The opportunity to collectively utilize modern high-frequency algorithmic trading " \
@@ -183,7 +185,8 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                    "'Information' section of the bot."
         await call.message.edit_text(text, reply_markup=inline.active_500(language[4]))
     elif call.data == 'active_15000':
-        text = "Преимущества формата участия:" \
+        text = "<b>Условия формата участия от 15000 USDT:</b>" \
+               "\n\nПреимущества формата участия:" \
                "\n- Минимальная прогнозируемая доходность от 3% в месяц." \
                "\n- Ваши криптоактивы находятся в Вашем постоянном доступе на Вашем субаккаунте Binance." \
                "\n- Только Вы имеете возможность пополнять и выводить активы в любой момент." \
@@ -203,7 +206,8 @@ async def handle_500_15000(call: types.CallbackQuery, state: FSMContext):
                "\n\n Максимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, " \
                'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
         if language[4] == 'EN':
-            text = "Advantages of participation format:" \
+            text = "Conditions of '15000' participation format:" \
+                   "\n\nAdvantages of participation format:" \
                    "\n-Minimum projected profitability of 3% per month." \
                    "\n- Your crypto assets are accessible on your Binance sub-account." \
                    "\n- Only you have the ability to deposit and withdraw assets at any time." \
@@ -354,12 +358,13 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
         await state.finish()
 
 
-async def handle_emailing_documents(call: types.CallbackQuery):
+async def handle_emailing_documents(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     text = 'Оповещение администратору отправлено, ожидайте подтверждения!'
     if language[4] == "EN":
         text = "Notification sent to the administrator. Please await confirmation!"
     await call.message.edit_text(text)
+    await state.finish()
 
 
 # async def biguser_registration_step3(message: types.Message, state: FSMContext):
@@ -398,24 +403,24 @@ async def handle_emailing_documents(call: types.CallbackQuery):
 #             await documents.save_contract_path(data.get('document_path'), message.from_user.id)
 
 
-# async def binanceapi_step1_msg(message: types.Message):
-#     x = await documents.check_approve_contract(message.from_id)
-#     if x is True:
-#         language = await users.user_data(message.from_user.id)
-#         text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
-#                "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
-#                "Подробная инструкция " \
-#                "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
-#                "saina-instrukciya'>ссылке</a>"
-#
-#         if language[4] == "EN":
-#             text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
-#                    "system in a reply message.\n\nDetailed instructions are available at the following " \
-#                    "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
-#         await message.answer(text)
-#         await BinanceAPI.alias.set()
-#     else:
-#         pass
+async def binanceapi_step1_msg(message: types.Message):
+    x = await documents.check_approve_contract(message.from_id)
+    if x is True:
+        language = await users.user_data(message.from_user.id)
+        text = "Чтобы мы могли активировать торговлю на вашем аккаунте, " \
+               "отправьте нам присвоенный системой адрес почты (alias) ответным сообщением.\n\n" \
+               "Подробная инструкция " \
+               "по <a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-" \
+               "saina-instrukciya'>ссылке</a>"
+
+        if language[4] == "EN":
+            text = "To enable trading on your account, please send us the email address (alias) assigned by the " \
+                   "system in a reply message.\n\nDetailed instructions are available at the following " \
+                   "<a href='https://teletype.in/@lmarket/podkluchenie-subakkaunta-sonera-saina-instrukciya'>link</a>."
+        await message.answer(text)
+        await BinanceAPI.alias.set()
+    else:
+        pass
 
 
 async def binanceapi_step1_call(call: types.CallbackQuery):
@@ -664,7 +669,7 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(biguser_registration_step_2, state=BigUser.kyc)
     # dp.register_message_handler(biguser_registration_step3, content_types=['text', 'video', 'photo', 'document'],
     #                             state=BigUser.contract)
-    # dp.register_message_handler(binanceapi_step1_msg, state=BigUser.finish)
+    dp.register_message_handler(binanceapi_step1_msg, state=BigUser.finish)
     dp.register_message_handler(binanceapi_step2, state=BinanceAPI.alias)
     dp.register_message_handler(binance_step3, state=BinanceAPI.api_key)
     dp.register_message_handler(binance_step4, state=BinanceAPI.api_secret)

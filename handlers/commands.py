@@ -1,4 +1,3 @@
-
 import decouple
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
@@ -327,8 +326,8 @@ async def bot_start_call(call: types.CallbackQuery):
                 await nft.delete_error(call.from_user.id)
     elif not user_status:
         await call.message.answer("Для комфортной работы с ботом, выберите язык:"
-                         "\nTo ensure smooth interaction with the bot, please select a language:",
-                         reply_markup=inline.language())
+                                  "\nTo ensure smooth interaction with the bot, please select a language:",
+                                  reply_markup=inline.language())
         await Registration.language.set()
     elif not nft_:
         await nft_start_call(call)
@@ -359,6 +358,7 @@ async def all_support(call: types.CallbackQuery, state: FSMContext):
            "Максимальное время ответа 6 часов. Мы будем сокращать ваше время ожидания и стараться ответить вам как " \
            "можно быстрее. "
     if language[4] == "EN":
+        photo = decouple.config('BANNER_SUPPORT_EN')
         text = "Welcome to the support service!\n\nDepending on your question, you can contact DAO J2M support or our " \
                "partners' support for IT products.\n\nDAO J2M Support\nWe provide support not only in using our bot " \
                "but also in all matters related to participating in DAO J2M. Our team is ready to assist you with any " \
@@ -377,7 +377,7 @@ async def all_support(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.support_menu("menu_kb"))
 
 
-async def back_button(call:types.CallbackQuery):
+async def back_button(call: types.CallbackQuery):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
     if call.data == "nft_kb":
@@ -421,7 +421,7 @@ async def nft_refill(call: types.CallbackQuery):
                f"the provided address: \n\n`{purse}`" \
                "\n\nYou can update and check the status of your transaction using the buttons below\."
     await call.message.answer(text, parse_mode=types.ParseMode.MARKDOWN_V2,
-                                 reply_markup=inline.check_nft_status(language[4]))
+                              reply_markup=inline.check_nft_status(language[4]))
 
 
 def register(dp: Dispatcher):

@@ -1,8 +1,5 @@
 import datetime
-
 import decouple
-
-
 import handlers.commands
 
 from aiogram import Dispatcher, types

@@ -112,7 +112,6 @@ async def structure_handler(call: types.CallbackQuery):
             reply_markup=inline.referral_statistic(language[4]),
             parse_mode=types.ParseMode.MARKDOWN_V2)
 
-
 async def structure_handler_msg(msg: types.Message):
     photo = decouple.config("BANNER_STRUCTURE")
     await msg.bot.send_chat_action(msg.chat.id, "typing")
