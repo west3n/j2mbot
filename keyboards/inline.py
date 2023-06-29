@@ -271,11 +271,12 @@ def return_currencies() -> InlineKeyboardMarkup:
 
 
 def finish_transaction(lang) -> InlineKeyboardMarkup:
-    button = "Оплата завершена"
+    button, button2 = "Оплата завершена", "Отмена транзакции"
     if lang == "EN":
-        button = "Payment completed"
+        button, button2 = "Payment completed", "Cancel"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"✅ {button}", callback_data="finish_payment")]
+        [InlineKeyboardButton(f"✅ {button}", callback_data="finish_payment")],
+        [InlineKeyboardButton(f"❌ {button2}", callback_data="cancel_payment")]
     ])
     return kb
 
@@ -283,12 +284,15 @@ def finish_transaction(lang) -> InlineKeyboardMarkup:
 def transaction_status(lang) -> InlineKeyboardMarkup:
     button = "Проверить еще раз"
     button_2 = "Детали транзакции"
+    button3 = "Отмена транзакции"
     if lang == "EN":
         button = "Please double-check again"
         button_2 = "Transaction Detail"
+        button3 = "Cancel"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"🔄 {button}", callback_data="transaction_status")],
-        [InlineKeyboardButton(f"🧩 {button_2}", callback_data="transaction_detail")]
+        [InlineKeyboardButton(f"🧩 {button_2}", callback_data="transaction_detail")],
+        [InlineKeyboardButton(f"❌ {button3}", callback_data="cancel_payment")]
     ])
     return kb
 
@@ -432,7 +436,7 @@ def emailing_documents(lang) -> InlineKeyboardMarkup:
 
 
 def support_menu(status) -> InlineKeyboardMarkup:
-    button_1, button_2, button3 = "Support Sonera", "Support J2M", "Back"
+    button_1, button_2, button3 = "Support SONERA", "Support J2M", "Back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"{button_1}", url="https://t.me/sonera_help")],
         [InlineKeyboardButton(f"{button_2}", url="https://t.me/J2M_Support")],

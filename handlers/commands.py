@@ -4,7 +4,7 @@ import decouple
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from keyboards import inline
-from database import users, balance, referral, nft
+from database import users, balance, referral, nft, thedex_db
 from aiogram.dispatcher.filters.state import StatesGroup, State
 import shutup
 from binance import thedex, microservice
@@ -477,7 +477,27 @@ async def nft_refill(call: types.CallbackQuery):
                               reply_markup=inline.check_nft_status(language[4]))
 
 
+async def cancel_payment(call: types.CallbackQuery, state: FSMContext):
+    await state.finish()
+    language = await users.user_data(call.from_user.id)
+    try:
+        await call.message.delete()
+    except:
+        pass
+    transaction = await thedex_db.get_transaction(call.from_user.id)
+    try:
+        transaction = transaction[0]
+        await thedex_db.delete_transaction(transaction[0])
+    except:
+        pass
+    text = "Транзакция успешно отменена!"
+    if language[4] == "EN":
+        text = "Transaction successfully canceled!"
+    await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+
+
 def register(dp: Dispatcher):
+    dp.register_callback_query_handler(cancel_payment, text="cancel_payment", state="*")
     dp.register_message_handler(file_id, content_types=['photo', 'document', 'animation', 'video'], state="*")
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
