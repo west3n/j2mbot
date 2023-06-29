@@ -272,12 +272,21 @@ async def all_referral_lines(call: types.CallbackQuery):
         all_line_ids = await referral.get_line_3(call.from_user.id)
     if all_line_ids[1]:
         for tg_id in all_line_ids[1]:
-            user_name = await users.get_tg_username(tg_id)
+            print(tg_id)
+            try:
+                user_name = await users.get_tg_username(tg_id)
+            except TypeError:
+                user_name = None
             if user_name:
-                deposit_balance, referral_balance = await balance.get_balance_line(tg_id)
-                text += f"• {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
+                try:
+                    deposit_balance, referral_balance = await balance.get_balance_line(tg_id)
+                    text += f"• {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
+                except TypeError:
+                    text += f"• {tg_id} (@{user_name}) | Пользователь еще не заключил смарт-контракт\n"
+                    if language[4] == "EN":
+                        text += f"• {tg_id} (@{user_name}) | User has not yet entered into a smart contract\n"
             else:
-                pass
+                text += f"• {tg_id} (Не зарегистрирован в системе) | Пользователь еще не заключил смарт-контракт\n"
     else:
         text += "У вас нет рефералов по этой линии" if language[4] == "RU" else "You have no referrals for that line"
     await call.message.delete()

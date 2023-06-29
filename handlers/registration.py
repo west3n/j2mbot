@@ -22,7 +22,29 @@ async def language_handler(call: types.CallbackQuery, state: FSMContext):
             await commands.bot_start_call(call)
             await state.finish()
     else:
-        text_1 = "Спасибо за ваш интерес к нашей Децентрализованной Автономной Организации (ДАО/DAO J2M).\n\nМы создали этого бота, чтобы упростить доступ к нашей деятельности. Перед тем, как предоставить Вам возможность стать участником DAO, мы хотели бы ознакомить вас с несколькими важными документами и условиями участия в нашем DAO.\n\nЭти документы обеспечивают прозрачность, безопасность и конфиденциальность для всех участников.\n\nНаш бот отправит Вам несколько документов, которые необходимо изучить и акцептировать.\n\n1. Политика конфиденциальности: Мы ценим вашу конфиденциальность и защиту ваших личных данных. В этом документе мы описываем, какие данные мы собираем, как мы их используем и какие меры безопасности мы принимаем.\n\n2. Правила использования J2M Bot: Этот документ описывает правила и обязанности, которые вы принимаете при использовании бота нашего ДАО и связанных с ним услуг. Он включает в себя общие правила поведения, ограничения и юридические аспекты.\n\n3. Правила децентрализованной автономной организации J2M: Данный документ является основным руководством для участников нашего ДАО. В нем описываются правила взаимодействия, процесс управления и важные аспекты, связанные с участием в наших активностях.\n\n4. Дисклеймер: Данный документ содержит важную информацию о рисках, связанных с использованием бота нашего ДАО и участием в наших активностях.\n\n5. Условия применения IT продуктов: В рамках нашего ДАО мы предоставляем доступ к программному обеспечению наших партнеров. Перед применением этих продуктов, рекомендуется внимательно ознакомиться с правилами и условиями.\n\nУчастие в нашем ДАО предоставит вам возможность внести свой вклад в развитие возможностей цифровой экономики, участвовать в совместных решениях в рамках нашей организации.\n\nПожалуйста, внимательно изучите документы, прежде чем принимать их условия.\n\nЕсли Вы принимаете условия описанные в документах ДАО, нажмите на кнопку 'Принимаю'\n\nЕсли у вас возникнут вопросы или потребуется дополнительная информация, не стесняйтесь обратиться к нашей поддержке. Мы всегда готовы помочь вам в процессе присоединения к нашему ДАО.\n\nЖелаем вам взаимовыгодного участия в нашем DAO J2M!"
+        text_1 = "Спасибо за ваш интерес к нашей Децентрализованной Автономной Организации (ДАО/DAO J2M).\n\nМы " \
+                 "создали этого бота, чтобы упростить доступ к нашей деятельности. Перед тем, как предоставить Вам " \
+                 "возможность стать участником DAO, мы хотели бы ознакомить вас с несколькими важными документами и " \
+                 "условиями участия в нашем DAO.\n\nЭти документы обеспечивают прозрачность, безопасность и " \
+                 "конфиденциальность для всех участников.\n\nНаш бот отправит Вам несколько документов, " \
+                 "которые необходимо изучить и акцептировать.\n\n1. Политика конфиденциальности: Мы ценим вашу " \
+                 "конфиденциальность и защиту ваших личных данных. В этом документе мы описываем, какие данные мы " \
+                 "собираем, как мы их используем и какие меры безопасности мы принимаем.\n\n2. Правила использования " \
+                 "J2M Bot: Этот документ описывает правила и обязанности, которые вы принимаете при использовании " \
+                 "бота нашего ДАО и связанных с ним услуг. Он включает в себя общие правила поведения, ограничения и " \
+                 "юридические аспекты.\n\n3. Правила децентрализованной автономной организации J2M: Данный документ " \
+                 "является основным руководством для участников нашего ДАО. В нем описываются правила взаимодействия, " \
+                 "процесс управления и важные аспекты, связанные с участием в наших активностях.\n\n4. Дисклеймер: " \
+                 "Данный документ содержит важную информацию о рисках, связанных с использованием бота нашего ДАО и " \
+                 "участием в наших активностях.\n\n5. Условия применения IT продуктов: В рамках нашего ДАО мы " \
+                 "предоставляем доступ к программному обеспечению наших партнеров. Перед применением этих продуктов, " \
+                 "рекомендуется внимательно ознакомиться с правилами и условиями.\n\nУчастие в нашем ДАО предоставит " \
+                 "вам возможность внести свой вклад в развитие возможностей цифровой экономики, участвовать в " \
+                 "совместных решениях в рамках нашей организации.\n\n<b>Пожалуйста, внимательно изучите документы, " \
+                 "прежде чем принимать их условия.\n\nЕсли Вы принимаете условия описанные в документах ДАО, " \
+                 "нажмите на кнопку 'Принимаю'</b>\n\nЕсли у вас возникнут вопросы или потребуется дополнительная " \
+                 "информация, не стесняйтесь обратиться к нашей поддержке. Мы всегда готовы помочь вам в процессе " \
+                 "присоединения к нашему ДАО.\n\nЖелаем вам взаимовыгодного участия в нашем DAO J2M! "
         text_2 = "Принимаете условия, указанные в документах?"
         document_1 = decouple.config("USER_AGREEMENT")
         privacy_policy_doc = decouple.config("PRIVACY_POLICY")
@@ -82,7 +104,7 @@ async def language_handler(call: types.CallbackQuery, state: FSMContext):
         await asyncio.sleep(1)
         await call.message.answer_document(product_usage_terms_doc)
         await call.message.bot.send_chat_action(call.message.chat.id, "typing")
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await call.message.answer(text_2, reply_markup=inline.user_terms(call.data.upper()))
         await Registration.next()
 
@@ -100,6 +122,7 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
             await state.set_state(Registration.accept.state)
         else:
             await state.set_state(SmartContract.mint_nft.state)
+            # ДОБАВЛЕНИЕ НОВОГО ЮЗЕРА
             await users.add_new_user(call.from_user.id, call.from_user.username,
                                      call.from_user.full_name, data.get('language'))
             # await commands.bot_start_call(call)
@@ -116,7 +139,7 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
                        f"возможностями, " \
                        f"предоставляемыми нашим ДАО, мы просим Вас подтвердить, что информация о возможности " \
                        f"присоединиться к нашему сообществу была передана вам от " \
-                       f"{ref_full_name}. Это обеспечивает дополнительный уровень доверия и помогает нам подтвердить " \
+                       f"<b>{ref_full_name}</b>. Это обеспечивает дополнительный уровень доверия и помогает нам подтвердить " \
                        f"вашу легитимность в нашем ДАО.\n\n" \
                        f"Примечание: После данного подтверждения изменение этой информации будет невозможным, " \
                        f"поскольку на следующем этапе регистрации эти данные будут внесены в смарт-контракт ДАО."
@@ -127,7 +150,7 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
                            f"opportunities" \
                            f"provided by our DAO, we kindly ask you to confirm that the information about the possibility of " \
                            f"joining" \
-                           f"our community was passed to you by {ref_full_name}. This ensures an additional level of trust " \
+                           f"our community was passed to you by <b>{ref_full_name}</b>. This ensures an additional level of trust " \
                            f"and helps us" \
                            f"confirm your legitimacy in our DAO.\n\n" \
                            f"Note: After this confirmation, it will be impossible to change this information, as in the next " \
@@ -139,16 +162,17 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
                        f"Согласно нашим правилам, которые Вы приняли, прежде чем вы сможете воспользоваться всеми " \
                        f"возможностями, " \
                        f"предоставляемыми нашим ДАО, мы просим Вас подтвердить, что информация о возможности " \
-                       f"присоединиться к нашему сообществу была найдена самостоятельно. Это обеспечивает " \
+                       f"присоединиться к нашему сообществу <b>была найдена самостоятельно</b>. Это обеспечивает " \
                        f"дополнительный уровень доверия и помогает нам подтвердить " \
                        f"вашу легитимность в нашем ДАО.\n\n" \
                        f"Примечание: После данного подтверждения изменение этой информации будет невозможным, " \
                        f"поскольку на следующем этапе регистрации эти данные будут внесены в смарт-контракт ДАО."
                 if language == "EN":
                     text = f"We strive to create a community based on interaction and collaboration among our members.\n\n"
-                    f"According to our rules, which you have accepted, before you can take advantage of all the opportunities "
+                    f"According to our rules, which you have accepted, before you can take advantage of all the " \
+                    f"opportunities "
                     f"provided by our DAO, we kindly ask you to confirm that the information about the possibility of joining "
-                    f"our community was found independently by you. This ensures an additional level of trust and helps us "
+                    f"our community <b>was found independently by you</b>. This ensures an additional level of trust and helps us "
                     f"confirm your legitimacy in our DAO.\n\n"
                     f"Note: After this confirmation, it will be impossible to change this information, as in the next "
                     f"registration stage, these data will be entered into the DAO smart contract."
@@ -158,7 +182,8 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
 async def processing_registration(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     if call.data == "no":
-        text = "Уточните у того, кто Вас пригласил его ID участника ДАО и отправьте нам этот номер."
+        text = "Уточните у того, кто Вас пригласил его ID участника ДАО (Партнерская программа) и отправьте нам этот " \
+               "номер. "
         if language[4] == 'EN':
             text = "Please clarify with the person who invited you for their " \
                    "DAO participant ID and send us that number."
@@ -226,13 +251,22 @@ async def new_referral(msg: types.Message, state: FSMContext):
         if int(msg.text) in await users.get_all_tg_id():
             async with state.proxy() as data:
                 data["line_1"] = msg.text
+            # ДОБАВЛЕНИЕ РЕФЕРАЛА
             await referral.update_line_1(msg.from_user.id, data.get('line_1'))
+            try:
+                text = f"Пользователь {msg.from_id} - {msg.from_user.full_name if msg.from_user.username is None else '@'+ msg.from_user.username} " \
+                       f"зарегистрировался по вашей партнерской программе!"
+                await msg.bot.send_message(chat_id=int(data.get('line_1')),
+                                           text=text)
+            except:
+                pass
             user_name = await users.get_tg_full_name(data.get('line_1'))
             count = await nft.check_nft_count()
             text = f"Данные успешно сохранены! \n\n" \
                    f"Вы указали в качестве пригласившего вас пользователя <b>{user_name}</b>"
             text_2 = "Вы приняли условия работы с DAO J2M! Теперь, чтобы официально стать участником и получить " \
-                     "полный доступ к нашим возможностям и привилегиям, вам необходимо приобрести NFT (невзаимозаменяемый" \
+                     "полный доступ к нашим возможностям и привилегиям, вам необходимо приобрести NFT (" \
+                     "невзаимозаменяемый" \
                      " токен), который будет служить подтверждением вашего участия в нашем ДАО." \
                      "\n\nNFT является уникальным цифровым активом, зарегистрированным в блокчейне. Приобретение этого " \
                      "токена позволит нам записать в смарт контракт информацию о вашем статусе участника и о том, " \
@@ -366,8 +400,7 @@ async def nft_refresh(call: types.CallbackQuery):
                    f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
                    f"развитии совместно с DAO J2M!" \
                    f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
-                   f"\nАдрес кошелька с NFT: {address}" \
-                   f"\nПриватный ключ: {private_key}" \
+                   f"Данные по NFT отправляются автоматически вам на почту." \
                    f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
                    f"\n\nNFT хранится на сервере DAO J2M, " \
                    f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
@@ -382,8 +415,6 @@ async def nft_refresh(call: types.CallbackQuery):
                        f"create the future, and consciously utilize modern technologies. " \
                        f"Best of luck in your further development alongside DAO J2M!" \
                        f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
-                       f"\nWallet address with NFT: {address}" \
-                       f"\nPrivate key: {private_key}" \
                        f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                        f"You can find more information about this in the 'Information' section."
             await call.message.answer_video(video=video,
@@ -429,7 +460,7 @@ async def nft_refresh(call: types.CallbackQuery):
             if resp:
                 text = f"Транзакция прошла успешно!" \
                        f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
-                       f"\nВаш индивидуальный номер участника DAO: {dao}" \
+                       f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
                        f"\nТеперь вам доступен полный функционал бота." \
                        f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
                        f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
