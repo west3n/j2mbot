@@ -68,3 +68,13 @@ async def nft_id(tg_id):
     finally:
         db.close()
         cur.close()
+
+
+async def get_ad_status(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT status FROM app_nft WHERE tg_id_id=%s", (tg_id,))
+        return cur.fetchone()
+    finally:
+        db.close()
+        cur.close()

@@ -1,12 +1,26 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from database.thedex_db import get_transaction
 
 
-def main_menu(lang) -> InlineKeyboardMarkup:
-    balance, refill, withdrawal, structure, support, information = ["Баланс", "Пополнение", "Вывод",
-                                                                    "Партнерская программа", "Поддержка", "Информация"]
-    if lang == "EN":
-        balance, refill, withdrawal, structure, support, information = ["Balance", "Refill", "Withdrawal",
-                                                                        "Affiliate program", "Support", "Information"]
+async def main_menu(lang, tg_id) -> InlineKeyboardMarkup:
+    trans = await get_transaction(tg_id)
+    if not trans:
+        balance, refill, withdrawal, structure, support, information = ["Баланс", "⬆️ Пополнение", "Вывод",
+                                                                        "Партнерская программа", "Поддержка",
+                                                                        "Информация"]
+        if lang == "EN":
+            balance, refill, withdrawal, structure, support, information = ["Balance", "⬆️ Refill", "Withdrawal",
+                                                                            "Affiliate program", "Support",
+                                                                            "Information"]
+    else:
+        balance, refill, withdrawal, structure, support, information = ["Баланс", "‼️ НЕЗАКОНЧЕННАЯ ТРАНЗАКЦИЯ",
+                                                                        "Вывод",
+                                                                        "Партнерская программа", "Поддержка",
+                                                                        "Информация"]
+        if lang == "EN":
+            balance, refill, withdrawal, structure, support, information = ["Balance", "‼️ UNCOMPLETED TRANSACTION",
+                                                                            "Withdrawal", "Partner Program", "Support",
+                                                                            "Information"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f'💵 {balance}', callback_data='balance')],
         [InlineKeyboardButton(f'🪪 {structure}', callback_data='structure')],
@@ -189,9 +203,9 @@ def yesno_refill(lang) -> InlineKeyboardMarkup:
 
 
 def refill_account(lang) -> InlineKeyboardMarkup:
-    first_button, second_button = "Личный аккаунт от 15000 USDT", "Коллективный аккаунт от 500 USDT"
+    first_button, second_button = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT"
     if lang == "EN":
-        first_button, second_button = "Personal account starting from 15,000 USDT", \
+        first_button, second_button = "Personal account starting from 15 000 USDT", \
             "Collective account starting from 500 USDT."
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💰 {first_button}", callback_data="active_15000")],
@@ -201,8 +215,8 @@ def refill_account(lang) -> InlineKeyboardMarkup:
 
 
 def refill_account_2(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, back = "Личный аккаунт от 15000 USDT", "Коллективный аккаунт от 500 USDT", \
-        "Главное меню"
+    first_button, second_button, back = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT", \
+        "Назад"
     if lang == "EN":
         first_button, second_button, back = "Personal account starting from 15,000 USDT", \
             "Collective account starting from 500 USDT.", "Go back"
@@ -383,9 +397,10 @@ def distribution(lang) -> InlineKeyboardMarkup:
 
 
 def active_500(lang) -> InlineKeyboardMarkup:
-    button, button_2, back = "Разместить активы", "Условия от 15000 USDT", "Главное меню"
+    button, button_2, back = "Разместить активы коллективный аккаунт", "Изучить условия от 15 000 USDT", "Назад"
     if lang == "EN":
-        button, button_2, back = "To deposit assets", "Conditions from 15000 USDT", "Main menu"
+        button, button_2, back = "Place assets in a collective account", \
+            "Explore conditions starting from 15,000 USDT", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="500")],
         [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_15000")],
@@ -395,9 +410,10 @@ def active_500(lang) -> InlineKeyboardMarkup:
 
 
 def active_15000(lang) -> InlineKeyboardMarkup:
-    button, button_2, back = "Разместить активы", "Условия от 500 USDT", "Главное меню"
+    button, button_2, back = "Разместить активы личный аккаунт", "Изучить условия от 500 USDT", "Назад"
     if lang == "EN":
-        button, button_2, back = "To deposit assets", "Conditions from 500 USDT", "Main menu"
+        button, button_2, back = "Place assets in a personal account", "Explore conditions starting from 500 USDT", \
+            "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="15000")],
         [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_500")],

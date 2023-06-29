@@ -228,13 +228,13 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
         await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'))
         await state.finish()
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     if status == "Rejected":
         text = "Произошла ошибка. Деньги вернуться к вам на счет."
         if language[4] == "EN":
             text = "An error occurred. The money will be refunded to your account."
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def smalluser_check(call: types.CallbackQuery, row):
@@ -262,14 +262,14 @@ async def smalluser_check(call: types.CallbackQuery, row):
         await balance.insert_deposit(call.from_user.id, row[1])
         await balance.insert_balance_history(call.from_user.id, row[1], row[2])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     elif status == "Rejected":
         text = "Произошла ошибка. Деньги вернуться к вам на счет."
         if language[4] == "EN":
             text = "An error occurred. The money will be refunded to your account."
         await thedex_db.insert_status(call.from_user.id, row[2], status)
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def smalluser_check_2(call: types.CallbackQuery):
@@ -300,14 +300,14 @@ async def smalluser_check_2(call: types.CallbackQuery):
         await balance.insert_deposit(call.from_user.id, row[1])
         await balance.insert_balance_history(call.from_user.id, row[1], row[2])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     elif status == "Rejected":
         text = "Произошла ошибка. Деньги вернуться к вам на счет."
         if language[4] == "EN":
             text = "An error occurred. The money will be refunded to your account."
         await thedex_db.insert_status(call.from_user.id, row[2], status)
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def transiction_detail(call: types.CallbackQuery):
@@ -333,7 +333,7 @@ async def transiction_detail(call: types.CallbackQuery):
         text = "Ошибка транзакции, попробуйте повторить еще раз!"
         if language[4] == "EN":
             text = f"Transaction error, please repeat one more time!"
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
         await thedex_db.delete_transaction(row[0])
 
 

@@ -183,13 +183,13 @@ async def processing_registration(call: types.CallbackQuery, state: FSMContext):
                "\n\nСпасибо за ваше понимание и готовность принять участие в нашем ДАО! Мы рады " \
                "приветствовать вас в нашем активном и развивающемся сообществе!"
         text_2 = "В рамках нашего ДАО мы предлагаем особое преимущество первым 555 участникам. " \
-                 "Они могут приобрести NFT всего за 5 USDT (US Dollar Tether)!" \
+                 "Они могут приобрести NFT всего за 10 USD (US Dollar)!" \
                  "\n\nЭто уникальная возможность стать частью нашего ДАО на более выгодных условиях. " \
                  "NFT участия не только даст вам полный доступ к нашим активностям, но и откроет двери к ряду " \
                  "привилегий, вознаграждений и участию в развитии нашего сообщества." \
-                 "\n\nПосле распределения первых 555 NFT, право участия в ДАО можно будет приобрести за  50 USDT." \
+                 "\n\nПосле распределения первых 555 NFT, право участия в ДАО можно будет приобрести за 50 USD." \
                  "\n\nУ Вас есть возможность стать одним из первых участников нашего ДАО и воспользоваться " \
-                 f"преимуществами этого предложения! Осталось {555 - int(count)} NFT за 5 USDT."
+                 f"преимуществами этого предложения! Осталось {555 - int(count)} NFT за 10 USD."
         if language[4] == "EN":
             text = "You have accepted the terms of working with DAO J2M! Now, to officially become a participant " \
                    "and gain full access to our capabilities and privileges, you need to acquire an NFT " \
@@ -206,14 +206,14 @@ async def processing_registration(call: types.CallbackQuery, state: FSMContext):
                    "\n\nThank you for your understanding and willingness to participate in our DAO! " \
                    "We are delighted to welcome you to our active and growing community!"
             text_2 = "As part of our DAO, we offer a special advantage to the first 555 participants. " \
-                     "They can acquire the NFT for only 5 USDT (US Dollar Tether)!" \
+                     "They can acquire the NFT for only 10 USD (US Dollar)!" \
                      "\n\nThis is a unique opportunity to become part of our DAO on more favorable terms. " \
                      "The participation NFT will not only grant you full access to our activities but also " \
                      "open doors to a range of privileges, rewards, and participation in the development of " \
                      "our community.\n\nAfter the distribution of the first 555 NFTs, the right to participate " \
-                     "in the DAO can be acquired for 50 USDT.\n\nYou have the opportunity to become one of the " \
+                     "in the DAO can be acquired for 50 USD.\n\nYou have the opportunity to become one of the " \
                      "first participants in our DAO and take advantage of this offer! " \
-                     f"There are {555 - int(count)} NFTs left for 5 USDT."
+                     f"There are {555 - int(count)} NFTs left for 10 USD."
         await call.message.edit_text(text)
         await call.message.answer(text_2, reply_markup=inline.get_nft(language[4]))
         await SmartContract.next()
@@ -248,13 +248,13 @@ async def new_referral(msg: types.Message, state: FSMContext):
                      "\n\nСпасибо за ваше понимание и готовность принять участие в нашем ДАО! Мы рады " \
                      "приветствовать вас в нашем активном и развивающемся сообществе!"
             text_3 = "В рамках нашего ДАО мы предлагаем особое преимущество первым 555 участникам. " \
-                     "Они могут приобрести NFT всего за 5 USDT (US Dollar Tether)!" \
+                     "Они могут приобрести NFT всего за 10 USD (US Dollar)!" \
                      "\n\nЭто уникальная возможность стать частью нашего ДАО на более выгодных условиях. " \
                      "NFT участия не только даст вам полный доступ к нашим активностям, но и откроет двери к ряду " \
                      "привилегий, вознаграждений и участию в развитии нашего сообщества." \
-                     "\n\nПосле распределения первых 555 NFT, право участия в ДАО можно будет приобрести за  50 USDT." \
+                     "\n\nПосле распределения первых 555 NFT, право участия в ДАО можно будет приобрести за  50 USD." \
                      "\n\nУ Вас есть возможность стать одним из первых участников нашего ДАО и воспользоваться\n " \
-                     f"преимуществами этого предложения! Осталось {555 - int(count)} NFT за 5 USDT."
+                     f"преимуществами этого предложения! Осталось {555 - int(count)} NFT за 10 USD."
             if language[4] == 'EN':
                 text = f"The data has been successfully saved!\n\n"
                 f"You have indicated <b>{user_name}</b> as the user who invited you."
@@ -273,14 +273,14 @@ async def new_referral(msg: types.Message, state: FSMContext):
                          "\n\nThank you for your understanding and willingness to participate in our DAO! " \
                          "We are delighted to welcome you to our active and growing community!"
                 text_3 = "As part of our DAO, we offer a special advantage to the first 555 participants. " \
-                         "They can acquire the NFT for only 5 USDT (US Dollar Tether)!" \
+                         "They can acquire the NFT for only 10 USD (US Dollar)!" \
                          "\n\nThis is a unique opportunity to become part of our DAO on more favorable terms. " \
                          "The participation NFT will not only grant you full access to our activities but also " \
                          "open doors to a range of privileges, rewards, and participation in the development of " \
                          "our community.\n\nAfter the distribution of the first 555 NFTs, the right to participate " \
-                         "in the DAO can be acquired for 50 USDT.\n\nYou have the opportunity to become one of the " \
+                         "in the DAO can be acquired for 50 USD.\n\nYou have the opportunity to become one of the " \
                          "first participants in our DAO and take advantage of this offer! " \
-                         f"There are {555 - int(count)} NFTs left for 5 USDT."
+                         f"There are {555 - int(count)} NFTs left for 10 USD."
             await msg.answer(text)
             await msg.bot.send_chat_action(msg.chat.id, "typing")
             await asyncio.sleep(1)
@@ -312,7 +312,7 @@ async def mint_nft(call: types.CallbackQuery, state: FSMContext):
     count = await nft.check_nft_count()
     summ = 48
     if count <= 555:
-        summ = 3.475
+        summ = 8.5
     invoiceId = await thedex.create_invoice(summ, int(call.from_user.id), "Покупка NFT")
     purse, amount = await thedex.pay_invoice('USDT_TRON', invoiceId)
     if "." in amount:
@@ -320,7 +320,8 @@ async def mint_nft(call: types.CallbackQuery, state: FSMContext):
     await nft.create_nft(call.from_user.id, invoiceId)
     text = f"Для регистрации в DAO и получения NFT отправьте на указанный адрес {amount} USDT TRC\-20:" \
            f"\n\n`{purse}`" \
-           "\n\nОбновить и ознакомится со статусом транзакции Вы можете с помощью кнопок ниже\."
+           "\n\nОбновить и ознакомится со статусом транзакции Вы можете с помощью кнопок ниже\." \
+           "\n\nДля продолжения нажмите на кнопку 'Обновить'"
     if language[4] == "EN":
         text = f"To register in the DAO and receive the NFT, please send {amount} USDT TRC\-20 to " \
                f"the provided address: \n\n`{purse}`" \

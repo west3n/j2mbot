@@ -1,3 +1,5 @@
+import asyncio
+
 import decouple
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
@@ -35,24 +37,12 @@ async def file_id(msg: types.Message):
 
 
 async def bot_start(msg: types.Message, state: FSMContext):
-    nft_ = await nft.check_nft_status(msg.from_id)
-    await state.finish()
-    user_status = await users.user_data(msg.from_user.id)
-    wallet = await balance.get_balance_status(msg.from_id)
-    if user_status and wallet and nft_:
-        name = msg.from_user.first_name
-        language = await users.user_data(msg.from_user.id)
-        text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
-        photo = decouple.config("BANNER_MAIN")
-        if language[4] == 'EN':
-            text = f"{name}, please select the section of interest by clicking one of the buttons below:"
-            photo = decouple.config("BANNER_MAIN_EN")
-        await msg.answer_photo(
-            photo=photo,
-            caption=text,
-            reply_markup=inline.main_menu(language[4]))
-    elif user_status and nft_:
-        if nft_[1]:
+    if msg.chat.type == "private":
+        nft_ = await nft.check_nft_status(msg.from_id)
+        await state.finish()
+        user_status = await users.user_data(msg.from_user.id)
+        wallet = await balance.get_balance_status(msg.from_id)
+        if user_status and wallet and nft_:
             name = msg.from_user.first_name
             language = await users.user_data(msg.from_user.id)
             text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
@@ -63,73 +53,93 @@ async def bot_start(msg: types.Message, state: FSMContext):
             await msg.answer_photo(
                 photo=photo,
                 caption=text,
-                reply_markup=inline.main_menu_short(language[4]))
-        else:
-            language = await users.user_data(msg.from_user.id)
-            invoiceId = await nft.check_nft_status(msg.from_user.id)
-            status = await thedex.invoice_one(invoiceId[5])
-            if status == "Waiting":
-                text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
-                if language[4] == "EN":
-                    text = "Further time is needed for verification. Please try again later."
-                await msg.answer(text, reply_markup=inline.check_nft_status(language[4]))
-
-            elif status == "Unpaid":
-                text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
-                if language[4] == "EN":
-                    text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
-                await msg.answer(text)
-                await nft.delete_error(msg.from_user.id)
-
-            elif status == "Successful":
-                invitor = await referral.get_id_from_line_1_id(msg.from_user.id)
-                try:
-                    invitor = invitor[0]
-                except TypeError:
-                    invitor = 1
-                try:
-                    resp, private_key, address = await microservice.microservice_(msg.from_user.id, invitor)
-                    await nft.update_nft(msg.from_user.id, address, private_key, "Succsesful")
-                except TypeError:
-                    resp = None
-                    address = None
-                    private_key = None
-                if resp:
-                    text = f"Оплата прошла успешно.\n\n" \
-                           f"Адрес кошелька с NFT: {address}\n" \
-                           f"Приватный ключ: {private_key}\n\n" \
-                           f"Рекомендуем удалить это сообщение после сохранения в заметки."
-
+                reply_markup=await inline.main_menu(language[4], msg.from_id))
+        elif user_status and nft_:
+            if nft_[1]:
+                name = msg.from_user.first_name
+                language = await users.user_data(msg.from_user.id)
+                text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
+                photo = decouple.config("BANNER_MAIN")
+                if language[4] == 'EN':
+                    text = f"{name}, please select the section of interest by clicking one of the buttons below:"
+                    photo = decouple.config("BANNER_MAIN_EN")
+                await msg.answer_photo(
+                    photo=photo,
+                    caption=text,
+                    reply_markup=inline.main_menu_short(language[4]))
+            else:
+                language = await users.user_data(msg.from_user.id)
+                invoiceId = await nft.check_nft_status(msg.from_user.id)
+                status = await thedex.invoice_one(invoiceId[5])
+                if status == "Waiting":
+                    text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
                     if language[4] == "EN":
-                        text = f"The payment was successful.\n\n"
-                        f"Wallet address with NFT: {address}\n"
-                        f"Private key: {private_key}\n\n"
-                        f"We recommend deleting this message after saving the information in your notes."
+                        text = "Further time is needed for verification. Please try again later."
+                    await msg.answer(text, reply_markup=inline.check_nft_status(language[4]))
 
+                elif status == "Unpaid":
+                    text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
+                    if language[4] == "EN":
+                        text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
+                    await msg.answer(text)
+                    await nft.delete_error(msg.from_user.id)
+
+                elif status == "Successful":
+                    invitor = await referral.get_id_from_line_1_id(msg.from_user.id)
+                    try:
+                        invitor = invitor[0]
+                    except TypeError:
+                        invitor = 1
+                    try:
+                        resp, private_key, address = await microservice.microservice_(msg.from_user.id, invitor)
+                        await nft.update_nft(msg.from_user.id, address, private_key, "Succsesful")
+                    except TypeError:
+                        resp = None
+                        address = None
+                        private_key = None
+                    if resp:
+                        text = f"Оплата прошла успешно.\n\n" \
+                               f"Адрес кошелька с NFT: {address}\n" \
+                               f"Приватный ключ: {private_key}\n\n" \
+                               f"Рекомендуем удалить это сообщение после сохранения в заметки."
+
+                        if language[4] == "EN":
+                            text = f"The payment was successful.\n\n"
+                            f"Wallet address with NFT: {address}\n"
+                            f"Private key: {private_key}\n\n"
+                            f"We recommend deleting this message after saving the information in your notes."
+
+                        await msg.answer(text, reply_markup=inline.main_menu_short(language[4]))
+                    else:
+                        text = "Произошла ошибка, обратитесь в поддержку"
+                        if language[4] == "EN":
+                            text = "An error occurred. Please contact support."
                     await msg.answer(text, reply_markup=inline.main_menu_short(language[4]))
-                else:
-                    text = "Произошла ошибка, обратитесь в поддержку"
+                elif status == "Rejected":
+                    text = "Произошла ошибка. Деньги вернуться к вам на счет."
                     if language[4] == "EN":
-                        text = "An error occurred. Please contact support."
-                await msg.answer(text, reply_markup=inline.main_menu_short(language[4]))
-            elif status == "Rejected":
-                text = "Произошла ошибка. Деньги вернуться к вам на счет."
-                if language[4] == "EN":
-                    text = "An error occurred. The money will be refunded to your account."
-                await msg.answer(text)
-                await nft.delete_error(msg.from_user.id)
-    elif not user_status:
-        await msg.answer("Для комфортной работы с ботом, выберите язык:"
-                         "\nTo ensure smooth interaction with the bot, please select a language:",
-                         reply_markup=inline.language())
-        await Registration.language.set()
-    elif not nft_:
-        await nft_start(msg)
-    if msg.get_args():
-        if int(msg.get_args()) == msg.from_id:
-            pass
+                        text = "An error occurred. The money will be refunded to your account."
+                    await msg.answer(text)
+                    await nft.delete_error(msg.from_user.id)
+        elif not user_status:
+            await msg.answer("Для комфортной работы с ботом, выберите язык:"
+                             "\nTo ensure smooth interaction with the bot, please select a language:",
+                             reply_markup=inline.language())
+            await Registration.language.set()
+        elif not nft_:
+            await nft_start(msg)
+        if msg.get_args():
+            if int(msg.get_args()) == msg.from_id:
+                pass
+            else:
+                await referral.add_first_line(int(msg.get_args()), msg.from_id)
+    else:
+        if str(msg.from_id) in ['254465569', '15362825']:
+            await msg.answer("Привет, создатель! 💋")
         else:
-            await referral.add_first_line(int(msg.get_args()), msg.from_id)
+            await msg.answer("Ой, я не умею работать в группе 😰"
+                             f"\n{msg.from_user.full_name}, ты можешь поблагодарить @Caramba и @miroshnikov за создание "
+                             f"меня!")
 
 
 async def nft_start(msg: types.Message):
@@ -262,7 +272,7 @@ async def bot_start_call(call: types.CallbackQuery):
         await call.message.answer_photo(
             photo=photo,
             caption=text,
-            reply_markup=inline.main_menu(language[4]))
+            reply_markup=await inline.main_menu(language[4], call.from_user.id))
     elif user_status and nft_:
         if nft_[1]:
             name = call.from_user.first_name
@@ -340,11 +350,16 @@ async def bot_start_call(call: types.CallbackQuery):
 
 
 async def select_language(msg: types.Message, state: FSMContext):
-    await state.finish()
-    await msg.answer("Для комфортной работы с ботом, выберите язык:"
-                     "\nTo ensure smooth interaction with the bot, please select a language:",
-                     reply_markup=inline.language())
-    await Registration.language.set()
+    if msg.chat.type == "private":
+        await state.finish()
+        await msg.answer("Для комфортной работы с ботом, выберите язык:"
+                         "\nTo ensure smooth interaction with the bot, please select a language:",
+                         reply_markup=inline.language())
+        await Registration.language.set()
+    else:
+        mess = await msg.answer("Не-а, больше не получится!")
+        await asyncio.sleep(2)
+        await msg.bot.delete_message(chat_id=decouple.config('GROUP_ID'), message_id=mess.message_id)
 
 
 async def all_support(call: types.CallbackQuery, state: FSMContext):
@@ -404,7 +419,8 @@ async def back_button(call: types.CallbackQuery):
         if language[4] == "EN":
             text = "Main menu"
             photo = decouple.config('BANNER_MAIN_EN')
-        await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer_photo(photo=photo, caption=text,
+                                        reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def nft_refill(call: types.CallbackQuery):
@@ -413,7 +429,7 @@ async def nft_refill(call: types.CallbackQuery):
     count = await nft.check_nft_count()
     summ = 48
     if count <= 555:
-        summ = 3.475
+        summ = 8.5
     invoiceId = await thedex.create_invoice(summ, int(call.from_user.id), "Покупка NFT")
     purse, amount = await thedex.pay_invoice('USDT_TRON', invoiceId)
     if "." in amount:
@@ -431,7 +447,7 @@ async def nft_refill(call: types.CallbackQuery):
 
 
 def register(dp: Dispatcher):
-    dp.register_message_handler(file_id, content_types=['photo', 'document', 'animation'], state="*")
+    dp.register_message_handler(file_id, content_types=['photo', 'document', 'animation', 'video'], state="*")
     dp.register_message_handler(bot_start, commands='start', state='*')
     dp.register_message_handler(select_language, commands='language', state='*')
     dp.register_callback_query_handler(bot_start_call, text='main_menu')

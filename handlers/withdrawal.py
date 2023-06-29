@@ -134,7 +134,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                                        f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
                             
                             await state.finish()
-                            await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+                            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
                         else:
                             text = f"Баланс, доступный к выводу: {withdrawal_balance} USDT" \
                                    f"\nCумма минимального вывода 50 USDT" \
@@ -143,7 +143,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                                 text = f"The balance available for withdrawal: {withdrawal_balance} USDT" \
                                        f"\nMinimum withdrawal amount is 50 USDT." \
                                        f"\n\nPlease write the amount of USDT you want to withdraw:"
-                            
+
                             await call.message.answer(text)
                             await state.set_state(NewWallet.amount.state)
                     else:
@@ -154,7 +154,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             if language[4] == 'EN':
                                 text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
                                 "You can always change it in the 'Withdrawal' section."
-                            
+
                             await call.message.answer(text)
                             await NewWallet.wallet.set()
                         else:
@@ -163,9 +163,9 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             if language[4] == 'EN':
                                 text = f"<b>The balance available for withdrawal:</b> " \
                                        f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-                            
+
                             await state.finish()
-                            await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+                            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
                 else:
                     text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit} USDT" \
                            f"Доступные активы к выводу: {withdrawal_balance} USDT" \
@@ -178,9 +178,9 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                     if language[4] == 'EN':
                         text = f"<b>The balance available for withdrawal:</b> " \
                                f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-                    
+
                     await state.finish()
-                    await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+                    await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
         elif status == "500":
             if first_trans:
                 now = datetime.datetime.now()
@@ -205,7 +205,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             if language[4] == 'EN':
                                 text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
                                 "You can always change it in the 'Withdrawal' section."
-                            
+
                             await call.message.answer(text)
                             await NewWallet.wallet.set()
                         elif withdrawal_balance is None or 0:
@@ -215,9 +215,9 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                             if language[4] == 'EN':
                                 text = f"<b>The balance available for withdrawal:</b> " \
                                        f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-                            
+
                             await state.finish()
-                            await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+                            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
                         else:
                             text = f"Баланс, доступный к выводу: {withdrawal_balance} USDT" \
                                    f"\nCумма минимального вывода 50 USDT" \
@@ -226,7 +226,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                                 text = f"The balance available for withdrawal: {withdrawal_balance} USDT" \
                                        f"\nMinimum withdrawal amount is 50 USDT." \
                                        f"\n\nPlease write the amount of USDT you want to withdraw:"
-                            
+
                             await call.message.answer(text)
                             await state.set_state(NewWallet.amount.state)
                 else:
@@ -237,16 +237,16 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
                         if language[4] == 'EN':
                             text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
                             "You can always change it in the 'Withdrawal' section."
-                        
+
                         await call.message.answer(text)
                         await NewWallet.wallet.set()
                     else:
                         text = f"Вывод для вашего статуса доступен при балансе более 1000 USDT"
                         if language[4] == 'EN':
                             text = f"Withdrawal is available for your status with a balance of over 1000 USDT."
-                        
+
                         await state.finish()
-                        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+                        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     else:
         text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit } USDT" \
@@ -260,9 +260,9 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
         if language[4] == 'EN':
             text = f"<b>The balance available for withdrawal:</b> " \
                    f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-        
+
         await state.finish()
-        await call.message.answer(text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def add_new_wallet(msg: types.Message, state: FSMContext):

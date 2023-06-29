@@ -96,6 +96,8 @@ async def get_my_balance(tg_id):
         db.close()
 
 
+
+
 async def update_hold(hold, tg_id):
     db, cur = connect()
     try:
@@ -151,6 +153,16 @@ async def get_document_status(tg_id):
     try:
         cur.execute("SELECT document FROM app_balance WHERE tg_id_id=%s", (tg_id,))
         return cur.fetchone()
+    finally:
+        cur.close()
+        db.close()
+
+async def get_balance_line(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit FROM app_balance WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
     finally:
         cur.close()
         db.close()

@@ -128,7 +128,8 @@ async def structure_handler(call: types.CallbackQuery):
             photo = decouple.config("BANNER_MAIN_EN")
             text = "To participate in the J2M affiliate program, you need to replenish your balance. "
             "For more details, please refer to the 'Replenishment' section."
-        await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.main_menu(language[4]))
+        await call.message.answer_photo(photo=photo, caption=text,
+                                        reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def structure_handler_msg(msg: types.Message):
@@ -273,8 +274,7 @@ async def all_referral_lines(call: types.CallbackQuery):
         for tg_id in all_line_ids[1]:
             user_name = await users.get_tg_username(tg_id)
             if user_name:
-                deposit_balance = 0
-                referral_balance = 0
+                deposit_balance, referral_balance = await balance.get_balance_line(tg_id)
                 text += f"• {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
             else:
                 pass
