@@ -490,10 +490,12 @@ async def cancel_payment(call: types.CallbackQuery, state: FSMContext):
         await thedex_db.delete_transaction(transaction[0])
     except:
         pass
+    photo = decouple.config('BANNER_MAIN')
     text = "Транзакция успешно отменена!"
     if language[4] == "EN":
         text = "Transaction successfully canceled!"
-    await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+        photo = decouple.config('BANNER_MAIN_EN')
+    await call.message.answer_photo(photo=photo, caption=text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 def register(dp: Dispatcher):
