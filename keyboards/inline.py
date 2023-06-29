@@ -489,3 +489,15 @@ def emailing_alias(lang) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"📨 {button}", callback_data="emailing_alias")]])
     return kb
+
+
+def email_verif(lang) -> InlineKeyboardMarkup:
+    button_1, button_2 = "Отправить другой код", "Изменить почту"
+    if lang == "EN":
+        button_1, button_2 = "Send another code", "Change email"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"📨 {button_1}", callback_data="new_code")],
+        [InlineKeyboardButton(f"📧 {button_2}", callback_data="change_email")]
+    ])
+    return kb
+

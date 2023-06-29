@@ -109,3 +109,23 @@ async def check_status(tg_id):
     finally:
         db.close()
         cur.close()
+
+
+async def insert_email(tg_id, email):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_j2muser SET email=%s WHERE tg_id=%s", (email, tg_id,))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()
+
+
+async def check_email(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT email FROM app_j2muser WHERE tg_id=%s", (tg_id,))
+        return cur.fetchone()
+    finally:
+        db.close()
+        cur.close()

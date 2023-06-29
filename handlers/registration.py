@@ -1,6 +1,6 @@
 import decouple
 import asyncio
-
+import re
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -9,7 +9,8 @@ from database import users, referral, nft
 from binance import thedex, microservice
 from handlers import commands
 from keyboards import inline
-from handlers.commands import Registration, SmartContract
+from handlers.commands import Registration, SmartContract, Email, generate_random_code
+from handlers.google import send_email_message
 
 
 async def language_handler(call: types.CallbackQuery, state: FSMContext):
@@ -121,14 +122,66 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
             await call.message.edit_reply_markup(reply_markup=inline.user_terms(data.get('language')))
             await state.set_state(Registration.accept.state)
         else:
-            await state.set_state(SmartContract.mint_nft.state)
-            # ДОБАВЛЕНИЕ НОВОГО ЮЗЕРА
             await users.add_new_user(call.from_user.id, call.from_user.username,
                                      call.from_user.full_name, data.get('language'))
-            # await commands.bot_start_call(call)
+            try:
+                await call.message.delete()
+            except:
+                pass
+            text = f"Для продолжения укажите ваш действующий личный e-mail.\n\n" \
+                   f"<em>На почту придет сообщение с верификационным кодом, так же при потере доступа к боту вы сможете " \
+                   f"восстановить свой аккаунт через почту!</em>"
+            if data.get('language') == "EN":
+                text = f"To proceed, please provide your current personal email.\n\n"
+                f"<em>You will receive a message with a verification code to your email. In case you lose access to the bot, "
+                f"you will be able to recover your account through email!</em>"
+            await call.message.answer(text)
+            await Registration.next()
+
+
+async def email_message(msg: types.Message, state: FSMContext):
+    pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+    language = await users.user_data(msg.from_user.id)
+    if re.match(pattern, msg.text):
+        code = generate_random_code()
+        async with state.proxy() as data:
+            await state.update_data({"email": msg.text, "code": code})
+        text = f"На указанную почту {msg.text} было отправлено письмо. Оно может находится в спаме, пожалуйста проверьте\n\n" \
+               f"Пожалуйста, введите уникальный код из письма:"
+        email_text = f"Вас приветствует команда DAO J2M!\n\n" \
+                     f"Для завершения верификации, отправьте боту этот код: {code}" \
+                     f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по " \
+                     f"этой электронной почте ответным письмом, или напишите нам в телеграм: " \
+                     f"https://t.me/J2M_Support "
+        if language[4] == "EN":
+            text = f"An email has been sent to the provided email address {msg.text}.\n\n"
+            f"Please enter the unique code from the email:"
+            email_text = f"Greetings from the DAO J2M team!\n\n"
+            f"To complete the verification, please send this code to the bot: {code}"
+            f"\n\nIf you encounter any difficulties or need assistance, you can contact us via "
+            f"this email by replying to this message, or reach out to us on Telegram: "
+            f"https://t.me/J2M_Support"
+        await send_email_message(to=msg.text,
+                                 subject="DAO J2M verification",
+                                 message_text=email_text)
+        await msg.answer(text)
+        await Registration.next()
+    else:
+        text = "Указанная почта не является email. Пожалуйста напишите почту еще раз:"
+        if language[4] == "EN":
+            text = "The provided email address is not valid. Please enter your email again:"
+        await msg.answer(text)
+
+
+async def ver_code(msg: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        if msg.text == data.get("code"):
+            await msg.answer("Верификация успешно пройдена.")
+            await users.insert_email(msg.from_id, data.get('email'))
+            await state.set_state(SmartContract.mint_nft.state)
             language = data.get('language')
             try:
-                ref_tg = await referral.get_id_from_line_1_id(call.from_user.id)
+                ref_tg = await referral.get_id_from_line_1_id(msg.from_user.id)
                 ref_full_name = await users.get_tg_full_name(ref_tg[0])
             except TypeError:
                 ref_tg = None
@@ -155,7 +208,7 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
                            f"confirm your legitimacy in our DAO.\n\n" \
                            f"Note: After this confirmation, it will be impossible to change this information, as in the next " \
                            f"registration stage, these data will be entered into the DAO smart contract."
-                await call.message.answer(text, reply_markup=inline.yesno_refill(language))
+                await msg.answer(text, reply_markup=inline.yesno_refill(language))
             else:
                 text = f"Мы стремимся создать сообщество, основанное на взаимодействии и сотрудничестве между нашими " \
                        f"участниками.\n\n" \
@@ -176,7 +229,56 @@ async def finish_registration(call: types.CallbackQuery, state: FSMContext):
                     f"confirm your legitimacy in our DAO.\n\n"
                     f"Note: After this confirmation, it will be impossible to change this information, as in the next "
                     f"registration stage, these data will be entered into the DAO smart contract."
-                await call.message.edit_text(text, reply_markup=inline.yesno_refill(language))
+                await msg.answer(text, reply_markup=inline.yesno_refill(language))
+        else:
+            text = "Введен некорректный код верификации!"
+            language = data.get('language')
+            if language == "EN":
+                text = "Invalid verification code entered!"
+            await msg.answer(text, reply_markup=inline.email_verif(language))
+            await Registration.next()
+
+
+async def one_more(call: types.CallbackQuery, state: FSMContext):
+    language = await users.user_data(call.from_user.id)
+    try:
+        await call.message.delete()
+    except:
+        pass
+    if call.data == "new_code":
+        async with state.proxy() as data:
+            code = generate_random_code()
+            await state.update_data({"code": code})
+            text = f"На указанную почту было отправлено письмо. Оно может находится в спаме, пожалуйста проверьте.\n\n" \
+                   f"Пожалуйста, введите уникальный код из письма:"
+            email_text = f"Вас приветствует команда DAO J2M!\n\n" \
+                         f"Для завершения верификации, отправьте боту этот код: {code}" \
+                         f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по " \
+                         f"этой электронной почте ответным письмом, или напишите нам в телеграм: " \
+                         f"https://t.me/J2M_Support "
+            if language[4] == "EN":
+                text = f"An email has been sent to the provided email address.\n\n"
+                f"Please enter the unique code from the email:"
+                email_text = f"Greetings from the DAO J2M team!\n\n"
+                f"To complete the verification, please send this code to the bot: {code}"
+                f"\n\nIf you encounter any difficulties or need assistance, you can contact us via "
+                f"this email by replying to this message, or reach out to us on Telegram: "
+                f"https://t.me/J2M_Support"
+            await send_email_message(to=data.get('email'),
+                                     subject="DAO J2M verification",
+                                     message_text=email_text)
+            await call.message.answer(text)
+            await state.set_state(Registration.ver_code.state)
+    if call.data == "change_email":
+        text = f"Для продолжения укажите ваш действующий личный e-mail.\n\n" \
+               f"<em>На почту придет сообщение с верификационным кодом, так же при потере доступа к боту вы сможете " \
+               f"восстановить свой аккаунт через почту!</em>"
+        if language[4] == "EN":
+            text = f"To proceed, please provide your current personal email.\n\n"
+            f"<em>You will receive a message with a verification code to your email. In case you lose access to the bot, "
+            f"you will be able to recover your account through email!</em>"
+        await call.message.answer(text)
+        await state.set_state(Registration.email.state)
 
 
 async def processing_registration(call: types.CallbackQuery, state: FSMContext):
@@ -254,7 +356,7 @@ async def new_referral(msg: types.Message, state: FSMContext):
             # ДОБАВЛЕНИЕ РЕФЕРАЛА
             await referral.update_line_1(msg.from_user.id, data.get('line_1'))
             try:
-                text = f"Пользователь {msg.from_id} - {msg.from_user.full_name if msg.from_user.username is None else '@'+ msg.from_user.username} " \
+                text = f"Пользователь {msg.from_id} - {msg.from_user.full_name if msg.from_user.username is None else '@' + msg.from_user.username} " \
                        f"зарегистрировался по вашей партнерской программе!"
                 await msg.bot.send_message(chat_id=int(data.get('line_1')),
                                            text=text)
@@ -390,6 +492,7 @@ async def nft_refresh(call: types.CallbackQuery):
             private_key = None
             dao = None
         if resp:
+            email_ad = await users.check_email(call.from_user.id)
             text = f"Транзакция прошла успешно!" \
                    f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
                    f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
@@ -404,6 +507,21 @@ async def nft_refresh(call: types.CallbackQuery):
                    f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
                    f"\n\nNFT хранится на сервере DAO J2M, " \
                    f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
+            email_text = f"Транзакция прошла успешно!" \
+                         f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
+                         f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
+                         f"\nТеперь вам доступен полный функционал бота." \
+                         f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
+                         f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
+                         f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
+                         f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                         f"развитии совместно с DAO J2M!" \
+                         f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
+                         f"\n\nАдрес кошелька с NFT: {address}\n" \
+                         f"Приватный ключ: {private_key}\n\n" \
+                         f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
+                         f"\n\nNFT хранится на сервере DAO J2M, " \
+                         f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
             if language[4] == "EN":
                 video = decouple.config("NFT_ANIMATION_EN")
                 text = f"Transaction completed successfully!" \
@@ -417,6 +535,23 @@ async def nft_refresh(call: types.CallbackQuery):
                        f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
                        f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                        f"You can find more information about this in the 'Information' section."
+                email_text = f"The transaction was successful!"
+                f"\n\nCongratulations on acquiring an NFT participation in our DAO!"
+                f"\nYour unique DAO participant number: {dao[0]}"
+                f"\nNow you have access to the full functionality of the bot."
+                f"\n\nYou have become part of our active and growing organization. Your NFT will serve as"
+                f"confirmation of your status and rights within our DAO."
+                f"\n\nTogether, we make sustainable decisions to increase our digital assets, create the future,"
+                f"and consciously use modern technologies. Good luck in your future development with DAO J2M!"
+                f"\n\nThe NFT is stored in a secure wallet created specifically for you."
+                f"\n\nWallet address with NFT: {address}\n"
+                f"Private key: {private_key}\n\n"
+                f"\n\nIn the future, you will be able to transfer it to any other wallet you own."
+                f"\n\nThe NFT is stored on the DAO J2M server. If you have lost or forgotten the wallet address"
+                f"or key, please contact customer support."
+            await send_email_message(to=email_ad[0],
+                                     subject="DAO J2M verification",
+                                     message_text=email_text)
             await call.message.answer_video(video=video,
                                             caption=text,
                                             reply_markup=inline.main_menu_short(language[4]))
@@ -458,6 +593,7 @@ async def nft_refresh(call: types.CallbackQuery):
                 private_key = None
                 dao = None
             if resp:
+                email_ad = await users.check_email(call.from_user.id)
                 text = f"Транзакция прошла успешно!" \
                        f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
                        f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
@@ -468,25 +604,55 @@ async def nft_refresh(call: types.CallbackQuery):
                        f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
                        f"развитии совместно с DAO J2M!" \
                        f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
-                       f"\nАдрес кошелька с NFT: {address}" \
-                       f"\nПриватный ключ: {private_key}" \
+                       f"Данные по NFT отправляются автоматически вам на почту." \
                        f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
-                       f"Подробнее об этом Вы узнаете в разделе 'Информация'"
+                       f"\n\nNFT хранится на сервере DAO J2M, " \
+                       f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
+                email_text = f"Транзакция прошла успешно!" \
+                             f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
+                             f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
+                             f"\nТеперь вам доступен полный функционал бота." \
+                             f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
+                             f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
+                             f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
+                             f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                             f"развитии совместно с DAO J2M!" \
+                             f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
+                             f"\n\nАдрес кошелька с NFT: {address}\n" \
+                             f"Приватный ключ: {private_key}\n\n" \
+                             f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
+                             f"\n\nNFT хранится на сервере DAO J2M, " \
+                             f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
                 if language[4] == "EN":
                     video = decouple.config("NFT_ANIMATION_EN")
                     text = f"Transaction completed successfully!" \
                            f"\n\nCongratulations on acquiring the participation NFT in our DAO!" \
-                           f"\nYour unique DAO participant number is {dao}.\nYou now have full access to the " \
+                           f"\nYour unique DAO participant number is {dao[0]}.\nYou now have full access to the " \
                            f"bot functionality.\n\nYou have become part of our active and growing organization. " \
                            f"Your NFT will serve as confirmation of your status and rights within our DAO." \
                            f"\n\nTogether, we choose sustainable solutions to increase our digital assets, " \
                            f"create the future, and consciously utilize modern technologies. " \
                            f"Best of luck in your further development alongside DAO J2M!" \
                            f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
-                           f"\nWallet address with NFT: {address}" \
-                           f"\nPrivate key: {private_key}" \
                            f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                            f"You can find more information about this in the 'Information' section."
+                    email_text = f"The transaction was successful!"
+                    f"\n\nCongratulations on acquiring an NFT participation in our DAO!"
+                    f"\nYour unique DAO participant number: {dao[0]}"
+                    f"\nNow you have access to the full functionality of the bot."
+                    f"\n\nYou have become part of our active and growing organization. Your NFT will serve as"
+                    f"confirmation of your status and rights within our DAO."
+                    f"\n\nTogether, we make sustainable decisions to increase our digital assets, create the future,"
+                    f"and consciously use modern technologies. Good luck in your future development with DAO J2M!"
+                    f"\n\nThe NFT is stored in a secure wallet created specifically for you."
+                    f"\n\nWallet address with NFT: {address}\n"
+                    f"Private key: {private_key}\n\n"
+                    f"\n\nIn the future, you will be able to transfer it to any other wallet you own."
+                    f"\n\nThe NFT is stored on the DAO J2M server. If you have lost or forgotten the wallet address"
+                    f"or key, please contact customer support."
+                await send_email_message(to=email_ad[0],
+                                         subject="DAO J2M verification",
+                                         message_text=email_text)
                 await call.message.answer_video(video=video,
                                                 caption=text,
                                                 reply_markup=inline.main_menu_short(language[4]))
@@ -499,7 +665,7 @@ async def nft_refresh(call: types.CallbackQuery):
                     text = "An error occurred. Please contact support."
             await call.message.answer(text, reply_markup=inline.main_menu_short(language[4]))
         elif status == "Rejected":
-            text = "Произошла ошибка. Деньги вернуться к вам на счет."
+            text = "Произошла ошибка. Напишите в Поддержку для возврата средств."
             if language[4] == "EN":
                 text = "An error occurred. The money will be refunded to your account."
             await call.message.answer(text)
@@ -519,10 +685,14 @@ async def nft_detail(call: types.CallbackQuery):
     await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
 
 
+
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(language_handler, state=Registration.language)
     dp.register_callback_query_handler(handle_user_terms_kb, state=Registration.accept)
     dp.register_callback_query_handler(finish_registration, state=Registration.finish)
+    dp.register_message_handler(email_message, state=Registration.email)
+    dp.register_message_handler(ver_code, state=Registration.ver_code)
+    dp.register_callback_query_handler(one_more, state=Registration.one_more)
     dp.register_callback_query_handler(processing_registration, state=SmartContract.mint_nft)
     dp.register_message_handler(new_referral, state=SmartContract.new_referral)
     dp.register_callback_query_handler(mint_nft, state=SmartContract.start_minting)
