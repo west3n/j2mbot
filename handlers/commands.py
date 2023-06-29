@@ -30,6 +30,8 @@ async def file_id(msg: types.Message):
             await msg.reply(msg.photo[-1].file_id)
         if msg.animation:
             await msg.reply(msg.animation.file_id)
+        if msg.video:
+            await msg.reply(msg.video.file_id)
 
 
 async def bot_start(msg: types.Message, state: FSMContext):

@@ -334,21 +334,13 @@ async def nft_refresh(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     invoiceId = await nft.check_nft_status(call.from_user.id)
     status = await thedex.invoice_one(invoiceId[5])
-    if status == "Waiting":
-        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
-        if language[4] == "EN":
-            text = "Further time is needed for verification. Please try again later."
-        await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
-
-    elif status == "Unpaid":
-        text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
-        if language[4] == "EN":
-            text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
-        await call.message.answer(text)
-        await nft.delete_error(call.from_user.id)
-
-    elif status == "Successful":
-        animation = decouple.config("NFT_ANIMATION")
+    ads = await nft.get_ad_status(call.from_user.id)
+    try:
+        ads = ads[0]
+    except TypeError:
+        ads = None
+    if ads == "Реклама":
+        video = decouple.config("NFT_ANIMATION")
         invitor = await referral.get_id_from_line_1_id(call.from_user.id)
         try:
             invitor = invitor[0]
@@ -365,7 +357,7 @@ async def nft_refresh(call: types.CallbackQuery):
         if resp:
             text = f"Транзакция прошла успешно!" \
                    f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
-                   f"\nВаш индивидуальный номер участника DAO: {dao}" \
+                   f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
                    f"\nТеперь вам доступен полный функционал бота." \
                    f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
                    f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
@@ -376,11 +368,13 @@ async def nft_refresh(call: types.CallbackQuery):
                    f"\nАдрес кошелька с NFT: {address}" \
                    f"\nПриватный ключ: {private_key}" \
                    f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
-                   f"Подробнее об этом Вы узнаете в разделе 'Информация'"
+                   f"\n\nNFT хранится на сервере DAO J2M, " \
+                   f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
             if language[4] == "EN":
+                video = decouple.config("NFT_ANIMATION_EN")
                 text = f"Transaction completed successfully!" \
                        f"\n\nCongratulations on acquiring the participation NFT in our DAO!" \
-                       f"\nYour unique DAO participant number is {dao}.\nYou now have full access to the " \
+                       f"\nYour unique DAO participant number is {dao[0]}.\nYou now have full access to the " \
                        f"bot functionality.\n\nYou have become part of our active and growing organization. " \
                        f"Your NFT will serve as confirmation of your status and rights within our DAO." \
                        f"\n\nTogether, we choose sustainable solutions to increase our digital assets, " \
@@ -391,21 +385,93 @@ async def nft_refresh(call: types.CallbackQuery):
                        f"\nPrivate key: {private_key}" \
                        f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                        f"You can find more information about this in the 'Information' section."
-            await call.message.answer_animation(animation=animation,
-                                                caption=text,
-                                                reply_markup=inline.main_menu_short(language[4]))
+            await call.message.answer_video(video=video,
+                                            caption=text,
+                                            reply_markup=inline.main_menu_short(language[4]))
+            await call.bot.send_message(chat_id=decouple.config('GROUP_ID'),
+                                        text=f"Пользователь {call.from_user.id} - {call.from_user.username} получил NFT (РЕКЛАМА)"
+                                             f"\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/nft/")
         else:
-
             text = "Произошла ошибка, обратитесь в поддержку"
             if language[4] == "EN":
                 text = "An error occurred. Please contact support."
-        await call.message.answer(text, reply_markup=inline.main_menu_short(language[4]))
-    elif status == "Rejected":
-        text = "Произошла ошибка. Деньги вернуться к вам на счет."
-        if language[4] == "EN":
-            text = "An error occurred. The money will be refunded to your account."
-        await call.message.answer(text)
-        await nft.delete_error(call.from_user.id)
+            await call.message.answer(text, reply_markup=inline.main_menu_short(language[4]))
+    else:
+        if status == "Waiting":
+            text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
+            if language[4] == "EN":
+                text = "Further time is needed for verification. Please try again later."
+            await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
+
+        elif status == "Unpaid":
+            text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
+            if language[4] == "EN":
+                text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
+            await call.message.answer(text)
+            await nft.delete_error(call.from_user.id)
+
+        elif status == "Successful":
+            video = decouple.config("NFT_ANIMATION")
+            invitor = await referral.get_id_from_line_1_id(call.from_user.id)
+            try:
+                invitor = invitor[0]
+            except TypeError:
+                invitor = 1
+            try:
+                resp, private_key, address = await microservice.microservice_(call.from_user.id, invitor)
+                dao = await nft.update_nft(call.from_user.id, address, private_key, "Successful")
+            except TypeError:
+                resp = None
+                address = None
+                private_key = None
+                dao = None
+            if resp:
+                text = f"Транзакция прошла успешно!" \
+                       f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
+                       f"\nВаш индивидуальный номер участника DAO: {dao}" \
+                       f"\nТеперь вам доступен полный функционал бота." \
+                       f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
+                       f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
+                       f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
+                       f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                       f"развитии совместно с DAO J2M!" \
+                       f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
+                       f"\nАдрес кошелька с NFT: {address}" \
+                       f"\nПриватный ключ: {private_key}" \
+                       f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
+                       f"Подробнее об этом Вы узнаете в разделе 'Информация'"
+                if language[4] == "EN":
+                    video = decouple.config("NFT_ANIMATION_EN")
+                    text = f"Transaction completed successfully!" \
+                           f"\n\nCongratulations on acquiring the participation NFT in our DAO!" \
+                           f"\nYour unique DAO participant number is {dao}.\nYou now have full access to the " \
+                           f"bot functionality.\n\nYou have become part of our active and growing organization. " \
+                           f"Your NFT will serve as confirmation of your status and rights within our DAO." \
+                           f"\n\nTogether, we choose sustainable solutions to increase our digital assets, " \
+                           f"create the future, and consciously utilize modern technologies. " \
+                           f"Best of luck in your further development alongside DAO J2M!" \
+                           f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
+                           f"\nWallet address with NFT: {address}" \
+                           f"\nPrivate key: {private_key}" \
+                           f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
+                           f"You can find more information about this in the 'Information' section."
+                await call.message.answer_video(video=video,
+                                                caption=text,
+                                                reply_markup=inline.main_menu_short(language[4]))
+                await call.bot.send_message(chat_id=decouple.config('GROUP_ID'),
+                                            text=f"Пользователь {call.from_user.id} - {call.from_user.username} купил NFT"
+                                                 f"\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/nft/")
+            else:
+                text = "Произошла ошибка, обратитесь в поддержку"
+                if language[4] == "EN":
+                    text = "An error occurred. Please contact support."
+            await call.message.answer(text, reply_markup=inline.main_menu_short(language[4]))
+        elif status == "Rejected":
+            text = "Произошла ошибка. Деньги вернуться к вам на счет."
+            if language[4] == "EN":
+                text = "An error occurred. The money will be refunded to your account."
+            await call.message.answer(text)
+            await nft.delete_error(call.from_user.id)
 
 
 async def nft_detail(call: types.CallbackQuery):
@@ -419,8 +485,6 @@ async def nft_detail(call: types.CallbackQuery):
         text = f"The payment amount is: {amount} USDT-20\n"
         f"Wallet for payment: {purse}"
     await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
-
-
 
 
 def register(dp: Dispatcher):

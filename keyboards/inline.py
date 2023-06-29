@@ -8,10 +8,10 @@ def main_menu(lang) -> InlineKeyboardMarkup:
         balance, refill, withdrawal, structure, support, information = ["Balance", "Refill", "Withdrawal",
                                                                         "Affiliate program", "Support", "Information"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f'💵 {balance}', callback_data='balance'),
-         InlineKeyboardButton(f'🪪 {structure}', callback_data='structure')],
-        [InlineKeyboardButton(f'⬆️ {refill}', callback_data='refill'),
-         InlineKeyboardButton(f'⬇️ {withdrawal}', callback_data='withdrawal')],
+        [InlineKeyboardButton(f'💵 {balance}', callback_data='balance')],
+        [InlineKeyboardButton(f'🪪 {structure}', callback_data='structure')],
+        [InlineKeyboardButton(f' {refill}', callback_data='refill')],
+        [InlineKeyboardButton(f'⬇️ {withdrawal}', callback_data='withdrawal')],
         [InlineKeyboardButton(f'🧑‍💻 {support}', callback_data='support'),
          InlineKeyboardButton(f'📒 {information}', callback_data='information')]
     ])
@@ -205,11 +205,11 @@ def refill_account_2(lang) -> InlineKeyboardMarkup:
         "Главное меню"
     if lang == "EN":
         first_button, second_button, back = "Personal account starting from 15,000 USDT", \
-            "Collective account starting from 500 USDT.", "Main menu"
+            "Collective account starting from 500 USDT.", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💰 {first_button}", callback_data="15000")],
         [InlineKeyboardButton(f"💵 {second_button}", callback_data="500")],
-        [InlineKeyboardButton(f'◀️ {back}', callback_data='main_menu')]
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='refill')]
     ])
     return kb
 
@@ -225,13 +225,15 @@ def continue_refill(lang) -> InlineKeyboardMarkup:
 
 
 def refill_500_choice(lang) -> InlineKeyboardMarkup:
-    button, button_2, back = "от 500 до 1000 USDT", "от 1000 USDT", "Главное меню"
+    button, button_2, button_3, back = "от 500 до 1000 USDT", "от 1000 USDT", "Личный аккаунт от 15 000 USDT", "Назад"
     if lang == "EN":
-        button, button_2, back = "from 500 to 1000 USDT", "from 1000 USDT", "Main menu"
+        button, button_2, button_3, back = "from 500 to 1000 USDT", "from 1000 USDT", \
+            "Personal account from 15 000 USDT", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="from_500")],
         [InlineKeyboardButton(f"💰 {button_2}", callback_data="from_1000")],
-        [InlineKeyboardButton(f'◀️ {back}', callback_data='main_menu')]
+        [InlineKeyboardButton(f"💰💰 {button_3}", callback_data="15000")],
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='deposit_funds')]
     ])
     return kb
 
@@ -371,11 +373,12 @@ def refill_main_menu(lang) -> InlineKeyboardMarkup:
 
 
 def distribution(lang) -> InlineKeyboardMarkup:
-    button = "Условия применения ПО"
+    button, back = "Условия применения ПО", "Назад"
     if lang == "EN":
-        button = "Terms of software usage"
+        button, back = "Terms of software usage", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"👪 {button}", callback_data="distribution")]])
+        [InlineKeyboardButton(f"👪 {button}", callback_data="distribution")],
+        [InlineKeyboardButton(f"◀️ {back}", callback_data="refill")]])
     return kb
 
 
@@ -386,7 +389,7 @@ def active_500(lang) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="500")],
         [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_15000")],
-        [InlineKeyboardButton(f'◀️ {back}', callback_data='main_menu')]
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='distribution')]
     ])
     return kb
 
@@ -398,7 +401,7 @@ def active_15000(lang) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="15000")],
         [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_500")],
-        [InlineKeyboardButton(f'◀️ {back}', callback_data='main_menu')]
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='distribution')]
     ])
     return kb
 
@@ -442,4 +445,27 @@ def new_information_menu(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"💼 {button}", callback_data='company_documents')],
         [InlineKeyboardButton(f"◀️ {back}", callback_data='main_menu')]
     ])
+    return kb
+
+
+def refill_account_3(lang) -> InlineKeyboardMarkup:
+    first_button, second_button, back = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT", \
+        "Назад"
+    if lang == "EN":
+        first_button, second_button, back = "Personal account starting from 15,000 USDT", \
+            "Collective account starting from 500 USDT.", "Go back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💰 {first_button}", callback_data="active_15000")],
+        [InlineKeyboardButton(f"💵 {second_button}", callback_data="active_500")],
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='review_terms')]
+    ])
+    return kb
+
+
+def emailing_alias(lang) -> InlineKeyboardMarkup:
+    button = "Информация отправлена"
+    if lang == "EN":
+        button = "The information have been sent"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"📨 {button}", callback_data="emailing_alias")]])
     return kb
