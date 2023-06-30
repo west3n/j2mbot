@@ -134,7 +134,7 @@ async def bot_start(msg: types.Message, state: FSMContext):
                                f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
                                f"\n\nNFT хранится на сервере DAO J2M, " \
                                f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки." \
-                               f"\n\nСсылка-приглашение в закрытый <a href='{invite_link}'>DAO J2M чат</a>"
+                               f"\n\nСсылка-приглашение в закрытый DAO J2M чат: {invite_link.invite_link}"
 
                         email_text = f"Транзакция прошла успешно!" \
                                      f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
@@ -415,10 +415,7 @@ async def bot_start_call(call: types.CallbackQuery):
                            f"развитии совместно с DAO J2M!" \
                            f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
                            f"Данные по NFT отправляются автоматически вам на почту." \
-                           f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
-                           f"\n\nNFT хранится на сервере DAO J2M, " \
-                           f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки." \
-                           f"\n\nСсылка-приглашение в закрытый <a href='{invite_link}'>DAO J2M чат</a>"
+                           f"\n\nСсылка-приглашение в закрытый DAO J2M чат: {invite_link.invite_link}"
                     email_text = f"Транзакция прошла успешно!" \
                            f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
                            f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
@@ -447,7 +444,7 @@ async def bot_start_call(call: types.CallbackQuery):
                                f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
                                f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                                f"You can find more information about this in the 'Information' section." \
-                               f"\n\nInvitation link to the closed <a href='{invite_link}'>J2M DAO chat</a>"
+                               f"\n\nInvitation link to the closed <a href='{invite_link.invite_link}'>J2M DAO chat</a>"
 
                         email_text = f"The transaction was successful!"
                         f"\n\nCongratulations on acquiring an NFT participation in our DAO!"

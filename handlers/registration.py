@@ -505,10 +505,7 @@ async def nft_refresh(call: types.CallbackQuery):
                    f"развитии совместно с DAO J2M!" \
                    f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
                    f"Данные по NFT отправляются автоматически вам на почту." \
-                   f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
-                   f"\n\nNFT хранится на сервере DAO J2M, " \
-                   f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки." \
-                   f"\n\nСсылка-приглашение в закрытый <a href='{invite_link}'>DAO J2M чат</a>"
+                   f"\n\nСсылка-приглашение в закрытый DAO J2M чат: {invite_link.invite_link}"
 
             email_text = f"Транзакция прошла успешно!" \
                          f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
@@ -538,7 +535,7 @@ async def nft_refresh(call: types.CallbackQuery):
                        f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
                        f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                        f"You can find more information about this in the 'Information' section." \
-                       f"\n\nInvitation link to the closed <a href='{invite_link}'>J2M DAO chat</a>"
+                       f"\n\nInvitation link to the closed {invite_link.invite_link} J2M DAO chat: "
                 email_text = f"The transaction was successful!"
                 f"\n\nCongratulations on acquiring an NFT participation in our DAO!"
                 f"\nYour unique DAO participant number: {dao[0]}"
@@ -554,7 +551,7 @@ async def nft_refresh(call: types.CallbackQuery):
                 f"\n\nThe NFT is stored on the DAO J2M server. If you have lost or forgotten the wallet address"
                 f"or key, please contact customer support."
             await send_email_message(to=email_ad[0],
-                                     subject="DAO J2M verification",
+                                     subject="DAO J2M Smart Contract",
                                      message_text=email_text)
             await call.message.answer_video(video=video,
                                             caption=text,
@@ -610,10 +607,7 @@ async def nft_refresh(call: types.CallbackQuery):
                        f"развитии совместно с DAO J2M!" \
                        f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
                        f"Данные по NFT отправляются автоматически вам на почту." \
-                       f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
-                       f"\n\nNFT хранится на сервере DAO J2M, " \
-                       f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки." \
-                       f"\n\nСсылка-приглашение в закрытый <a href='{invite_link}'>DAO J2M чат</a>"
+                       f"\n\nСсылка-приглашение в закрытый DAO J2M чат: {invite_link.invite_link}"
 
                 email_text = f"Транзакция прошла успешно!" \
                              f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
@@ -643,7 +637,7 @@ async def nft_refresh(call: types.CallbackQuery):
                            f"\n\nYour NFT is stored in a secure wallet created specifically for you. " \
                            f"\n\nIn the future, you will be able to transfer it to any other wallet of yours. " \
                            f"You can find more information about this in the 'Information' section." \
-                           f"\n\nInvitation link to the closed <a href='{invite_link}'>J2M DAO chat</a>"
+                           f"\n\nInvitation link to the closed J2M DAO chat: {invite_link.invite_link}"
                     email_text = f"The transaction was successful!"
                     f"\n\nCongratulations on acquiring an NFT participation in our DAO!"
                     f"\nYour unique DAO participant number: {dao[0]}"
@@ -659,7 +653,7 @@ async def nft_refresh(call: types.CallbackQuery):
                     f"\n\nThe NFT is stored on the DAO J2M server. If you have lost or forgotten the wallet address"
                     f"or key, please contact customer support."
                 await send_email_message(to=email_ad[0],
-                                         subject="DAO J2M verification",
+                                         subject="DAO J2M Smart Contract",
                                          message_text=email_text)
                 await call.message.answer_video(video=video,
                                                 caption=text,
