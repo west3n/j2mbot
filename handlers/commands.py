@@ -108,7 +108,7 @@ async def bot_start(msg: types.Message, state: FSMContext):
                     try:
                         invitor = invitor[0]
                     except TypeError:
-                        invitor = 1
+                        invitor = 32591016
                     try:
                         resp, private_key, address = await microservice.microservice_(msg.from_user.id, invitor)
                         dao = await nft.update_nft(msg.from_user.id, address, private_key, "Successful")
@@ -389,7 +389,7 @@ async def bot_start_call(call: types.CallbackQuery):
                 try:
                     invitor = invitor[0]
                 except TypeError:
-                    invitor = 1
+                    invitor = 32591016
                 try:
                     resp, private_key, address = await microservice.microservice_(call.from_user.id, invitor)
                     dao = await nft.update_nft(call.from_user.id, address, private_key, "Successful")
