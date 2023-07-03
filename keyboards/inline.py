@@ -117,19 +117,57 @@ def user_docs_2(lang) -> InlineKeyboardMarkup:
 
 
 def information_menu(lang) -> InlineKeyboardMarkup:
-    name, conditions, urls, docs, back = [
-        "Распределение доходности", "Условия пополнения и вывода",
-        "Важные ссылки", "Документация", "Главное меню"]
+    dao, documents, products, collaboration, news, marketing, back = [
+        "О DAO J2M", "Юр.документы", "Продукты",
+        "Сотрудничество", "Новости", "Маркетинг", "Главное меню"]
     if lang == "EN":
-        name, conditions, urls, docs, back = [
-            "Distribution of profitability", "Terms of replenishment and withdrawal",
-            "Important links", "Documentation", "Main menu"]
+        dao, documents, products, collaboration, news, marketing, back = [
+            "About DAO J2M", "Legal Documents", "Products",
+            "Collaboration", "News", "Marketing", "Main Menu"]
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"{name}", callback_data="distribution")],
-        [InlineKeyboardButton(f"{conditions}", callback_data="conditions")],
-        [InlineKeyboardButton(f"{urls}", callback_data="urls"),
-         InlineKeyboardButton(f"{docs}", callback_data="docs")],
-        [InlineKeyboardButton(f"◀️ {back}", callback_data="main_menu")]
+        [InlineKeyboardButton(f"{dao}", callback_data="dao"),
+         InlineKeyboardButton(f"{documents}", callback_data="info_documents")],
+        [InlineKeyboardButton(f"{products}", callback_data="info_products"),
+         InlineKeyboardButton(f"{collaboration}", callback_data="info_collaboration")],
+        [InlineKeyboardButton(f"{news}", callback_data="info_news"),
+         InlineKeyboardButton(f"{marketing}", callback_data="info_marketing")],
+        [InlineKeyboardButton(f"{back}", callback_data="main_menu")]
+    ])
+    return kb
+
+
+def about_j2m_kb(lang) -> InlineKeyboardMarkup:
+    documents, products, collaboration, news, marketing, back = [
+        "Юр.документы", "Продукты",
+        "Сотрудничество", "Новости", "Маркетинг", "Главное меню"]
+    if lang == "EN":
+        documents, products, collaboration, news, marketing, back = [
+            "Legal Documents", "Products",
+            "Collaboration", "News", "Marketing", "Main Menu"]
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{documents}", callback_data="info_documents"),
+         InlineKeyboardButton(f"{products}", callback_data="info_products")],
+        [InlineKeyboardButton(f"{collaboration}", callback_data="info_collaboration"),
+         InlineKeyboardButton(f"{news}", callback_data="info_news")],
+        [InlineKeyboardButton(f"{marketing}", callback_data="info_marketing"),
+         InlineKeyboardButton(f"{back}", callback_data="main_menu")]
+    ])
+    return kb
+
+
+def info_documents_kb(lang) -> InlineKeyboardMarkup:
+    dao, products, collaboration, news, marketing, back = [
+        "О DAO J2M", "Продукты", "Сотрудничество", "Новости", "Маркетинг", "Главное меню"]
+    if lang == "EN":
+        dao, products, collaboration, news, marketing, back = [
+            "About DAO J2M", "Products", "Collaboration", "News", "Marketing", "Main Menu"]
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"{dao}", callback_data="dao"),
+         InlineKeyboardButton(f"{products}", callback_data="info_products")],
+        [InlineKeyboardButton(f"{collaboration}", callback_data="info_collaboration"),
+         InlineKeyboardButton(f"{news}", callback_data="info_news")],
+        [InlineKeyboardButton(f"{marketing}", callback_data="info_marketing"),
+         InlineKeyboardButton(f"{back}", callback_data="main_menu")]
     ])
     return kb
 
@@ -457,17 +495,6 @@ def change_data(lang) -> InlineKeyboardMarkup:
     return kb
 
 
-def new_information_menu(lang) -> InlineKeyboardMarkup:
-    button, back = 'Документы компании', 'Вернуться в главное меню'
-    if lang == 'EN':
-        button, back = "Company Documents", "Return to main menu"
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"💼 {button}", callback_data='company_documents')],
-        [InlineKeyboardButton(f"◀️ {back}", callback_data='main_menu')]
-    ])
-    return kb
-
-
 def refill_account_3(lang) -> InlineKeyboardMarkup:
     first_button, second_button, back = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT", \
         "Назад"
@@ -500,4 +527,3 @@ def email_verif(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"📧 {button_2}", callback_data="change_email")]
     ])
     return kb
-
