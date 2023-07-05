@@ -157,12 +157,43 @@ async def get_document_status(tg_id):
         cur.close()
         db.close()
 
+
 async def get_balance_line(tg_id):
     db, cur = connect()
     try:
         cur.execute("SELECT balance, deposit FROM app_balance WHERE tg_id_id=%s", (tg_id,))
         result = cur.fetchone()
         return result
+    finally:
+        cur.close()
+        db.close()
+
+
+async def balance_to_deposit_autoreinvest():
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_id_id FROM  app_balance WHERE settings is NULL OR settings = 100")
+        tg_ids = [user[0] for user in cur.fetchall()]
+        for tg_id in tg_ids:
+            balance = await get_my_balance(tg_id)
+            cur.execute("UPDATE app_balance SET deposit = %s, balance = %s WHERE tg_id_id = %s", (balance[0], 0, tg_id,))
+            db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def balance_to_deposit_invest():
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_id_id FROM  app_balance WHERE settings = 50")
+        tg_ids = [user[0] for user in cur.fetchall()]
+        for tg_id in tg_ids:
+            balance = await get_my_balance(tg_id)
+            deposit = int(balance) / 2
+            cur.execute("UPDATE app_balance SET deposit = deposit + %s, balance = %s WHERE tg_id_id = %s",
+                        (deposit, deposit, tg_id,))
+            db.commit()
     finally:
         cur.close()
         db.close()

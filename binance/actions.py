@@ -1,4 +1,6 @@
 import ccxt
+import decouple
+
 from database import binance_db
 
 
