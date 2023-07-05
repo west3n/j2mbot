@@ -18,6 +18,19 @@ async def get_balance(tg_id):
             return balance
 
 
+async def get_balance_j2m():
+    api_key = decouple.config('API_KEY')
+    api_secret = decouple.config('API_SECRET')
+    exchange = ccxt.binance({
+        'apiKey': api_key,
+        'secret': api_secret
+    })
+    balances = exchange.fetch_balance()
+    for currency, balance in balances['total'].items():
+        if currency == 'USDT':
+            return balance
+
+
 def check_credentials(api_key, api_secret):
     exchange = ccxt.binance({
         'apiKey': api_key,

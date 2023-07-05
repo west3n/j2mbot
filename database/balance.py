@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from database.connection import connect
