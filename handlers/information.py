@@ -13,7 +13,11 @@ async def information_handler(call: types.CallbackQuery):
            "\n\nВ ближайшие дни здесь появится дополнительная полезная информация."
     if language[4] == 'EN':
         photo = decouple.config("BANNER_INFORMATION_EN")
-        text = "FAQ"
+        text = "In this section, you can review DAO documents again. Any changes to the documents that have " \
+               "been accepted through voting will be notified to DAO participants through informational " \
+               "messages from this bot.\n\nPUBLIC posting of DAO J2M documents and their forwarding " \
+               "to any third parties is PROHIBITED\n\n" \
+               "Additional useful information will be added here in the coming days."
     await call.message.delete()
     await call.message.answer_photo(
         photo=photo,
@@ -74,7 +78,7 @@ async def company_documents(call: types.CallbackQuery):
            "Благодаря им регламентируются условия и форматы взаимодействия участников и партнёров DAO " \
            "J2M как между собой, так и с используемыми сервисами, решениями и регуляторами, а также " \
            "определяется ответственность сторон и правила применения возможностей DAO."
-    if language == "EN":
+    if language[4] == "EN":
         documents_group = [decouple.config("USER_AGREEMENT_EN"), decouple.config("PRIVACY_POLICY_EN"),
                            decouple.config("J2M_DAO_RULES_EN"), decouple.config("DISCLAIMER_EN"),
                            decouple.config("PRODUCT_USAGE_TERMS_EN"), decouple.config("BALANCE_DOCUMENT_EN")]
