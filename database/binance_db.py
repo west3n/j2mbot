@@ -36,39 +36,65 @@ async def check_binance_keys(tg_id):
         db.close()
 
 
-async def insert_balance_j2m_monday(balance):
+async def insert_balance_j2m_monday(balance_usdt, balance_busd):
     db, cur = connect()
     try:
         now = datetime.datetime.now().date()
-        cur.execute("INSERT INTO app_balancej2m (date_monday, balance_monday) VALUES (%s, %s)", (now, balance,))
+        cur.execute("INSERT INTO app_balancej2m (date_monday, balance_monday_usdt, balance_monday_busd) "
+                    "VALUES (%s, %s)", (now, balance_usdt, balance_busd, ))
         db.commit()
     finally:
         cur.close()
         db.close()
 
 
-async def insert_balance_j2m_sunday(balance):
+async def insert_balance_j2m_sunday(balance_usdt, balance_busd):
     db, cur = connect()
     try:
         sunday = datetime.datetime.now().date()
         monday = sunday - datetime.timedelta(days=sunday.weekday())
-        cur.execute("SELECT balance_monday FROM app_balancej2m WHERE date_monday = %s", (monday, ))
+        cur.execute("SELECT balance_monday_usdt, balance_monday_busd FROM app_balancej2m WHERE "
+                    "date_monday = %s", (monday, ))
         monday_balance = cur.fetchone()
-        profit = (((balance - monday_balance[0]) / monday_balance[0]) * 100)
-        cur.execute("UPDATE app_balancej2m SET date_sunday = %s, balance_sunday = %s, profit = %s "
-                    "WHERE date_monday = %s", (sunday, balance, round(profit, 2), monday, ))
+        total_balance_monday = monday_balance[0] + monday_balance[1]
+        total_balance_sunday = balance_usdt + balance_busd
+        profit = (((total_balance_sunday - total_balance_monday) / total_balance_monday) * 100)
+        cur.execute("UPDATE app_balancej2m SET date_sunday = %s, balance_sunday_usdt = %s, balance_sunday_busd = %s, "
+                    "profit = %s WHERE date_monday = %s", (sunday, balance_usdt, balance_busd, round(profit, 2),
+                                                           monday, ))
         db.commit()
     finally:
         cur.close()
         db.close()
 
 
-async def insert_balance_everyday(balance):
+async def insert_balance_everyday(balance_usdt, balance_busd):
     db, cur = connect()
     try:
         now = datetime.datetime.now().date()
-        cur.execute("INSERT INTO app_everydaybalance (date, balance) VALUES (%s, %s)", (now, balance,))
+        cur.execute("INSERT INTO app_everydaybalance (date, balance_usdt, balance_busd, total) "
+                    "VALUES (%s, %s, %s, %s)", (now, balance_usdt, balance_busd, int(balance_usdt) + int(balance_busd)))
         db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_api_keys():
+    db, cur = connect()
+    try:
+        cur.execute("SELECT api_key, secret_key FROM app_apikeys")
+        return cur.fetchall()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_weekly_profit(date):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT profit FROM app_balancej2m WHERE date_sunday = %s", (date, ))
+        return cur.fetchone()
     finally:
         cur.close()
         db.close()

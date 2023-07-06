@@ -52,11 +52,6 @@ async def file_id(msg: types.Message):
 
 
 async def bot_start(msg: types.Message, state: FSMContext):
-    language = await users.user_data(msg.from_user.id)
-    text = "Загружаю главное меню..."
-    if language[4] == 'EN':
-        text = "Loading main menu..."
-    start_message = await msg.answer(text)
     if msg.chat.type == "private":
         email_ = await users.check_email(msg.from_id)
         try:
@@ -68,6 +63,11 @@ async def bot_start(msg: types.Message, state: FSMContext):
         user_status = await users.user_data(msg.from_user.id)
         wallet = await balance.get_balance_status(msg.from_id)
         if user_status and wallet and nft_ and email_:
+            language = await users.user_data(msg.from_user.id)
+            text = "Загружаю главное меню..."
+            if language[4] == 'EN':
+                text = "Loading main menu..."
+            start_message = await msg.answer(text)
             name = msg.from_user.first_name
             language = await users.user_data(msg.from_user.id)
             text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
@@ -85,6 +85,11 @@ async def bot_start(msg: types.Message, state: FSMContext):
                 reply_markup=await inline.main_menu(language[4], msg.from_id))
         elif user_status and nft_ and email_:
             if nft_[1]:
+                language = await users.user_data(msg.from_user.id)
+                text = "Загружаю главное меню..."
+                if language[4] == 'EN':
+                    text = "Loading main menu..."
+                start_message = await msg.answer(text)
                 name = msg.from_user.first_name
                 language = await users.user_data(msg.from_user.id)
                 text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
@@ -102,6 +107,10 @@ async def bot_start(msg: types.Message, state: FSMContext):
                     reply_markup=inline.main_menu_short(language[4]))
             else:
                 language = await users.user_data(msg.from_user.id)
+                text = "Загружаю главное меню..."
+                if language[4] == 'EN':
+                    text = "Loading main menu..."
+                start_message = await msg.answer(text)
                 invoiceId = await nft.check_nft_status(msg.from_user.id)
                 status = await thedex.invoice_one(invoiceId[5])
                 if status == "Waiting":
@@ -141,6 +150,11 @@ async def bot_start(msg: types.Message, state: FSMContext):
                         private_key = None
                         dao = None
                     if resp:
+                        language = await users.user_data(msg.from_user.id)
+                        text = "Загружаю NFT..."
+                        if language[4] == 'EN':
+                            text = "Loading NFT..."
+                        start_message = await msg.answer(text)
                         email_ad = await users.check_email(msg.from_user.id)
                         invite_link = await msg.bot.create_chat_invite_link(chat_id=decouple.config('J2M_CHAT'))
                         text = f"Транзакция прошла успешно!" \
@@ -230,10 +244,6 @@ async def bot_start(msg: types.Message, state: FSMContext):
                     await msg.answer(text)
                     await nft.delete_error(msg.from_user.id)
         elif not user_status:
-            try:
-                await msg.bot.delete_message(msg.chat.id, start_message.message_id)
-            except MessageToDeleteNotFound:
-                pass
             await msg.answer("Для комфортной работы с ботом, выберите язык:"
                              "\nTo ensure smooth interaction with the bot, please select a language:",
                              reply_markup=inline.language())
@@ -251,22 +261,28 @@ async def bot_start(msg: types.Message, state: FSMContext):
                     await referral.add_first_line(int(msg.get_args()), msg.from_id)
                     text = f"Пользователь {msg.from_id} - {msg.from_user.full_name if msg.from_user.username is None else '@' + msg.from_user.username} " \
                            f"зарегистрировался по вашей партнерской программе!"
-                    try:
-                        await msg.bot.delete_message(msg.chat.id, start_message.message_id)
-                    except MessageToDeleteNotFound:
-                        pass
                     await msg.bot.send_message(chat_id=int(msg.get_args()),
                                                text=text)
                 except:
                     pass
     else:
         if str(msg.from_id) in ['254465569', '15362825']:
+            language = await users.user_data(msg.from_user.id)
+            text = "Загружаю главное меню..."
+            if language[4] == 'EN':
+                text = "Loading main menu..."
+            start_message = await msg.answer(text)
             try:
                 await msg.bot.delete_message(msg.chat.id, start_message.message_id)
             except MessageToDeleteNotFound:
                 pass
             await msg.answer("Привет, создатель! 💋")
         else:
+            language = await users.user_data(msg.from_user.id)
+            text = "Загружаю главное меню..."
+            if language[4] == 'EN':
+                text = "Loading main menu..."
+            start_message = await msg.answer(text)
             try:
                 await msg.bot.delete_message(msg.chat.id, start_message.message_id)
             except MessageToDeleteNotFound:

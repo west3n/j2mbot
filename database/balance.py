@@ -97,8 +97,6 @@ async def get_my_balance(tg_id):
         db.close()
 
 
-
-
 async def update_hold(hold, tg_id):
     db, cur = connect()
     try:
@@ -107,6 +105,7 @@ async def update_hold(hold, tg_id):
     finally:
         cur.close()
         db.close()
+
 
 async def get_hold(tg_id):
     db, cur = connect()
@@ -128,6 +127,7 @@ async def get_first_transaction(tg_id):
     finally:
         cur.close()
         db.close()
+
 
 async def update_percentage(tg_id, settings):
     db, cur = connect()

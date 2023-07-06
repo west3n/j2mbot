@@ -129,3 +129,6 @@ async def check_email(tg_id):
     finally:
         db.close()
         cur.close()
+
+
+
