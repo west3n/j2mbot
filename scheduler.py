@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from binance.actions import get_balance_j2m
 from database import balance, binance_db, users
 
@@ -28,6 +28,7 @@ async def weekly_deposit_update():
             await balance.update_weekly_deposit(tg_id, weekly_deposit[9])
 
 
+# Баланс J2M
 async def scheduler_balance_j2m():
     print(f"Scheduler run at {datetime.now()}")
     while True:
@@ -45,7 +46,7 @@ async def scheduler_balance_j2m():
         await asyncio.sleep(60 - now.second)
 
 
-
+# Понедельник
 async def balance_to_deposit():
     print(f"Scheduler run at {datetime.now()}")
     while True:
@@ -61,19 +62,20 @@ async def balance_to_deposit():
         await asyncio.sleep(60 - now.second)
 
 
-
-# async def deposit_to_balance():
-#     print(f"Scheduler run at {datetime.now()}")
-#     while True:
-#         now = datetime.now()
-#         print(now.weekday())
-#         if now.weekday() == 6 and now.hour == 17 and now.minute == 0:
-#             await third_notifications.result_notification()
-#         next_sunday = now + timedelta(days=(6 - now.weekday()) % 7)
-#         next_sunday_17 = next_sunday.replace(hour=17, minute=0, second=0, microsecond=0)
-#         time_until_next_sunday = (next_sunday_17 - now).total_seconds()
-#         await asyncio.sleep(time_until_next_sunday)
+# Воскресенье
+async def deposit_to_balance():
+    print(f"Scheduler run at {datetime.now()}")
+    while True:
+        now = datetime.now()
+        print(now.weekday())
+        if now.weekday() == 6 and now.hour == 18 and now.minute == 0:
+            await count_users_profit()
+        if now.weekday() == 6 and now.hour == 20 and now.minute == 0:
+            await balance.transfer_deposit_to_balance()
+        await asyncio.sleep(60 - now.second)
 
 
 if __name__ == '__main__':
     asyncio.run(scheduler_balance_j2m())
+    asyncio.run(balance_to_deposit())
+    asyncio.run(deposit_to_balance())
