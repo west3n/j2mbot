@@ -1,4 +1,6 @@
 import ccxt
+import decouple
+
 from database import binance_db
 
 
@@ -11,9 +13,28 @@ async def get_balance(tg_id):
         'secret': api_secret
     })
     balances = exchange.fetch_balance()
-    for currency, balance in balances['total'].items():
-        if currency == 'USDT':
-            return balance
+    usdt_balance = balances['total']['USDT']
+    busd_balance = balances['total']['BUSD']
+    return usdt_balance, busd_balance
+
+
+async def get_balance_j2m():
+    all_keys = await binance_db.get_api_keys()
+    usdt_balance = 0
+    busd_balance = 0
+    for keys in all_keys:
+        api_key, api_secret = keys
+        exchange = ccxt.binance({
+            'apiKey': api_key,
+            'secret': api_secret
+        })
+        try:
+            balances = exchange.fetch_balance()
+            usdt_balance += float(balances['total']['USDT'])
+            busd_balance += float(balances['total']['BUSD'])
+        except ccxt.errors.AuthenticationError:
+            pass
+    return usdt_balance, busd_balance
 
 
 def check_credentials(api_key, api_secret):

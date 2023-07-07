@@ -617,17 +617,17 @@ async def count_refill(msg: types.Message, state: FSMContext):
             balance_binance = await binance.get_balance(tg_id=msg.from_id)
         except:
             balance_binance = None
-        if balance_binance is not None:
+        if balance_binance[0] is not None:
             if msg.text.isdigit():
                 if int(msg.text) >= 15000:
                     async with state.proxy() as data:
                         data['count'] = msg.text
-                    if balance_binance >= 15000:
+                    if balance_binance[0] >= 15000:
                         await balance.insert_deposit(msg.from_id, int(msg.text))
                         deposit = await balance.get_balance(msg.from_id)
                         await users.set_status("15000", msg.from_id)
                         await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
-                        text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
+                        text = f"Ваш Баланс Binance: {balance_binance[0]}\n\n" \
                                f"Пополнение выполнено успешно.\n\n" \
                                f"<b>Активный депозит J2M: {deposit[1]} USDT</b>\n\n" \
                                f"<em>Мы сообщим Вам, когда запустим торговлю, и будем держать связь с Вами. " \
@@ -641,7 +641,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                                f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от реферальной " \
                                f"и мотивационной программы с последующим баном на полгода!</em>"
                         if language[4] == "EN":
-                            text = f"Your Binance Balance: {balance_binance}\n\n" \
+                            text = f"Your Binance Balance: {balance_binance[0]}\n\n" \
                                    "Deposit successfully completed.\n\n<em>We will notify you when trading starts " \
                                    "and will stay in touch with you. You can make withdrawals at any time by " \
                                    "submitting a prior request. This is necessary for us to close open orders and ensure " \
@@ -656,20 +656,20 @@ async def count_refill(msg: types.Message, state: FSMContext):
                     else:
                         text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>\n\n" \
                                f"<em>Для продолжения пополните аккаунт на сумму " \
-                               f"{int(msg.text) - int(balance_binance)} USDT и создайте новую заявку!</em>"
+                               f"{int(msg.text) - int(balance_binance[0])} USDT и создайте новую заявку!</em>"
                         if language[4] == "EN":
                             text = f"<b>The amount in your Binance account cannot be less than the top-up amount!</b>\n\n" \
                                    f"<em>To proceed, please top up your account with an amount of " \
-                                   f"{int(msg.text) - int(balance_binance)} USDT and create a new request!</em>"
+                                   f"{int(msg.text) - int(balance_binance[0])} USDT and create a new request!</em>"
                         await msg.answer(text)
                 else:
                     deposit = await balance.get_balance(msg.from_id)
                     if int(deposit[1]) + int(msg.text) >= 15000:
-                        if int(balance_binance) >= int(msg.text):
+                        if int(balance_binance[0]) >= int(msg.text):
                             await balance.insert_deposit(msg.from_id, int(msg.text))
                             await users.set_status("15000", msg.from_id)
                             await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
-                            text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
+                            text = f"Ваш Баланс Binance: {balance_binance[0]}\n\n" \
                                    f"Пополнение выполнено успешно.\n\n" \
                                    f"<b>Активный депозит J2M: {int(deposit[1]) + int(msg.text)} USDT</b>\n\n" \
                                    f"<em>Мы сообщим Вам, когда запустим торговлю, и будем держать связь с Вами. " \
@@ -683,7 +683,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                                    f"При выводе без заявки, компания оставляет за собой право отключить аккаунт от " \
                                    f"реферальной и мотивационной программы с последующим баном на полгода!</em>"
                             if language[4] == "EN":
-                                text = f"Your Binance Balance: {balance_binance}\n\n" \
+                                text = f"Your Binance Balance: {balance_binance[0]}\n\n" \
                                        "Deposit successfully completed.\n\n<em>We will notify you when trading starts " \
                                        "and will stay in touch with you. You can make withdrawals at any time by " \
                                        "submitting a prior request. This is necessary for us to close open orders and ensure " \
@@ -700,15 +700,13 @@ async def count_refill(msg: types.Message, state: FSMContext):
                             x = int(msg.text)
                             if 15000 > int(msg.text):
                                 x = 15000
-
                             text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>\n\n" \
                                    f"<em>Для продолжения пополните аккаунт на сумму " \
-                                   f"{x - int(balance_binance)} USDT и создайте новую заявку!</em>"
+                                   f"{x - int(balance_binance[0])} USDT и создайте новую заявку!</em>"
                             if language[4] == "EN":
                                 text = f"<b>The amount in your Binance account cannot be less than the top-up amount!</b>\n\n" \
                                        f"<em>To proceed, please top up your account with an amount of " \
-                                       f"{x - int(balance_binance)} USDT and create a new request!</em>"
-
+                                       f"{x - int(balance_binance[0])} USDT and create a new request!</em>"
                             await msg.answer(text)
 
                     else:

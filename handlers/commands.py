@@ -6,6 +6,8 @@ import string
 import decouple
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
+from aiogram.utils.exceptions import MessageToDeleteNotFound
+
 from keyboards import inline
 from database import users, balance, referral, nft, thedex_db
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -61,6 +63,11 @@ async def bot_start(msg: types.Message, state: FSMContext):
         user_status = await users.user_data(msg.from_user.id)
         wallet = await balance.get_balance_status(msg.from_id)
         if user_status and wallet and nft_ and email_:
+            language = await users.user_data(msg.from_user.id)
+            text = "Загружаю главное меню..."
+            if language[4] == 'EN':
+                text = "Loading main menu..."
+            start_message = await msg.answer(text)
             name = msg.from_user.first_name
             language = await users.user_data(msg.from_user.id)
             text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
@@ -68,12 +75,21 @@ async def bot_start(msg: types.Message, state: FSMContext):
             if language[4] == 'EN':
                 text = f"{name}, please select the section of interest by clicking one of the buttons below:"
                 photo = decouple.config("BANNER_MAIN_EN")
+            try:
+                await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+            except MessageToDeleteNotFound:
+                pass
             await msg.answer_photo(
                 photo=photo,
                 caption=text,
                 reply_markup=await inline.main_menu(language[4], msg.from_id))
         elif user_status and nft_ and email_:
             if nft_[1]:
+                language = await users.user_data(msg.from_user.id)
+                text = "Загружаю главное меню..."
+                if language[4] == 'EN':
+                    text = "Loading main menu..."
+                start_message = await msg.answer(text)
                 name = msg.from_user.first_name
                 language = await users.user_data(msg.from_user.id)
                 text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
@@ -81,24 +97,40 @@ async def bot_start(msg: types.Message, state: FSMContext):
                 if language[4] == 'EN':
                     text = f"{name}, please select the section of interest by clicking one of the buttons below:"
                     photo = decouple.config("BANNER_MAIN_EN")
+                try:
+                    await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+                except MessageToDeleteNotFound:
+                    pass
                 await msg.answer_photo(
                     photo=photo,
                     caption=text,
                     reply_markup=inline.main_menu_short(language[4]))
             else:
                 language = await users.user_data(msg.from_user.id)
+                text = "Загружаю главное меню..."
+                if language[4] == 'EN':
+                    text = "Loading main menu..."
+                start_message = await msg.answer(text)
                 invoiceId = await nft.check_nft_status(msg.from_user.id)
                 status = await thedex.invoice_one(invoiceId[5])
                 if status == "Waiting":
                     text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
                     if language[4] == "EN":
                         text = "Further time is needed for verification. Please try again later."
+                    try:
+                        await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+                    except MessageToDeleteNotFound:
+                        pass
                     await msg.answer(text, reply_markup=inline.check_nft_status(language[4]))
 
                 elif status == "Unpaid":
                     text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
                     if language[4] == "EN":
                         text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
+                    try:
+                        await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+                    except MessageToDeleteNotFound:
+                        pass
                     await msg.answer(text)
                     await nft.delete_error(msg.from_user.id)
 
@@ -118,6 +150,11 @@ async def bot_start(msg: types.Message, state: FSMContext):
                         private_key = None
                         dao = None
                     if resp:
+                        language = await users.user_data(msg.from_user.id)
+                        text = "Загружаю NFT..."
+                        if language[4] == 'EN':
+                            text = "Loading NFT..."
+                        start_message = await msg.answer(text)
                         email_ad = await users.check_email(msg.from_user.id)
                         invite_link = await msg.bot.create_chat_invite_link(chat_id=decouple.config('J2M_CHAT'))
                         text = f"Транзакция прошла успешно!" \
@@ -181,17 +218,29 @@ async def bot_start(msg: types.Message, state: FSMContext):
                         await send_email_message(to=email_ad[0],
                                                  subject="DAO J2M Smart Contract",
                                                  message_text=email_text)
+                        try:
+                            await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+                        except MessageToDeleteNotFound:
+                            pass
                         await msg.answer_video(video=video,
                                                caption=text, reply_markup=inline.main_menu_short(language[4]))
                     else:
                         text = "Произошла ошибка, обратитесь в поддержку"
                         if language[4] == "EN":
                             text = "An error occurred. Please contact support."
+                    try:
+                        await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+                    except MessageToDeleteNotFound:
+                        pass
                     await msg.answer(text, reply_markup=inline.main_menu_short(language[4]))
                 elif status == "Rejected":
                     text = "Произошла ошибка. Деньги вернуться к вам на счет."
                     if language[4] == "EN":
                         text = "An error occurred. The money will be refunded to your account."
+                    try:
+                        await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+                    except MessageToDeleteNotFound:
+                        pass
                     await msg.answer(text)
                     await nft.delete_error(msg.from_user.id)
         elif not user_status:
@@ -218,8 +267,26 @@ async def bot_start(msg: types.Message, state: FSMContext):
                     pass
     else:
         if str(msg.from_id) in ['254465569', '15362825']:
+            language = await users.user_data(msg.from_user.id)
+            text = "Загружаю главное меню..."
+            if language[4] == 'EN':
+                text = "Loading main menu..."
+            start_message = await msg.answer(text)
+            try:
+                await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+            except MessageToDeleteNotFound:
+                pass
             await msg.answer("Привет, создатель! 💋")
         else:
+            language = await users.user_data(msg.from_user.id)
+            text = "Загружаю главное меню..."
+            if language[4] == 'EN':
+                text = "Loading main menu..."
+            start_message = await msg.answer(text)
+            try:
+                await msg.bot.delete_message(msg.chat.id, start_message.message_id)
+            except MessageToDeleteNotFound:
+                pass
             await msg.answer("Ой, я не умею работать в группе 😰"
                              f"\n{msg.from_user.full_name}, ты можешь поблагодарить @Caramba и @miroshnikov за создание "
                              f"меня!")
@@ -337,6 +404,11 @@ async def nft_start_call(call: types.CallbackQuery):
 
 
 async def bot_start_call(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = "Загружаю главное меню..."
+    if language[4] == 'EN':
+        text = "Loading main menu..."
+    start_message = await call.message.answer(text)
     try:
         await call.message.delete()
     except:
@@ -352,6 +424,10 @@ async def bot_start_call(call: types.CallbackQuery):
         if language[4] == 'EN':
             text = f"{name}, please select the section of interest by clicking one of the buttons below:"
             photo = decouple.config("BANNER_MAIN_EN")
+        try:
+            await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+        except MessageToDeleteNotFound:
+            pass
         await call.message.answer_photo(
             photo=photo,
             caption=text,
@@ -365,6 +441,10 @@ async def bot_start_call(call: types.CallbackQuery):
             if language[4] == 'EN':
                 text = f"{name}, please select the section of interest by clicking one of the buttons below:"
                 photo = decouple.config("BANNER_MAIN_EN")
+            try:
+                await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+            except MessageToDeleteNotFound:
+                pass
             await call.message.answer_photo(
                 photo=photo,
                 caption=text,
@@ -377,12 +457,20 @@ async def bot_start_call(call: types.CallbackQuery):
                 text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
                 if language[4] == "EN":
                     text = "Further time is needed for verification. Please try again later."
+                try:
+                    await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+                except MessageToDeleteNotFound:
+                    pass
                 await call.message.answer(text, reply_markup=inline.check_nft_status(language[4]))
 
             elif status == "Unpaid":
                 text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
                 if language[4] == "EN":
                     text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
+                try:
+                    await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+                except MessageToDeleteNotFound:
+                    pass
                 await call.message.answer(text)
                 await nft.delete_error(call.from_user.id)
 
@@ -463,6 +551,10 @@ async def bot_start_call(call: types.CallbackQuery):
                     await send_email_message(to=email_ad[0],
                                              subject="DAO J2M Smart Contract",
                                              message_text=email_text)
+                    try:
+                        await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+                    except MessageToDeleteNotFound:
+                        pass
                     await call.message.answer_video(video=video,
                                                     caption=text,
                                                     reply_markup=inline.main_menu_short(language[4]))
@@ -473,14 +565,26 @@ async def bot_start_call(call: types.CallbackQuery):
                     text = "Произошла ошибка, обратитесь в поддержку"
                     if language[4] == "EN":
                         text = "An error occurred. Please contact support."
+                try:
+                    await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+                except MessageToDeleteNotFound:
+                    pass
                 await call.message.answer(text, reply_markup=inline.main_menu_short(language[4]))
             elif status == "Rejected":
                 text = "Произошла ошибка. Деньги вернуться к вам на счет."
                 if language[4] == "EN":
                     text = "An error occurred. The money will be refunded to your account."
+                try:
+                    await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+                except MessageToDeleteNotFound:
+                    pass
                 await call.message.answer(text)
                 await nft.delete_error(call.from_user.id)
     elif not user_status:
+        try:
+            await call.message.bot.delete_message(call.message.chat.id, start_message.message_id)
+        except MessageToDeleteNotFound:
+            pass
         await call.message.answer("Для комфортной работы с ботом, выберите язык:"
                                   "\nTo ensure smooth interaction with the bot, please select a language:",
                                   reply_markup=inline.language())
