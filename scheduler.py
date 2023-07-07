@@ -1,8 +1,11 @@
 import asyncio
 from datetime import datetime, timedelta
+
+import decouple
+
 from binance.actions import get_balance_j2m
 from database import balance, binance_db, users
-
+from aiogram import Bot, types
 
 async def count_users_profit():
     tg_ids = await users.get_all_tg_id()
@@ -18,6 +21,17 @@ async def count_users_profit():
         if deposit[2] >= 5000:
             weekly_profit = deposit[2] * (profit_percentage / 100) * 0.45
         await balance.add_weekly_profit(weekly_profit, tg_id)
+        bot = Bot(token=decouple.config("BOT_TOKEN"))
+        session = await bot.get_session()
+        try:
+            await bot.send_message(chat_id=tg_id,
+                                   text=f"Отчет на {datetime.now().date()}"
+                                        f"\n\nВаша доходность за торговую неделю: {weekly_profit}\n\n"
+                                        f"Деньги зачислятся на баланс в понедельник.")
+        except:
+            pass
+        await session.close()
+
 
 
 async def weekly_deposit_update():
@@ -73,6 +87,7 @@ async def deposit_to_balance():
         if now.weekday() == 6 and now.hour == 20 and now.minute == 0:
             await balance.transfer_deposit_to_balance()
         await asyncio.sleep(60 - now.second)
+
 
 
 if __name__ == '__main__':
