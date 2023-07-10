@@ -527,3 +527,10 @@ def email_verif(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"📧 {button_2}", callback_data="change_email")]
     ])
     return kb
+
+
+def tax_fee() -> InlineKeyboardMarkup:
+    button = "Оплатить"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💸 {button}", callback_data="tax_fee")]])
+    return kb

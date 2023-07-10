@@ -12,8 +12,8 @@ async def get_balance(tg_id):
         if result:
             return result
         else:
-            cur.execute("INSERT INTO app_balance (tg_id_id, balance, deposit, withdrawal) "
-                        "VALUES (%s, 0, 0, 0) RETURNING id", (tg_id,))
+            cur.execute("INSERT INTO app_balance (tg_id_id, balance, deposit, withdrawal, referral_balance) "
+                        "VALUES (%s, 0, 0, 0, 0) RETURNING id", (tg_id,))
             db.commit()
             result = cur.fetchone()[0]
             return 0, 0, 0, result
