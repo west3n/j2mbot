@@ -68,6 +68,9 @@ async def insert_balance_j2m_sunday(balance_usdt, balance_busd):
         db.close()
 
 
+asyncio.run(insert_balance_j2m_sunday(14200, 150))
+
+
 async def insert_balance_everyday(balance_usdt, balance_busd):
     db, cur = connect()
     try:

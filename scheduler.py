@@ -7,7 +7,6 @@ from database import balance, binance_db, users, referral
 from aiogram import Bot, types
 
 
-
 async def count_users_profit():
     tg_ids = await users.get_all_tg_id()
     now = datetime.now().date() - timedelta(days=1)

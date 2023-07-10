@@ -203,7 +203,7 @@ async def balance_to_deposit_invest():
 async def add_weekly_profit(weekly_profit, tg_id):
     db, cur = connect()
     try:
-        cur.execute("UPDATE app_balance SET weekly_profit = %s WHERE tg_id = %s", (weekly_profit, tg_id, ))
+        cur.execute("UPDATE app_balance SET weekly_profit = %s WHERE tg_id_id = %s", (weekly_profit, tg_id, ))
         db.commit()
     finally:
         db.close()
@@ -235,3 +235,14 @@ async def transfer_deposit_to_balance():
         cur.close()
         db.close()
 
+
+async def update_referral_profit(tg_id, profit):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_balance SET balance = balance + %s, referral_balance = referral_balance + %s "
+                    "WHERE tg_id_id = %s",
+                    (profit, profit, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()

@@ -115,3 +115,37 @@ async def update_line_1(tg_id, line_1):
     finally:
         db.close()
         cur.close()
+
+
+async def get_inviter_id_line1(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_id_id FROM app_referral WHERE line_1=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        db.close()
+        cur.close()
+
+
+async def get_inviter_id_line2(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_id_id FROM app_referral WHERE line_2=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        db.close()
+        cur.close()
+
+
+async def get_inviter_id_line3(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT tg_id_id FROM app_referral WHERE line_3=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        db.close()
+        cur.close()
+
