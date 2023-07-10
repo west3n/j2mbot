@@ -1,37 +1,60 @@
 import asyncio
-from datetime import datetime, timedelta
-
 import decouple
 
+from datetime import datetime, timedelta
 from binance.actions import get_balance_j2m
-from database import balance, binance_db, users
+from database import balance, binance_db, users, referral
 from aiogram import Bot, types
+
+
 
 async def count_users_profit():
     tg_ids = await users.get_all_tg_id()
-    now = datetime.now().date()
+    now = datetime.now().date() - timedelta(days=1)
     for tg_id in tg_ids:
         deposit = await balance.get_balance_status(tg_id)
         profit_percentage = await binance_db.get_weekly_profit(now)
+        print(profit_percentage)
         weekly_profit = 0
-        if deposit[2] == 0:
-            pass
-        if deposit[2] < 5000:
-            weekly_profit = deposit[2] * (profit_percentage / 100) * 0.4
-        if deposit[2] >= 5000:
-            weekly_profit = deposit[2] * (profit_percentage / 100) * 0.45
-        await balance.add_weekly_profit(weekly_profit, tg_id)
-        bot = Bot(token=decouple.config("BOT_TOKEN"))
-        session = await bot.get_session()
-        try:
-            await bot.send_message(chat_id=tg_id,
-                                   text=f"Отчет на {datetime.now().date()}"
-                                        f"\n\nВаша доходность за торговую неделю: {weekly_profit}\n\n"
-                                        f"Деньги зачислятся на баланс в понедельник.")
-        except:
-            pass
-        await session.close()
+        if deposit[2] < 15000:
+            if deposit[2] == 0:
+                pass
+            elif deposit[2] < 5000:
+                weekly_profit = deposit[2] * (profit_percentage[0] / 100) * 0.4
+            elif deposit[2] >= 5000:
+                weekly_profit = deposit[2] * (profit_percentage[0] / 100) * 0.45
+            await balance.add_weekly_profit(weekly_profit, tg_id)
+            bot = Bot(token=decouple.config("BOT_TOKEN"))
+            session = await bot.get_session()
+            line_3 = await referral.get_inviter_id_line3(tg_id)
+            line_2 = await referral.get_inviter_id_line2(tg_id)
+            line_1 = await referral.get_inviter_id_line1(tg_id)
+            try:
+                if line_1[0]:
+                    referral_profit_1 = weekly_profit * 0.05
+                    await balance.update_referral_profit(line_1[0], referral_profit_1)
+            except TypeError:
+                pass
+            try:
+                if line_2[0]:
+                    referral_profit_2 = weekly_profit * 0.03
+                    await balance.update_referral_profit(line_2[0], referral_profit_2)
+            except TypeError:
+                pass
+            try:
+                if line_3[0]:
+                    referral_profit_3 = weekly_profit * 0.02
+                    await balance.update_referral_profit(line_3[0], referral_profit_3)
+            except TypeError:
+                pass
 
+                await bot.send_message(chat_id=tg_id,
+                                       text=f"Отчет на {datetime.now().date()}"
+                                            f"\n\nВаша доходность за торговую неделю: {weekly_profit}\n\n"
+                                            f"Деньги зачислятся на баланс в понедельник.")
+            except:
+                pass
+            await session.close()
 
 
 async def weekly_deposit_update():
@@ -44,11 +67,11 @@ async def weekly_deposit_update():
 
 # Баланс J2M
 async def scheduler_balance_j2m():
-    print(f"Scheduler run at {datetime.now()}")
+    print(f"Balance J2M start - [{datetime.now()}]")
     while True:
         now = datetime.now()
         user_balance = await get_balance_j2m()
-        if now.hour == 10 and now.minute == 0:
+        if now.hour == 3 and now.minute == 2:
             await binance_db.insert_balance_everyday(user_balance[0], user_balance[1])
             print(f"Insert everyday balance at {now.date()}")
         if now.weekday() == 0 and now.hour == 15 and now.minute == 0:
@@ -62,7 +85,7 @@ async def scheduler_balance_j2m():
 
 # Понедельник
 async def balance_to_deposit():
-    print(f"Scheduler run at {datetime.now()}")
+    print(f"Balance to deposit start - [{datetime.now()}]")
     while True:
         now = datetime.now()
         if now.weekday() == 0 and now.hour == 17 and now.minute == 0:
@@ -89,8 +112,15 @@ async def deposit_to_balance():
         await asyncio.sleep(60 - now.second)
 
 
+async def main():
+    loop = asyncio.get_running_loop()
+    tasks = [
+        loop.create_task(scheduler_balance_j2m()),
+        loop.create_task(balance_to_deposit()),
+        loop.create_task(deposit_to_balance())
+    ]
+    await asyncio.gather(*tasks)
+
 
 if __name__ == '__main__':
-    asyncio.run(scheduler_balance_j2m())
-    asyncio.run(balance_to_deposit())
-    asyncio.run(deposit_to_balance())
+    asyncio.run(main())
