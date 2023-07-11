@@ -177,7 +177,8 @@ async def balance_to_deposit_autoreinvest():
         tg_ids = [user[0] for user in cur.fetchall()]
         for tg_id in tg_ids:
             balance = await get_my_balance(tg_id)
-            cur.execute("UPDATE app_balance SET deposit = %s, balance = %s WHERE tg_id_id = %s", (balance[0], 0, tg_id,))
+            print(f"{balance} - {tg_id}")
+            cur.execute("UPDATE app_balance SET deposit = deposit + %s, balance = %s WHERE tg_id_id = %s", (float(round(balance, 2)), 0.0, tg_id,))
             db.commit()
     finally:
         cur.close()

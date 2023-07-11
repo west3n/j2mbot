@@ -10,18 +10,23 @@ from aiogram import Bot, types
 async def count_users_profit():
     tg_ids = await users.get_all_tg_id()
     now = datetime.now().date() - timedelta(days=1)
+    profit_percentage = await binance_db.get_weekly_profit(now)
     for tg_id in tg_ids:
         deposit = await balance.get_balance_status(tg_id)
-        profit_percentage = await binance_db.get_weekly_profit(now)
         print(profit_percentage)
         weekly_profit = 0
-        if deposit[2] < 15000:
-            if deposit[2] == 0:
+        try:
+            deposit_ = deposit[2]
+        except TypeError:
+            deposit_ = 0
+        if deposit_ < 15000:
+            if deposit_ == 0:
                 pass
-            elif deposit[2] < 5000:
-                weekly_profit = deposit[2] * (profit_percentage[0] / 100) * 0.4
-            elif deposit[2] >= 5000:
-                weekly_profit = deposit[2] * (profit_percentage[0] / 100) * 0.45
+            elif deposit_ < 5000:
+                weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.4
+            elif deposit_ >= 5000:
+                print(tg_id)
+                weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.45
             await balance.add_weekly_profit(weekly_profit, tg_id)
             bot = Bot(token=decouple.config("BOT_TOKEN"))
             session = await bot.get_session()
@@ -46,11 +51,13 @@ async def count_users_profit():
                     await balance.update_referral_profit(line_3[0], referral_profit_3)
             except TypeError:
                 pass
-
+            try:
                 await bot.send_message(chat_id=tg_id,
-                                       text=f"Отчет на {datetime.now().date()}"
-                                            f"\n\nВаша доходность за торговую неделю: {weekly_profit}\n\n"
-                                            f"Деньги зачислятся на баланс в понедельник.")
+                                       text=f"<b> Отчет на {datetime.now().date()} </b>"
+                                            f"\n\nВаша доходность за торговую неделю: {round(weekly_profit, 2)}\n\n"
+                                            f"Общий профит J2M: {round(profit_percentage[0], 2)}\n\n"
+                                            f"<em> Баланс будет обновлен в течение суток! </em>",
+                                       parse_mode=types.ParseMode.HTML)
             except:
                 pass
             await session.close()
@@ -59,9 +66,12 @@ async def count_users_profit():
 async def weekly_deposit_update():
     tg_ids = await users.get_all_tg_id()
     for tg_id in tg_ids:
-        weekly_deposit = await balance.get_balance_status(tg_id)
-        if weekly_deposit[9] != 0 and weekly_deposit[4] == 0:
-            await balance.update_weekly_deposit(tg_id, weekly_deposit[9])
+        try:
+            weekly_deposit = await balance.get_balance_status(tg_id)
+            if weekly_deposit[9] != 0 and weekly_deposit[4] == 0:
+                await balance.update_weekly_deposit(tg_id, round(weekly_deposit[9], 2))
+        except TypeError:
+            pass
 
 
 # Баланс J2M
@@ -70,7 +80,7 @@ async def scheduler_balance_j2m():
     while True:
         now = datetime.now()
         user_balance = await get_balance_j2m()
-        if now.hour == 3 and now.minute == 2:
+        if now.hour == 3 and now.minute == 0:
             await binance_db.insert_balance_everyday(user_balance[0], user_balance[1])
             print(f"Insert everyday balance at {now.date()}")
         if now.weekday() == 0 and now.hour == 15 and now.minute == 0:

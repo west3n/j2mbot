@@ -1,3 +1,5 @@
+import asyncio
+
 import ccxt
 import decouple
 
@@ -29,7 +31,7 @@ async def get_balance_j2m():
             'secret': api_secret
         })
         try:
-            balances = exchange.fetch_balance()
+            balances = exchange.fetch_balance(params={'type': 'future'})
             usdt_balance += float(balances['total']['USDT'])
             busd_balance += float(balances['total']['BUSD'])
         except ccxt.errors.AuthenticationError:

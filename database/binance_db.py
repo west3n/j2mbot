@@ -41,7 +41,7 @@ async def insert_balance_j2m_monday(balance_usdt, balance_busd):
     try:
         now = datetime.datetime.now().date()
         cur.execute("INSERT INTO app_balancej2m (date_monday, balance_monday_usdt, balance_monday_busd) "
-                    "VALUES (%s, %s)", (now, balance_usdt, balance_busd, ))
+                    "VALUES (%s, %s, %s)", (now, balance_usdt, balance_busd, ))
         db.commit()
     finally:
         cur.close()
@@ -52,7 +52,7 @@ async def insert_balance_j2m_sunday(balance_usdt, balance_busd):
     db, cur = connect()
     try:
         sunday = datetime.datetime.now().date()
-        monday = sunday - datetime.timedelta(days=sunday.weekday())
+        monday = sunday - datetime.timedelta(days=7) #sunday.weekday()
         cur.execute("SELECT balance_monday_usdt, balance_monday_busd FROM app_balancej2m WHERE "
                     "date_monday = %s", (monday, ))
         monday_balance = cur.fetchone()
@@ -66,9 +66,6 @@ async def insert_balance_j2m_sunday(balance_usdt, balance_busd):
     finally:
         cur.close()
         db.close()
-
-
-asyncio.run(insert_balance_j2m_sunday(14200, 150))
 
 
 async def insert_balance_everyday(balance_usdt, balance_busd):
@@ -96,7 +93,7 @@ async def get_api_keys():
 async def get_weekly_profit(date):
     db, cur = connect()
     try:
-        cur.execute("SELECT profit FROM app_balancej2m WHERE date_sunday = %s", (date, ))
+        cur.execute("SELECT profit FROM app_balancej2m WHERE date_sunday = %s", (date,))
         return cur.fetchone()
     finally:
         cur.close()
