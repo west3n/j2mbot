@@ -225,8 +225,12 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         text = "Оплата прошла успешно."
         if language[4] == "EN":
             text = "Payment was successful."
-        await balance.insert_deposit(call.from_user.id, data.get("amount"))
-        await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'))
+        try:
+            await balance.insert_deposit(call.from_user.id, data.get("amount"))
+            await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'))
+            #await thedex_db.insert_status(call.from_user.id, row[2], status)
+        except:
+            pass
         await state.finish()
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
@@ -259,9 +263,12 @@ async def smalluser_check(call: types.CallbackQuery, row):
         text = "Оплата прошла успешно."
         if language[4] == "EN":
             text = "Payment was successful."
-        await balance.insert_deposit(call.from_user.id, row[1])
-        await balance.insert_balance_history(call.from_user.id, row[1], row[2])
-        await thedex_db.insert_status(call.from_user.id, row[2], status)
+        try:
+            await balance.insert_deposit(call.from_user.id, row[1])
+            await balance.insert_balance_history(call.from_user.id, row[1], row[2])
+            await thedex_db.insert_status(call.from_user.id, row[2], status)
+        except:
+            pass
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     if status == "Rejected":
@@ -297,9 +304,12 @@ async def smalluser_check_2(call: types.CallbackQuery):
         text = "Оплата прошла успешно."
         if language[4] == "EN":
             text = "Payment was successful."
-        await balance.insert_deposit(call.from_user.id, row[1])
-        await balance.insert_balance_history(call.from_user.id, row[1], row[2])
-        await thedex_db.insert_status(call.from_user.id, row[2], status)
+        try:
+            await balance.insert_deposit(call.from_user.id, row[1])
+            await balance.insert_balance_history(call.from_user.id, row[1], row[2])
+            await thedex_db.insert_status(call.from_user.id, row[2], status)
+        except:
+            pass
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     if status == "Rejected":
