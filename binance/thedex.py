@@ -14,7 +14,6 @@ nonce = time.time_ns() // 1_000_000
 
 async def create_invoice(amount, tg_id, title):
     request = '/api/v1/invoices/create'
-
     data = {
         'request': request,
         'nonce': nonce,
@@ -24,19 +23,16 @@ async def create_invoice(amount, tg_id, title):
         'merchantId': decouple.config("THEDEX_MERCHANT_ID"),
         'title': f"{title}"
     }
-
     completeUrl = baseUrl + request
     data_json = json.dumps(data, separators=(',', ':'))
     payload = base64.b64encode(data_json.encode('ascii'))
     signature = hmac.new(secret_key.encode('ascii'), payload, hashlib.sha512).hexdigest()
-
     headers = {
         'Content-type': 'application/json',
         'X-EX-APIKEY': api_key,
         'X-EX-PAYLOAD': payload,
         'X-EX-SIGNATURE': signature
     }
-
     resp = requests.post(completeUrl, headers=headers, data=data_json)
     resp_json = json.dumps(resp.json(), sort_keys=True, indent=4)
     return json.loads(resp_json)['invoiceId']
@@ -44,7 +40,6 @@ async def create_invoice(amount, tg_id, title):
 
 async def pay_invoice(currency, invoice_id):
     request = '/api/v1/invoices/currency'
-
     data = {
         "invoiceId": invoice_id,
         'nonce': nonce,
@@ -56,7 +51,6 @@ async def pay_invoice(currency, invoice_id):
     data_json = json.dumps(data, separators=(',', ':'))
     payload = base64.b64encode(data_json.encode('ascii'))
     signature = hmac.new(secret_key.encode('ascii'), payload, hashlib.sha512).hexdigest()
-
     headers = {
         'Content-type': 'application/json',
         'X-EX-APIKEY': api_key,
@@ -70,7 +64,6 @@ async def pay_invoice(currency, invoice_id):
 
 async def invoice_one(invoice_id):
     request = '/api/v1/invoices/one'
-
     data = {
         "invoiceId": invoice_id,
         "orderId": "null",
@@ -82,7 +75,6 @@ async def invoice_one(invoice_id):
     data_json = json.dumps(data, separators=(',', ':'))
     payload = base64.b64encode(data_json.encode('ascii'))
     signature = hmac.new(secret_key.encode('ascii'), payload, hashlib.sha512).hexdigest()
-
     headers = {
         'Content-type': 'application/json',
         'X-EX-APIKEY': api_key,
@@ -96,7 +88,6 @@ async def invoice_one(invoice_id):
 
 async def invoice_one_2(invoice_id):
     request = '/api/v1/invoices/one'
-
     data = {
         "invoiceId": invoice_id,
         "orderId": "null",
@@ -108,7 +99,6 @@ async def invoice_one_2(invoice_id):
     data_json = json.dumps(data, separators=(',', ':'))
     payload = base64.b64encode(data_json.encode('ascii'))
     signature = hmac.new(secret_key.encode('ascii'), payload, hashlib.sha512).hexdigest()
-
     headers = {
         'Content-type': 'application/json',
         'X-EX-APIKEY': api_key,
@@ -121,6 +111,3 @@ async def invoice_one_2(invoice_id):
         json.loads(resp_json)['purse'], \
         json.loads(resp_json)['payCurrency'], \
         json.loads(resp_json)['amountInPayCurrency']
-
-
-

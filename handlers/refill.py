@@ -1,13 +1,11 @@
 import asyncio
 import random
-
 import decouple
 import shutup
 
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-
 from keyboards import inline
 from database import users, documents, binance_db, balance, thedex_db
 from binance import actions as binance
@@ -89,7 +87,6 @@ async def refill_handler(call: types.CallbackQuery):
             await new_docs(call)
     else:
         await registration_500(call)
-
 
 
 async def new_docs(call: types.CallbackQuery):
