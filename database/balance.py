@@ -7,7 +7,7 @@ from database.connection import connect
 async def get_balance(tg_id):
     db, cur = connect()
     try:
-        cur.execute("SELECT balance, deposit, withdrawal FROM app_balance WHERE tg_id_id=%s", (tg_id,))
+        cur.execute("SELECT balance, deposit, withdrawal, referral_balance FROM app_balance WHERE tg_id_id=%s", (tg_id,))
         result = cur.fetchone()
         if result:
             return result
@@ -144,16 +144,6 @@ async def update_document(tg_id):
     try:
         cur.execute("UPDATE app_balance SET document=TRUE WHERE tg_id_id=%s", (tg_id,))
         db.commit()
-    finally:
-        cur.close()
-        db.close()
-
-
-async def get_document_status(tg_id):
-    db, cur = connect()
-    try:
-        cur.execute("SELECT document FROM app_balance WHERE tg_id_id=%s", (tg_id,))
-        return cur.fetchone()
     finally:
         cur.close()
         db.close()

@@ -75,6 +75,13 @@ async def back_menu(call: types.CallbackQuery, state: FSMContext):
 
 
 async def smalluser_step1(msg: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        try:
+            await msg.bot.delete_message(chat_id=msg.from_id,
+                                         message_id=data.get('dep_msg'))
+            await msg.delete()
+        except MessageToDeleteNotFound:
+            pass
     language = await users.user_data(msg.from_user.id)
     if msg.text.isdigit():
         if 500 <= int(msg.text) < 1000:
@@ -112,42 +119,15 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
         await msg.answer(text)
 
 
-async def smalluser_amount_1000(msg: types.Message, state: FSMContext):
-    language = await users.user_data(msg.from_user.id)
-    if msg.text.isdigit():
-        if int(msg.text) >= 1000:
-            async with state.proxy() as data:
-                summary = int(msg.text)
-                response = await thedex.create_invoice(summary, msg.from_id, "Пополнение больше 1000")
-                await state.update_data({'status': 1000, 'amount': int(msg.text), 'invoiceId': response})
-                await thedex_db.insert_transaction(msg.from_id, int(msg.text), response)
-                await users.set_status(status="1000", tg_id=msg.from_id)
-                text = "Выберите длительность холда:"
-                if language[4] == "EN":
-                    text = "Select hold time:"
-                await msg.answer(text, reply_markup=inline.hold_kb(language[4]))
-                await state.set_state(SmallUser.hold.state)
-        else:
-            text = "Сумма пополнения должна быть от 1000 USDT!"
-            if language[4] == "EN":
-                text = "The deposit amount should be from 1000 USDT!"
-            await msg.answer(text)
-    else:
-        text = "Введите желаемую сумму пополнения числом, без запятых, букв и прочего!"
-        if language[4] == "EN":
-            text = "Please enter the desired deposit amount as a number, without commas, letters, or other symbols!"
-        await msg.answer(text)
-
-
 async def smalluser_hold(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
     async with state.proxy() as data:
         data['hold'] = int(call.data)
         await balance.update_hold(int(call.data), call.from_user.id)
-        text = "Выберите сеть пополнения:"
+        text = "🌐 Выберите сеть пополнения:"
         if language[4] == "EN":
-            text = "Select deposit cryptocurrency:"
+            text = "🌐 Select deposit cryptocurrency:"
         await call.message.answer(text, reply_markup=inline.return_currencies())
         await state.set_state(SmallUser.currency.state)
 
@@ -172,9 +152,11 @@ async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):
         count = wallet[1]
         if "." in count:
             count = count.replace(".", ",")
-        text = f"Отправьте {count} {currency_str} на указанный адрес:\n\n`{wallet[0]}`\n\n" \
+        text = f"Отправьте `{count}` {currency_str} на указанный адрес:\n\n`{wallet[0]}`\n\n" \
                f"Перед совершением транзакции внимательно проверьте адрес получателя и сумму перевода, оба значения " \
-               f"должны совпадать со значениями в сообщении"
+               f"должны совпадать со значениями в сообщении" \
+               f"\n\n*Срок действия кошелька для пополнения \- 60 минут, " \
+               f"если вы не успеваете пополнить за это время отмените транзакцию\!*"
 
         if language[4] == "EN":
             text = f"Please send {count} {currency_str} to the provided address:\n\n{wallet[0]}\n\n" \
@@ -191,25 +173,28 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         status = await thedex.invoice_one(data.get('invoiceId'))
     if status == "Waiting":
-        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже. " \
+               "\n\n<em>Если вы не отправили нужную сумму, пожалуйста посмотрите Детали транзакции.</em>"
         if language[4] == "EN":
             text = "We need a little more time for verification. Please try again later"
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
     if status == "Unpaid":
-        text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n" \
-               'Пожалуйста, напишите цифрами сумму депозита в USDT, которую хотели бы внести. \n\n' \
-               'Минимальный вклад 500 USDT\n\n' \
-               'Комиссия - 0,5%'
-        if language[4] == "EN":
-            text = "You missed the payment deadline. The procedure needs to be repeated.\n\n" \
-                   "Please write the deposit amount in USDT as a number.\n\n" \
-                   "Minimum deposit is 500 USDT.\n\n" \
-                   "Commission fee - 0.5%."
+        text = "Вы не успели оплатить!" \
+               "\n\n<b>🆙 Введите сумму пополнения в USDT цифрами сообщением!</b>" \
+               "\n\n💵 Минимальная сумма - <b>500 USDT</b>" \
+               "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
+               "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
+        if language[4] == 'EN':
+            text = "🆙 Enter the replenishment amount in USDT using digits.\n\n" \
+                   "💵Minimum amount - 500 USDT" \
+                   "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
+                   "The commission amount is calculated based on the network used for the deposit."
         await state.set_state(SmallUser.amount.state)
         await call.message.answer(text)
 
     if status == "Successful":
-        text = "Оплата прошла успешно."
+        text = "🥳 Оплата прошла успешно! " \
+               "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
         if language[4] == "EN":
             text = "Payment was successful."
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
@@ -245,7 +230,8 @@ async def smalluser_check(call: types.CallbackQuery, row):
         await registration_500(call)
 
     if status == "Successful":
-        text = "Оплата прошла успешно."
+        text = "🥳 Оплата прошла успешно! " \
+               "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
         if language[4] == "EN":
             text = "Payment was successful."
 
@@ -352,8 +338,8 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(deposit_500, lambda c: c.data in ['from_500', 'from_1000'])
     dp.register_callback_query_handler(transaction_detail, text="transaction_detail", state="*")
     dp.register_message_handler(smalluser_step1, state=SmallUser.amount)
+    dp.register_callback_query_handler(back_menu, state=SmallUser.amount)
     dp.register_callback_query_handler(smalluser_hold, state=SmallUser.hold)
     dp.register_callback_query_handler(smalluser_step2, state=SmallUser.currency)
     dp.register_callback_query_handler(smalluser_finish, state=SmallUser.finish)
     dp.register_callback_query_handler(smalluser_check_2, text="transaction_status")
-    dp.register_callback_query_handler(transiction_detail, text="transaction_detail", state="*")

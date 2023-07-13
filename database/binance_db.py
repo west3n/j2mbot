@@ -15,6 +15,17 @@ async def get_binance_keys(tg_id):
         db.close()
 
 
+async def get_binance_ac(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance_binance, balance_j2m, deposit FROM app_binance WHERE tg_id_id=%s",
+                    (tg_id, ))
+        return cur.fetchone()
+    finally:
+        cur.close()
+        db.close()
+
+
 async def save_binance_keys(tg_id, api_key, api_secret):
     db, cur = connect()
     try:
@@ -99,3 +110,13 @@ async def get_weekly_profit(date):
         cur.close()
         db.close()
 
+
+async def update_balance(tg_id, balance_binance, balance_j2m):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_binance SET balance_binance = %s, balance_j2m = %s WHERE tg_id_id=%s",
+                    (balance_binance, balance_j2m, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()

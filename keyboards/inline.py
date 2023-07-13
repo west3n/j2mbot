@@ -53,6 +53,15 @@ def back_button(lang) -> InlineKeyboardMarkup:
     ])
     return kb
 
+def back_menu(lang) -> InlineKeyboardMarkup:
+    button = 'Назад'
+    if lang == "EN":
+        button = "Back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f'◀️ {button}', callback_data='back')]
+    ])
+    return kb
+
 
 def language() -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -328,8 +337,8 @@ def transaction_status(lang) -> InlineKeyboardMarkup:
         button_2 = "Transaction Detail"
         button3 = "Cancel"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"🔄 {button}", callback_data="transaction_status")],
-        [InlineKeyboardButton(f"🧩 {button_2}", callback_data="transaction_detail")],
+        [InlineKeyboardButton(f"🔄 {button}", callback_data="transaction_status"),
+        InlineKeyboardButton(f"🧩 {button_2}", callback_data="transaction_detail")],
         [InlineKeyboardButton(f"❌ {button3}", callback_data="cancel_payment")]
     ])
     return kb

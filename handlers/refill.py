@@ -369,7 +369,7 @@ async def biguser_registration_step_2(call: types.CallbackQuery, state: FSMConte
         await call.bot.send_chat_action(call.message.chat.id, "upload_document")
         await asyncio.sleep(2)
         await call.message.answer_document(contract)
-        await documents.add_approve_docs(call.from_user.id)
+        await documents.update_kyc(call.from_user.id)
         await call.bot.send_chat_action(call.message.chat.id, "typing")
         await asyncio.sleep(2)
         await call.message.answer(text, reply_markup=inline.emailing_documents(language[4]))
@@ -506,8 +506,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
             if int(msg.text) >= 15000:
                 async with state.proxy() as data:
                     data['count'] = msg.text
-                if balance_binance >= 15000:
-                    await balance.insert_deposit(msg.from_id, int(msg.text))
+                if balance_binance >= 15000 and balance_binance > int(msg.text):
+                    await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                     deposit = await balance.get_balance(msg.from_id)
                     await users.set_status("15000", msg.from_id)
                     await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
@@ -550,7 +550,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                 deposit = await balance.get_balance(msg.from_id)
                 if int(deposit[1]) + int(msg.text) >= 15000:
                     if int(balance_binance) >= int(msg.text):
-                        await balance.insert_deposit(msg.from_id, int(msg.text))
+                        await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                         await users.set_status("15000", msg.from_id)
                         await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
                         text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
@@ -613,7 +613,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                     async with state.proxy() as data:
                         data['count'] = msg.text
                     if balance_binance[0] >= 15000:
-                        await balance.insert_deposit(msg.from_id, int(msg.text))
+                        await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                         deposit = await balance.get_balance(msg.from_id)
                         await users.set_status("15000", msg.from_id)
                         await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
@@ -656,7 +656,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                     deposit = await balance.get_balance(msg.from_id)
                     if int(deposit[1]) + int(msg.text) >= 15000:
                         if int(balance_binance[0]) >= int(msg.text):
-                            await balance.insert_deposit(msg.from_id, int(msg.text))
+                            await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                             await users.set_status("15000", msg.from_id)
                             await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
                             text = f"Ваш Баланс Binance: {balance_binance[0]}\n\n" \
@@ -728,12 +728,7 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(biguser_registration, text="15000")
     dp.register_callback_query_handler(biguser_registration_step_1, state=BigUser.binance)
     dp.register_callback_query_handler(biguser_registration_step_2, state=BigUser.kyc)
-    # dp.register_message_handler(biguser_registration_step3, content_types=['text', 'video', 'photo', 'document'],
-    #                             state=BigUser.contract)
     dp.register_message_handler(binanceapi_step1_msg, state=BigUser.finish)
-    # dp.register_message_handler(binanceapi_step2, state=BinanceAPI.alias)
-    # dp.register_message_handler(binance_step3, state=BinanceAPI.api_key)
-    # dp.register_message_handler(binance_step4, state=BinanceAPI.api_secret)
     dp.register_message_handler(count_refill, state=Refill.count)
     dp.register_callback_query_handler(new_docs_2, state=NewDoc.docs)
     dp.register_callback_query_handler(new_docs_3, state=NewDoc.docs_2)

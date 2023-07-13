@@ -85,187 +85,191 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
     text = 'Вывод средств пока не доступен, функция находится в разработке!\n\n' \
            'Доступ откроется в ближайшем обновлении 18.07.2023'
     language = await users.user_data(call.from_user.id)
-    withdrawal_balance = await balance.get_my_balance(call.from_user.id)
-    withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
-    wallet = await users.user_data(call.from_user.id)
-    first_trans = await balance.get_first_transaction(call.from_user.id)
-    date_first = first_trans[2]
-    status = await users.check_status(call.from_user.id)
-    hold = await balance.get_hold(call.from_user.id)
-    bal_user, deposit, withdraw = await balance.get_balance(call.from_user.id)
-    try:
-        hold = hold[0]
-    except TypeError:
-        hold = None
-    try:
-        status = status[0]
-    except TypeError:
-        status = None
-    if status:
-        if status == "1000":
-            if first_trans:
-                now = datetime.datetime.now()
-                if now.tzinfo is None:
-                    now = now.replace(tzinfo=datetime.timezone.utc)
-                if hold:
-                    if date_first + datetime.timedelta(days=int(hold)) <= now:
-                        difference = date_first - now
-                        if difference.total_seconds() >= 14 * 24 * 60 * 60:
-                            text = f"Первое пополнение было выполнено {date_first}\n\n" \
-                                   f"Доступная дата вывода: {date_first + datetime.timedelta(days=14)}"
-                            if language[4] == 'EN':
-                                text = f"The first top-up was made on {date_first}\n\n"
-                                f"Available withdrawal date: {date_first + datetime.timedelta(days=14)}"
-                            await call.message.delete()
-                            await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
-                        elif not wallet[6]:
-                            text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
-                                   "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
-                                   "Вы всегда сможете изменить его в меню 'Вывод'."
-                            if language[4] == 'EN':
-                                text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
-                                "You can always change it in the 'Withdrawal' section."
-                            
-                            await call.message.answer(text)
-                            await NewWallet.wallet.set()
-                        elif withdrawal_balance == 0:
-                            await state.set_state(NewWallet.amount.state)
-                            text = f"<b>Баланс, доступный к выводу:</b> " \
-                                   f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-                            if language[4] == 'EN':
-                                text = f"<b>The balance available for withdrawal:</b> " \
-                                       f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-                            
-                            await state.finish()
-                            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-                        else:
-                            text = f"Баланс, доступный к выводу: {withdrawal_balance} USDT" \
-                                   f"\nCумма минимального вывода 50 USDT" \
-                                   f"\n\nНапишите сумму USDT, которую хотите вывести:"
-                            if language[4] == 'EN':
-                                text = f"The balance available for withdrawal: {withdrawal_balance} USDT" \
-                                       f"\nMinimum withdrawal amount is 50 USDT." \
-                                       f"\n\nPlease write the amount of USDT you want to withdraw:"
-
-                            await call.message.answer(text)
-                            await state.set_state(NewWallet.amount.state)
-                    else:
-                        if not wallet[6]:
-                            text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
-                                   "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
-                                   "Вы всегда сможете изменить его в меню 'Вывод'."
-                            if language[4] == 'EN':
-                                text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
-                                "You can always change it in the 'Withdrawal' section."
-
-                            await call.message.answer(text)
-                            await NewWallet.wallet.set()
-                        else:
-                            text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance is not None else 0} USDT\n\n" \
-                                   f"Ближайшая дата возможного вывода: {date_first + datetime.timedelta(days=int(hold))}"
-                            if language[4] == 'EN':
-                                text = f"<b>The balance available for withdrawal:</b> " \
-                                       f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-
-                            await state.finish()
-                            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-                else:
-                    text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit} USDT" \
-                           f"Доступные активы к выводу: {withdrawal_balance} USDT" \
-                           f"Заявки на вывод, ожидающие обработки: {withdraw}" \
-                           f"Минимальная сумма вывода: 50 USDT" \
-                           f"Ближайшая дата доступная к выводу: {date_first + datetime.timedelta(days=int(hold))}" \
-                           f"Ваш номер кошелька для вывода: {wallet[6]}" \
-                           f"Если это верный номер кошелька, подтвердите вывод на него." \
-                           f"Если Нужно вывести активы на другой кошелек, измените его адрес."
-                    if language[4] == 'EN':
-                        text = f"<b>The balance available for withdrawal:</b> " \
-                               f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-
-                    await state.finish()
-                    await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-        elif status == "500":
-            if first_trans:
-                now = datetime.datetime.now()
-                if now.tzinfo is None:
-                    now = now.replace(tzinfo=datetime.timezone.utc)
-                date_first = first_trans[2]
-                withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
-                if withdrawal_balance > 1000:
-                        difference = date_first - now
-                        if difference.total_seconds() >= 14 * 24 * 60 * 60:
-                            text = f"Первое пополнение было выполнено {date_first}\n\n" \
-                                   f"Доступная дата вывода: {date_first + datetime.timedelta(days=14)}"
-                            if language[4] == 'EN':
-                                text = f"The first top-up was made on {date_first}\n\n"
-                                f"Available withdrawal date: {date_first + datetime.timedelta(days=14)}"
-                            await call.message.delete()
-                            await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
-                        elif not wallet[6]:
-                            text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
-                                   "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
-                                   "Вы всегда сможете изменить его в меню 'Вывод'."
-                            if language[4] == 'EN':
-                                text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
-                                "You can always change it in the 'Withdrawal' section."
-
-                            await call.message.answer(text)
-                            await NewWallet.wallet.set()
-                        elif withdrawal_balance is None or 0:
-                            await state.set_state(NewWallet.amount.state)
-                            text = f"<b>Баланс, доступный к выводу:</b> " \
-                                   f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-                            if language[4] == 'EN':
-                                text = f"<b>The balance available for withdrawal:</b> " \
-                                       f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-
-                            await state.finish()
-                            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-                        else:
-                            text = f"Баланс, доступный к выводу: {withdrawal_balance} USDT" \
-                                   f"\nCумма минимального вывода 50 USDT" \
-                                   f"\n\nНапишите сумму USDT, которую хотите вывести:"
-                            if language[4] == 'EN':
-                                text = f"The balance available for withdrawal: {withdrawal_balance} USDT" \
-                                       f"\nMinimum withdrawal amount is 50 USDT." \
-                                       f"\n\nPlease write the amount of USDT you want to withdraw:"
-
-                            await call.message.answer(text)
-                            await state.set_state(NewWallet.amount.state)
-                else:
-                    if not wallet[6]:
-                        text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
-                               "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
-                               "Вы всегда сможете изменить его в меню 'Вывод'."
-                        if language[4] == 'EN':
-                            text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
-                            "You can always change it in the 'Withdrawal' section."
-
-                        await call.message.answer(text)
-                        await NewWallet.wallet.set()
-                    else:
-                        text = f"Вывод для вашего статуса доступен при балансе более 1000 USDT"
-                        if language[4] == 'EN':
-                            text = f"Withdrawal is available for your status with a balance of over 1000 USDT."
-
-                        await state.finish()
-                        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
-    else:
-        text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit } USDT" \
-               f"Доступные активы к выводу: {withdrawal_balance} USDT" \
-               f"Заявки на вывод, ожидающие обработки: {withdraw}" \
-               f"Минимальная сумма вывода: 50 USDT" \
-               f"Ближайшая дата доступная к выводу: {date_first + datetime.timedelta(days=int(hold))}" \
-               f"Ваш номер кошелька для вывода: {wallet[6]}" \
-               f"Если это верный номер кошелька, подтвердите вывод на него." \
-               f"Если Нужно вывести активы на другой кошелек, измените его адрес."
-        if language[4] == 'EN':
-            text = f"<b>The balance available for withdrawal:</b> " \
-                   f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
-
-        await state.finish()
-        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    if language[4] == "EN":
+        text = "Withdrawal not available, function is under development!" \
+               "\n\nAccess will be taken in nearest update in 18.07.2023"
+    await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    # withdrawal_balance = await balance.get_my_balance(call.from_user.id)
+    # withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
+    # wallet = await users.user_data(call.from_user.id)
+    # first_trans = await balance.get_first_transaction(call.from_user.id)
+    # date_first = first_trans[2]
+    # status = await users.check_status(call.from_user.id)
+    # hold = await balance.get_hold(call.from_user.id)
+    # bal_user, deposit, withdraw = await balance.get_balance(call.from_user.id)
+    # try:
+    #     hold = hold[0]
+    # except TypeError:
+    #     hold = None
+    # try:
+    #     status = status[0]
+    # except TypeError:
+    #     status = None
+    # if status:
+    #     if status == "1000":
+    #         if first_trans:
+    #             now = datetime.datetime.now()
+    #             if now.tzinfo is None:
+    #                 now = now.replace(tzinfo=datetime.timezone.utc)
+    #             if hold:
+    #                 if date_first + datetime.timedelta(days=int(hold)) <= now:
+    #                     difference = date_first - now
+    #                     if difference.total_seconds() >= 14 * 24 * 60 * 60:
+    #                         text = f"Первое пополнение было выполнено {date_first}\n\n" \
+    #                                f"Доступная дата вывода: {date_first + datetime.timedelta(days=14)}"
+    #                         if language[4] == 'EN':
+    #                             text = f"The first top-up was made on {date_first}\n\n"
+    #                             f"Available withdrawal date: {date_first + datetime.timedelta(days=14)}"
+    #                         await call.message.delete()
+    #                         await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
+    #                     elif not wallet[6]:
+    #                         text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
+    #                                "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
+    #                                "Вы всегда сможете изменить его в меню 'Вывод'."
+    #                         if language[4] == 'EN':
+    #                             text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
+    #                             "You can always change it in the 'Withdrawal' section."
+    #
+    #                         await call.message.answer(text)
+    #                         await NewWallet.wallet.set()
+    #                     elif withdrawal_balance == 0:
+    #                         await state.set_state(NewWallet.amount.state)
+    #                         text = f"<b>Баланс, доступный к выводу:</b> " \
+    #                                f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #                         if language[4] == 'EN':
+    #                             text = f"<b>The balance available for withdrawal:</b> " \
+    #                                    f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #
+    #                         await state.finish()
+    #                         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    #                     else:
+    #                         text = f"Баланс, доступный к выводу: {withdrawal_balance} USDT" \
+    #                                f"\nCумма минимального вывода 50 USDT" \
+    #                                f"\n\nНапишите сумму USDT, которую хотите вывести:"
+    #                         if language[4] == 'EN':
+    #                             text = f"The balance available for withdrawal: {withdrawal_balance} USDT" \
+    #                                    f"\nMinimum withdrawal amount is 50 USDT." \
+    #                                    f"\n\nPlease write the amount of USDT you want to withdraw:"
+    #
+    #                         await call.message.answer(text)
+    #                         await state.set_state(NewWallet.amount.state)
+    #                 else:
+    #                     if not wallet[6]:
+    #                         text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
+    #                                "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
+    #                                "Вы всегда сможете изменить его в меню 'Вывод'."
+    #                         if language[4] == 'EN':
+    #                             text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
+    #                             "You can always change it in the 'Withdrawal' section."
+    #
+    #                         await call.message.answer(text)
+    #                         await NewWallet.wallet.set()
+    #                     else:
+    #                         text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance is not None else 0} USDT\n\n" \
+    #                                f"Ближайшая дата возможного вывода: {date_first + datetime.timedelta(days=int(hold))}"
+    #                         if language[4] == 'EN':
+    #                             text = f"<b>The balance available for withdrawal:</b> " \
+    #                                    f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #
+    #                         await state.finish()
+    #                         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    #             else:
+    #                 text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit} USDT" \
+    #                        f"Доступные активы к выводу: {withdrawal_balance} USDT" \
+    #                        f"Заявки на вывод, ожидающие обработки: {withdraw}" \
+    #                        f"Минимальная сумма вывода: 50 USDT" \
+    #                        f"Ближайшая дата доступная к выводу: {date_first + datetime.timedelta(days=int(hold))}" \
+    #                        f"Ваш номер кошелька для вывода: {wallet[6]}" \
+    #                        f"Если это верный номер кошелька, подтвердите вывод на него." \
+    #                        f"Если Нужно вывести активы на другой кошелек, измените его адрес."
+    #                 if language[4] == 'EN':
+    #                     text = f"<b>The balance available for withdrawal:</b> " \
+    #                            f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #
+    #                 await state.finish()
+    #                 await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    #     elif status == "500":
+    #         if first_trans:
+    #             now = datetime.datetime.now()
+    #             if now.tzinfo is None:
+    #                 now = now.replace(tzinfo=datetime.timezone.utc)
+    #             date_first = first_trans[2]
+    #             withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0
+    #             if withdrawal_balance > 1000:
+    #                     difference = date_first - now
+    #                     if difference.total_seconds() >= 14 * 24 * 60 * 60:
+    #                         text = f"Первое пополнение было выполнено {date_first}\n\n" \
+    #                                f"Доступная дата вывода: {date_first + datetime.timedelta(days=14)}"
+    #                         if language[4] == 'EN':
+    #                             text = f"The first top-up was made on {date_first}\n\n"
+    #                             f"Available withdrawal date: {date_first + datetime.timedelta(days=14)}"
+    #                         await call.message.delete()
+    #                         await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
+    #                     elif not wallet[6]:
+    #                         text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
+    #                                "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
+    #                                "Вы всегда сможете изменить его в меню 'Вывод'."
+    #                         if language[4] == 'EN':
+    #                             text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
+    #                             "You can always change it in the 'Withdrawal' section."
+    #
+    #                         await call.message.answer(text)
+    #                         await NewWallet.wallet.set()
+    #                     elif withdrawal_balance is None or 0:
+    #                         await state.set_state(NewWallet.amount.state)
+    #                         text = f"<b>Баланс, доступный к выводу:</b> " \
+    #                                f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #                         if language[4] == 'EN':
+    #                             text = f"<b>The balance available for withdrawal:</b> " \
+    #                                    f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #
+    #                         await state.finish()
+    #                         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    #                     else:
+    #                         text = f"Баланс, доступный к выводу: {withdrawal_balance} USDT" \
+    #                                f"\nCумма минимального вывода 50 USDT" \
+    #                                f"\n\nНапишите сумму USDT, которую хотите вывести:"
+    #                         if language[4] == 'EN':
+    #                             text = f"The balance available for withdrawal: {withdrawal_balance} USDT" \
+    #                                    f"\nMinimum withdrawal amount is 50 USDT." \
+    #                                    f"\n\nPlease write the amount of USDT you want to withdraw:"
+    #
+    #                         await call.message.answer(text)
+    #                         await state.set_state(NewWallet.amount.state)
+    #             else:
+    #                 if not wallet[6]:
+    #                     text = "Для того, чтобы вывести средства, нужно добавить адрес кошелька для вывода.\n" \
+    #                            "Ответным сообщением пришлите адрес кошелька <b>TRC-20 USDT</b>\n\n" \
+    #                            "Вы всегда сможете изменить его в меню 'Вывод'."
+    #                     if language[4] == 'EN':
+    #                         text = "To withdraw funds, you need to add a withdrawal wallet address.\n\n"
+    #                         "You can always change it in the 'Withdrawal' section."
+    #
+    #                     await call.message.answer(text)
+    #                     await NewWallet.wallet.set()
+    #                 else:
+    #                     text = f"Вывод для вашего статуса доступен при балансе более 1000 USDT"
+    #                     if language[4] == 'EN':
+    #                         text = f"Withdrawal is available for your status with a balance of over 1000 USDT."
+    #
+    #                     await state.finish()
+    #                     await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    #
+    # else:
+    #     text = f"Ваш суммарный баланс:{int(withdrawal_balance) + deposit } USDT" \
+    #            f"Доступные активы к выводу: {withdrawal_balance} USDT" \
+    #            f"Заявки на вывод, ожидающие обработки: {withdraw}" \
+    #            f"Минимальная сумма вывода: 50 USDT" \
+    #            f"Ближайшая дата доступная к выводу: {date_first + datetime.timedelta(days=int(hold))}" \
+    #            f"Ваш номер кошелька для вывода: {wallet[6]}" \
+    #            f"Если это верный номер кошелька, подтвердите вывод на него." \
+    #            f"Если Нужно вывести активы на другой кошелек, измените его адрес."
+    #     if language[4] == 'EN':
+    #         text = f"<b>The balance available for withdrawal:</b> " \
+    #                f"{withdrawal_balance if withdrawal_balance is not None else 0} USDT"
+    #
+    #     await state.finish()
+    #     await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def add_new_wallet(msg: types.Message, state: FSMContext):
