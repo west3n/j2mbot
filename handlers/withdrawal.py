@@ -1,5 +1,7 @@
 import datetime
 import decouple
+from aiogram.utils.exceptions import MessageToDeleteNotFound
+
 import handlers.commands
 
 from aiogram import Dispatcher, types
@@ -78,9 +80,10 @@ async def change_percentage_step2(call: types.CallbackQuery, state: FSMContext):
 async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
     try:
         await call.message.delete()
-    except:
+    except MessageToDeleteNotFound:
         pass
-
+    text = 'Вывод средств пока не доступен, функция находится в разработке!\n\n' \
+           'Доступ откроется в ближайшем обновлении 18.07.2023'
     language = await users.user_data(call.from_user.id)
     withdrawal_balance = await balance.get_my_balance(call.from_user.id)
     withdrawal_balance = withdrawal_balance if withdrawal_balance is not None else 0

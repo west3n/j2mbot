@@ -98,3 +98,4 @@ async def get_weekly_profit(date):
     finally:
         cur.close()
         db.close()
+
