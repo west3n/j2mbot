@@ -543,3 +543,17 @@ def tax_fee() -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💸 {button}", callback_data="tax_fee")]])
     return kb
+
+
+def withdrawal_account(lang) -> InlineKeyboardMarkup:
+    first_button, second_button, back = "Вывод с личного аккаунта (от 15 000 USDT)", \
+        "Вывод с коллективного аккаунта (от 500 USDT)", "Назад"
+    if lang == "EN":
+        first_button, second_button, back = "Withdrawal from personal account (starting from 15,000 USDT)", \
+            "Withdrawal from collective account (starting from 500 USDT)", "Go back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💰 {first_button}", callback_data="withdrawal_15000")],
+        [InlineKeyboardButton(f"💵 {second_button}", callback_data="withdrawal_500")],
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='withdrawal')]
+    ])
+    return kb

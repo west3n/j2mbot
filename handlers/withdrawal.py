@@ -272,30 +272,6 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
     #     await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
-async def add_new_wallet(msg: types.Message, state: FSMContext):
-    language = await users.user_data(msg.from_user.id)
-    async with state.proxy() as data:
-        data['wallet'] = msg.text
-    await users.save_wallet(data.get('wallet'), msg.from_id)
-    text = 'Ваш номер кошелька добавлен. Вы хотите блаблабла?'
-    if language[4] == 'EN':
-        text = "Your wallet number has been added. Do you want to blah blah blah?"
-    await msg.answer(text, reply_markup=inline.withdrawal_confirmation(language[4]))
-
-
-async def insert_amount(call: types.CallbackQuery, state: FSMContext):
-    language = await users.user_data(call.from_user.id)
-    if call.data == 'withdrawal_confirmation':
-        await state.set_state(NewWallet.amount.state)
-        text = "Напишите сумму USDT, которую хотите вывести:"
-        if language[4] == 'EN':
-            text = "Please indicate the amount of USDT you wish to withdraw:"
-        await call.message.edit_text(text)
-    else:
-        await handlers.commands.bot_start_call(call)
-        await state.finish()
-
-
 async def handle_amount(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     if not msg.text.isdigit():
@@ -305,15 +281,29 @@ async def handle_amount(msg: types.Message, state: FSMContext):
         await msg.delete()
         await msg.answer(text)
     else:
+        personal_balance_user = await binance_db.get_binance_ac(msg.from_user.id)
+        collective_balance_user = await balance.get_balance(msg.from_user.id)
         async with state.proxy() as data:
             data['amount'] = msg.text
-        wallet = await users.user_data(msg.from_user.id)
-        text = f"Вы заказываете вывод {data.get('amount')} USDT на TRC-20 кошелёк {wallet[6]}\n\n" \
-               f" блаблабла"
-        if language[4] == "EN":
-            text = f"You are requesting a withdrawal of {data.get('amount')} USDT to TRC-20 wallet {wallet[6]}.\n\n" \
-                   f"Blah blah blah."
-        await msg.answer(text, reply_markup=inline.finish_withdrawal(language[4]))
+            if data.get("status") == "Личный":
+                user_balance = personal_balance_user[1]
+            else:
+                user_balance = collective_balance_user[0]
+            if user_balance >= int(msg.text):
+                wallet = await users.user_data(msg.from_user.id)
+                text = f"Вы заказываете вывод {data.get('amount')} USDT на TRC-20 кошелёк {wallet[6]}"
+                if language[4] == "EN":
+                    text = f"You are requesting a withdrawal of {data.get('amount')} USDT to TRC-20 wallet {wallet[6]}"
+                await msg.answer(text, reply_markup=inline.finish_withdrawal(language[4]))
+            else:
+                text = f'❗️<b>Сумма, доступная к выводу:</b> {user_balance} USDT!\n\n' \
+                       '💳 Напишите сумму еще раз, минимальная сумма вывода - 50 USDT'
+                if language[4] == 'EN':
+                    text = f'❗️<b>Available withdrawal amount:</b> {user_balance} USDT!\n\n' \
+                           '💳 Please enter the amount again, the minimum withdrawal amount is 50 USDT.'
+                del_msg = await msg.answer(text)
+                await state.update_data({"del_msg": del_msg.message_id})
+                
 
 
 async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
@@ -325,12 +315,23 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
         async with state.proxy() as data:
             await output.insert_new_output(call.from_user.id, data.get('amount'), wallet[6])
             await balance.save_withdrawal_amount(data.get('amount'), call.from_user.id)
-            text = f'Создан запрос на вывод {data.get("amount")} USDT TRC-20 (кошелёк {wallet[6]}' \
-                   f'\n\nМы выгружаем блаблабла'
+            text = f'Ваша заявка на сумму: {data.get("amount")} USDT принята' \
+                   '\nОтслеживать статус заявки Вы можете в меню "История выводов"'
             if language[4] == 'EN':
-                text = f"A withdrawal request for {data.get('amount')} USDT TRC-20 (wallet {wallet[6]}) " \
-                       f"has been created.\n\nWe are processing the blah blah blah."
+                text = f'Your withdrawal request for the amount of: {data.get("amount")} USDT has been accepted.' \
+                       '\nYou can track the status of your request in the "Withdrawal History" menu.'
         await call.message.answer(text, reply_markup=inline.back_button(language[4]))
+        wallet = await users.user_data(call.from_user.id)
+        username = call.from_user.username
+        await call.bot.send_message(
+            decouple.config("GROUP_ID"),
+            f'Пользователь {"@" + username if username is not None else call.from_user.id} '
+            f'отправил заявку на вывод средств:\n<b>Cумма:</b> {data.get("amount")}\n<b>Кошелёк TRC-20:</b> {wallet[6]}'
+            f'\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/output/'
+            f'\n\nИнструкция: 1. Подтвердите транзакцию и добавьте хэш транзакции!'
+            f'\n2. Создайте успешный в вывод во вкладке "Истории пополнения и вывода" -> '
+            f'\n3. Измените баланс юзера во вкладке "Коллективный аккаунт - Балансы" и '
+            f'уберите Зарезервированный баланс (0,0)')
         await state.finish()
     else:
         text = 'Вы отменили операцию!'
@@ -340,7 +341,6 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
         await handlers.commands.bot_start_call(call)
         await state.finish()
 
-
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(withdraw_main_menu, text='withdrawal')
     dp.register_callback_query_handler(withdrawal_handler, text='withdrawal_funds')
@@ -348,7 +348,5 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(change_percentage, text='change_percentage')
     dp.register_callback_query_handler(change_percentage_step2, state=ChangePercentage.percentage)
     dp.register_message_handler(change_wallet_step2, state=ChangeWallet.wallet)
-    dp.register_message_handler(add_new_wallet, state=NewWallet.wallet)
-    dp.register_callback_query_handler(insert_amount, state=NewWallet.wallet)
     dp.register_message_handler(handle_amount, state=NewWallet.amount)
     dp.register_callback_query_handler(finish_withdrawal, state=NewWallet.amount)

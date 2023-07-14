@@ -65,6 +65,7 @@ async def deposit_500(call: types.CallbackQuery):
 
 
 async def back_menu(call: types.CallbackQuery, state: FSMContext):
+    await state.finish()
     language = await users.user_data(call.from_user.id)
     text = 'Выберите один из вариантов:'
     if language[4] == "EN":
