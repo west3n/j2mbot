@@ -46,7 +46,7 @@ async def balance_handler(call: types.CallbackQuery):
         photo = decouple.config("BANNER_BALANCE_EN")
     await call.message.delete()
     try:
-        if user_balance[3]:
+        if user_balance[4]:
             text_x = f"Ожидайте, бот создает ваш кошелек..."
             text_x2 = f"Ваш кошелек успешно создан!\n\n" \
                       f"<b>Важно! Сохраните это сообщение в виде скриншота или запишите в заметки.</b>\n" \

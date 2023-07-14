@@ -58,9 +58,12 @@ async def structure_handler(call: types.CallbackQuery):
         else:
             ref_tg = await referral.get_id_from_line_1_id(call.from_user.id)
             ref_balance = await balance.get_balance_status(call.from_user.id)
+
             try:
                 ref_balance = ref_balance[5]
-            except:
+                if "." in ref_balance:
+                    ref_balance = ref_balance.replace(".", ",")
+            except TypeError:
                 ref_balance = 0
 
             text_x = ""

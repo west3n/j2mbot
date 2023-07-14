@@ -16,7 +16,7 @@ async def get_balance(tg_id):
                         "VALUES (%s, 0, 0, 0, 0) RETURNING id", (tg_id,))
             db.commit()
             result = cur.fetchone()[0]
-            return 0, 0, 0, result
+            return 0, 0, 0, result, 0
     finally:
         cur.close()
         db.close()
