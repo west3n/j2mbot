@@ -306,7 +306,6 @@ async def handle_amount(msg: types.Message, state: FSMContext):
                 await state.update_data({"del_msg": del_msg.message_id})
 
 
-
 async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     await call.message.delete()
