@@ -57,12 +57,11 @@ async def structure_handler(call: types.CallbackQuery):
             await UserForm.accept.set()
         else:
             ref_tg = await referral.get_id_from_line_1_id(call.from_user.id)
-            ref_balance = await balance.get_balance_status(call.from_user.id)
-
+            ref_balance = await balance.get_balance(call.from_user.id)
             try:
-                ref_balance = ref_balance[5]
-                if "." in ref_balance:
-                    ref_balance = ref_balance.replace(".", ",")
+                ref_balance = ref_balance[3]
+                if "." in str(ref_balance):
+                    ref_balance = str(ref_balance).replace(".", ",")
             except TypeError:
                 ref_balance = 0
 
@@ -86,27 +85,27 @@ async def structure_handler(call: types.CallbackQuery):
 
             if ref_tg:
                 ref_name = await users.get_tg_username(ref_tg[0])
-                text_x = f"\n*Вас пригласил:* _@{ref_name}_"
-                text_x_e = f"\n*You were invited by:* _@{ref_name}_"
+                text_x = f"\n👨‍👦*Вас пригласил:* _@{ref_name}_"
+                text_x_e = f"\n👨‍👦 *You were invited by:* _@{ref_name}_"
 
-            text = f"*Ваш ID:* _{call.from_user.id}_" \
+            text = f"🆔 *Ваш ID:* `{call.from_user.id}`" \
                    f"{text_x}" \
-                   f"\n*Ваша партнёрская ссылка: \(нажмите на неё, чтобы скопировать\)*" \
+                   f"\n🔗 *Ваша партнёрская ссылка: \(нажмите на неё, чтобы скопировать\)*" \
                    f"\n`https://t.me/DAO_J2M_bot?start={call.from_user.id}`" \
                    f"\n\n*Всего заработано за весь период:* _{ref_balance} USDT_" \
                    f"\n\n╔ *1 Линия*  Количество человек: _{ref_line_1}_" \
-                   f"\n╟ Оборот: _0 USDT_" \
+                   f"\n╟ Оборот: в разработке" \
                    f"\n╟ *2 Линия*  Количество человек: _{ref_line_2}_" \
-                   f"\n╟ Оборот: _0 USDT_" \
+                   f"\n╟ Оборот: в разработке" \
                    f"\n╟ *3 Линия*  Количество человек: _{ref_line_3}_" \
-                   f"\n╚ Оборот: _0 USDT_" \
+                   f"\n╚ Оборот: в разработке" \
                    f"\n\n_❔ Подробно о том, как начисляются бонусы можно узнать в разделе 'Информация'_"
 
             if language[4] == 'EN':
                 photo = decouple.config("BANNER_STRUCTURE_EN")
-                text = f"*Your ID:* _{call.from_user.id}_" \
+                text = f"🆔 *Your ID:* _{call.from_user.id}_" \
                        f"{text_x_e}" \
-                       f"\n*Your referral link: \(press it for copying\)* " \
+                       f"\n🔗 *Your referral link: \(press it for copying\)* " \
                        f"\n`https://t.me/J2M_devbot?start={call.from_user.id}`" \
                        f"\n\n*Total earned for the entire period:* _{ref_balance} USDT_" \
                        f"\n\n╔ *1 Line* Number of people: _{ref_line_1}_ " \
@@ -140,10 +139,12 @@ async def structure_handler_msg(msg: types.Message):
     await msg.bot.send_chat_action(msg.chat.id, "typing")
     language = await users.user_data(msg.from_user.id)
     ref_tg = await referral.get_id_from_line_1_id(msg.from_user.id)
-    ref_balance = await balance.get_balance_status(msg.from_user.id)
+    ref_balance = await balance.get_balance(msg.from_user.id)
     try:
-        ref_balance = ref_balance[5]
-    except:
+        ref_balance = ref_balance[3]
+        if "." in str(ref_balance):
+            ref_balance = str(ref_balance).replace(".", ",")
+    except TypeError:
         ref_balance = 0
 
     text_x = ""
@@ -166,20 +167,20 @@ async def structure_handler_msg(msg: types.Message):
 
     if ref_tg:
         ref_name = await users.get_tg_username(ref_tg[0])
-        text_x = f"\n*Вас пригласил:* _@{ref_name}_"
-        text_x_e = f"\n*You were invited by:* _@{ref_name}_"
+        text_x = f"\n👨‍👦*Вас пригласил:* _@{ref_name}_"
+        text_x_e = f"\n👨‍👦 *You were invited by:* _@{ref_name}_"
 
-    text = f"*Ваш ID:* _{msg.from_user.id}_" \
+    text = f"🆔 *Ваш ID:* `{msg.from_user.id}" \
            f"{text_x}" \
-           f"\n*Ваша партнёрская ссылка: \(нажмите на неё, чтобы скопировать\)*" \
+           f"\n🔗 *Ваша партнёрская ссылка: \(нажмите на неё, чтобы скопировать\)*" \
            f"\n`https://t.me/DAO_J2M_bot?start={msg.from_user.id}`" \
            f"\n\n*Всего заработано за весь период:* _{ref_balance} USDT_" \
            f"\n\n╔ *1 Линия*  Количество человек: _{ref_line_1}_" \
-           f"\n╟ Оборот: _0 USDT_" \
+           f"\n╟ Оборот: в разработке" \
            f"\n╟ *2 Линия*  Количество человек: _{ref_line_2}_" \
-           f"\n╟ Оборот: _0 USDT_" \
+           f"\n╟ Оборот: в разработке" \
            f"\n╟ *3 Линия*  Количество человек: _{ref_line_3}_" \
-           f"\n╚ Оборот: _0 USDT_" \
+           f"\n╚ Оборот: в разработке" \
            f"\n\n_❔ Подробно о том, как начисляются бонусы можно узнать в разделе 'Информация'_"
 
     if language[4] == 'EN':
