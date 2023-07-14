@@ -367,19 +367,19 @@ def finish_withdrawal(lang) -> InlineKeyboardMarkup:
 
 
 def hold_kb(lang) -> InlineKeyboardMarkup:
-    button, button_2, button_3 = "30 дней", "60 дней", "90 дней"
+    button, button_2, button_3 = "30 дней", "90 дней", "180 дней"
     if lang == "EN":
         button, button_2, button_3 = "30 days", "60 days", "90 days"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"{button}", callback_data="30"),
-         InlineKeyboardButton(f"{button_2}", callback_data="60"),
-         InlineKeyboardButton(f"{button_3}", callback_data="90")]
+         InlineKeyboardButton(f"{button_2}", callback_data="90"),
+         InlineKeyboardButton(f"{button_3}", callback_data="180")]
     ])
     return kb
 
 
 def main_withdraw(lang) -> InlineKeyboardMarkup:
-    button, button_2, button_3, button_4 = "Вывод средств", "Изменить кошелек", \
+    button, button_2, button_3, button_4 = "Вывод средств", "Изменить кошелек для вывода", \
         "Изменить процент реинвестирования", "Вернуться в главное меню"
     if lang == "EN":
         button, button_2, button_3, button_4 = "Withdraw funds", "Change wallet", \
