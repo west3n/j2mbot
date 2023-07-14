@@ -304,7 +304,7 @@ async def handle_amount(msg: types.Message, state: FSMContext):
                            '💳 Please enter the amount again, the minimum withdrawal amount is 50 USDT.'
                 del_msg = await msg.answer(text)
                 await state.update_data({"del_msg": del_msg.message_id})
-                
+
 
 
 async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
