@@ -4,6 +4,7 @@ import decouple
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.utils.exceptions import MessageToDeleteNotFound
 
 from keyboards import inline
 from database import users, referral, balance, structure, nft
@@ -28,10 +29,6 @@ async def structure_handler(call: types.CallbackQuery):
         await call.message.delete()
     except MessageToDeleteNotFound:
         pass
-    # try:
-    #     status = status[0]
-    # except TypeError:
-    #     status = None
     if status:
         await call.bot.send_chat_action(call.message.chat.id, "typing")
         photo = decouple.config("BANNER_STRUCTURE")
@@ -49,10 +46,10 @@ async def structure_handler(call: types.CallbackQuery):
 
             await call.message.answer(text)
             await call.bot.send_chat_action(call.message.chat.id, "upload_document")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             await call.message.answer_document(document)
             await call.bot.send_chat_action(call.message.chat.id, "typing")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             await call.message.answer(text_2, reply_markup=inline.user_terms(language[4]))
             await UserForm.accept.set()
         else:
@@ -94,41 +91,58 @@ async def structure_handler(call: types.CallbackQuery):
                 ref_line_3 = ref_line_3[0]
             except TypeError:
                 ref_line_3 = 0
-
+            special_chars = ['.', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '!', ':']
             if ref_tg:
                 ref_name = await users.get_tg_username(ref_tg[0])
-                text_x = f"\n👨‍👦*Вас пригласил:* _@{ref_name}_"
-                text_x_e = f"\n👨‍👦 *You were invited by:* _@{ref_name}_"
-
+                invitor_data = await structure.get_user_form(ref_tg[0])
+                text_x = f"\n\n‍👦*Вас пригласил:* _@{ref_name}_"
+                if invitor_data:
+                    text_x += f"\n   ↳ _Имя_: {invitor_data[1]}" \
+                              f"\n   ↳ _Социальные сети_: {invitor_data[2]}"
+                    text_x_e += f"\n   ↳ _Name_: {invitor_data[1]}" \
+                                f"\n   ↳ _Social media_: {invitor_data[2]}"
+                text_x_e = f"\n\n👨‍👦 *You were invited by:* _@{ref_name}_"
             text = f"🆔 *Ваш ID:* `{call.from_user.id}`" \
                    f"{text_x}" \
                    f"\n\n🔗 *Ваша партнёрская ссылка:*" \
                    f"\n`https://t.me/DAO_J2M_bot?start={call.from_user.id}`" \
-                   f"\n\n*Всего заработано за весь период:* _{ref_balance} USDT_" \
-                   f"\n\n╔ *1 Линия*  Количество человек: _{ref_line_1}_" \
-                   f"\n╟ Оборот: в разработке" \
-                   f"\n╟ *2 Линия*  Количество человек: _{ref_line_2}_" \
-                   f"\n╟ Оборот: в разработке" \
-                   f"\n╟ *3 Линия*  Количество человек: _{ref_line_3}_" \
-                   f"\n╚ Оборот: в разработке" \
+                   f"\n\n*Партнёрские начисления за весь период:* _{ref_balance} USDT_" \
+                   f"\n\n*1 Линия:*  " \
+                   f"\n ↳ _Количество человек_: _{ref_line_1}_" \
+                   f"\n ↳ _Оборот_: {balance_line_1} USDT" \
+                   f"\n*2 Линия:*  " \
+                   f"\n ↳ _Количество человек_: _{ref_line_2}_" \
+                   f"\n ↳ _Оборот_: {balance_line_2} USDT" \
+                   f"\n*3 Линия:*  " \
+                   f"\n ↳ _Количество человек_: _{ref_line_3}_" \
+                   f"\n ↳ _Оборот_: {balance_line_3} USDT" \
                    f"\n\n_❔ Подробно о том, как начисляются бонусы можно узнать в разделе 'Информация'_"
-
+            for char in special_chars:
+                text = text.replace(char, "\\" + char)
             if language[4] == 'EN':
                 photo = decouple.config("BANNER_STRUCTURE_EN")
-                text = f"🆔 *Your ID:* _{call.from_user.id}_" \
+                text = f"*Your ID:* `{call.from_user.id}`" \
                        f"{text_x_e}" \
-                       f"\n🔗 *Your referral link: \(press it for copying\)* " \
+                       f"\n*Your referral link: (press it for copying)* " \
                        f"\n`https://t.me/J2M_devbot?start={call.from_user.id}`" \
                        f"\n\n*Total earned for the entire period:* _{ref_balance} USDT_" \
-                       f"\n\n╔ *1 Line* Number of people: _{ref_line_1}_ " \
-                       f"\n╟ Turnover: _0 USDT_" \
-                       f"\n╟ *2 Line* Number of people: _{ref_line_2}_ " \
-                       f"\n╟ Turnover: _0 USDT_" \
-                       f"\n╟ *3 Line* Number of people: _{ref_line_3}_ " \
-                       f"\n╚ Turnover: _0 USDT_" \
+                       f"\n\n*1 Line:* " \
+                       f"\n ↳ Number of people: _{ref_line_1}_ " \
+                       f"\n ↳ Turnover: _{balance_line_1} USDT_" \
+                       f"\n*2 Line:* " \
+                       f"\n ↳ Number of people: _{ref_line_2}_ " \
+                       f"\n ↳ Turnover: _{balance_line_2} USDT_" \
+                       f"\n*3 Line:*" \
+                       f"\n ↳ Number of people: _{ref_line_3}_ " \
+                       f"\n ↳ Turnover: _{balance_line_3} USDT_" \
                        f"\n\n_❔ For detailed information on how bonuses are calculated, " \
                        f"please refer to the 'Information' section_"
-
+                for char in special_chars:
+                    text = text.replace(char, "\\" + char)
+            try:
+                await call.message.delete()
+            except MessageToDeleteNotFound:
+                pass
             await call.message.answer_photo(
                 photo=photo,
                 caption=text,
@@ -256,7 +270,7 @@ async def handle_user_terms_kb(call: types.CallbackQuery):
 async def handle_name(call: types.CallbackQuery):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
-    text = 'Напишите ваше ФИО полностью:'
+    text = 'Напишите ваше ФИО полностью (эта информация будет отображаться для приглашенных вами людей):'
     if language[4] == "EN":
         text = "Please write your full name:"
     await call.message.answer(text)
@@ -267,7 +281,8 @@ async def handle_socials(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     async with state.proxy() as data:
         data['name'] = msg.text
-    text = 'Отправьте ссылки на ваши соц. сети и информационные ресурсы одним сообщением, каждое с новой строки:'
+    text = '📝 Отправьте ссылки на ваши социальные сети и информационные ресурсы одним сообщением, ' \
+           'каждое с новой строки:'
     if language[4] == "EN":
         text = "Please send the links to your social media profiles and informational " \
                "resources in a single message, with each link on a new line:"
@@ -280,7 +295,7 @@ async def save_form(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     async with state.proxy() as data:
         data['socials'] = msg.text
-    text = f'Анкета заполнена. \n\nВаш индивидуальный номер в партнерской программе: {user_id}' \
+    text = f'🥳 Анкета заполнена! \n\nВаш индивидуальный номер в партнерской программе: {user_id}' \
            f'\n\nВаша персональная ссылка-приглашение: https://t.me/DAO_J2M_bot?start={msg.from_user.id}' \
            f'\n\nИзменить данные анкеты Вы сможете в дальнейшем в этом меню.'
     if language[4] == "EN":
@@ -340,8 +355,10 @@ async def all_referral_lines(call: types.CallbackQuery):
 async def handle_user_data(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_data = await structure.get_user_form(call.from_user.id)
-    text = f'Ваше имя: {user_data[1]}\n\nUsername: {call.from_user.username}\n\nСоц.сети: {user_data[2]}' \
-           f'\n\nЧтобы изменить неактуальную информацию, нажмите соответствующую кнопку ниже.'
+    user_name = f"@{call.from_user.username}" if call.from_user.username else 'Добавьте в настройках Телеграм'
+    text = f'<b>🧔 Ваше имя:</b> {user_data[1]}\n\n<b>🪪 Username:</b> {user_name}' \
+           f'\n\n<b>🌐 Социальные сети:</b> {user_data[2]}' \
+           f'\n\n<em>❔ Чтобы изменить неактуальную информацию, нажмите соответствующую кнопку ниже.</em>'
     if language[4] == "EN":
         user_name = f"@{call.from_user.username}" if call.from_user.username else 'Add username in Telegram settings'
         text = f"Your name: {user_data[1]}\n\nUsername: {user_name}\n\nSocial media: {user_data[2]}" \
