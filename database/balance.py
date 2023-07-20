@@ -175,6 +175,7 @@ async def balance_to_deposit_autoreinvest():
         db.close()
 
 
+
 async def balance_to_deposit_invest():
     db, cur = connect()
     try:
@@ -234,6 +235,17 @@ async def update_referral_profit(tg_id, profit):
                     "WHERE tg_id_id = %s",
                     (profit, profit, tg_id,))
         db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_balance_(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit FROM app_balance WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
     finally:
         cur.close()
         db.close()
