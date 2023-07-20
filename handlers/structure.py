@@ -72,7 +72,7 @@ async def structure_handler(call: types.CallbackQuery):
                     ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
                 except:
                     ref_user_balance = 0
-                balance_line_1 += ref_user_balance
+                balance_line_1 += round(ref_user_balance, 2)
             try:
                 ref_line_1 = ref_line_1[0]
             except TypeError:
@@ -85,7 +85,7 @@ async def structure_handler(call: types.CallbackQuery):
                     ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
                 except:
                     ref_user_balance = 0
-                balance_line_2 += ref_user_balance
+                balance_line_2 += round(ref_user_balance, 2)
             try:
                 ref_line_2 = ref_line_2[0]
             except TypeError:
@@ -98,7 +98,7 @@ async def structure_handler(call: types.CallbackQuery):
                     ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
                 except:
                     ref_user_balance = 0
-                balance_line_3 += ref_user_balance
+                balance_line_3 += round(ref_user_balance, 2)
             try:
                 ref_line_3 = ref_line_3[0]
             except TypeError:
@@ -118,16 +118,16 @@ async def structure_handler(call: types.CallbackQuery):
                    f"{text_x}" \
                    f"\n\n🔗 *Ваша партнёрская ссылка:*" \
                    f"\n`https://t.me/DAO_J2M_bot?start={call.from_user.id}`" \
-                   f"\n\n*Партнёрские начисления за весь период:* _{round(ref_balance, 2)} USDT_" \
+                   f"\n\n*Партнёрские начисления за весь период:* _{ref_balance} USDT_" \
                    f"\n\n*1 Линия:*  " \
                    f"\n ↳ _Количество человек_: _{ref_line_1}_" \
-                   f"\n ↳ _Оборот_: {round(balance_line_1, 2)} USDT" \
+                   f"\n ↳ _Оборот_: {balance_line_1} USDT" \
                    f"\n*2 Линия:*  " \
                    f"\n ↳ _Количество человек_: _{ref_line_2}_" \
-                   f"\n ↳ _Оборот_: {round(balance_line_2, 2)} USDT" \
+                   f"\n ↳ _Оборот_: {balance_line_2} USDT" \
                    f"\n*3 Линия:*  " \
                    f"\n ↳ _Количество человек_: _{ref_line_3}_" \
-                   f"\n ↳ _Оборот_: {round(balance_line_3, 2)} USDT" \
+                   f"\n ↳ _Оборот_: {balance_line_3} USDT" \
                    f"\n\n_❔ Подробно о том, как начисляются бонусы можно узнать в разделе 'Информация'_"
             for char in special_chars:
                 text = text.replace(char, "\\" + char)
