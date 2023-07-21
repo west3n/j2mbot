@@ -27,22 +27,20 @@ async def balance_handler(call: types.CallbackQuery):
             "торгового бота</a>"
 
     if language[4] == "EN":
-        text = f"<b>Your individual DAO participant number, recorded in the smart contract:</b> {balance_id[0]}" \
-               f"\n<b>Your balance:</b> {user_balance[0]} USDT\n<b>Active deposit:</b> {user_balance[1]} USDT" \
-               f"<b>Partnership earnings:</b> 0 USDT"
-        text += f"\n<b>Reserved amount for withdrawal:</b> {user_balance[2]} USDT" if int(user_balance[2]) > 0 else ""
-        text += "\n\nIn this menu, you will find tools to manage your balance." \
-                "\n\nHigh-frequency trading bot schedule:" \
-                "\nThe bot is activated at 18:00 MSK (Moscow Standard Time) on Mondays." \
-                "\nParticipants who deposit their crypto assets before 17:30 MSK are included in the current session." \
-                "\nParticipants who deposit funds after 17:30 MSK are included in the session starting " \
-                "the following week." \
-                "\nThe bot is turned off, and weekly performance results are finalized every Sunday " \
-                "between 17:00 and 22:00 MSK." \
-                "\nThe algorithm calculates profits and distributes them among DAO participants at " \
-                "23:00 MSK on Sunday." \
-                "Participants receive notifications about their earnings and can see changes in " \
-                "their balance statistics."
+        text = f"Your individual DAO participant number recorded in the smart contract: {dao}" \
+               f"\n\n💵 <em>Collective Account</em>" \
+               f"\n<b>Your balance:</b> {round(user_balance[0], 2)} USDT" \
+               f"\n<b>Active deposit:</b> {round(user_balance[1], 2)} USDT"
+        text += f"\n\n💰 <em>Personal Account</em>" \
+                f"\n<b>Binance API balance:</b> {round(binance_balance[0], 2)}" \
+                f"\n<b>J2M balance:</b> {round(binance_balance[1], 2)}" \
+                f"\n<b>Active deposit:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
+        text += f"\n\n<b>👨‍👦‍👦 Partner earnings:</b> {round(user_balance[3], 2)} USDT"
+        text += f"\n\n<b>Amount reserved for withdrawal:</b> {round(user_balance[2], 2)} USDT" if int(
+            user_balance[2]) > 0 else ""
+        text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>" \
+                "Trading bot work schedule (RU)</a>"
+
         photo = decouple.config("BANNER_BALANCE_EN")
     await call.message.delete()
     try:
@@ -79,14 +77,23 @@ async def withdrawal_refill_history(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     await call.message.delete()
     history_type = 'OUT' if call.data == 'withdrawal_history' else 'IN'
-    history_text = 'withdrawal' if call.data == 'withdrawal_history' else 'refill'
+    if call.data == 'withdrawal_history':
+        history_text = 'вывода'
+        if language[4] == "EN":
+            history_text = 'withdrawal'
+    else:
+        history_text = 'пополнения'
+        if language[4] == 'EN':
+            history_text = 'refill'
     all_user_data = await balance.get_balance_history(call.from_user.id, history_type)
     for user_data in all_user_data:
-        text = f"<b>Дата:</b> {str(user_data[0]).split('+')[0]}\n<b>Cумма:</b> {user_data[1]}" \
+        text = f"<b>Дата:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}\n<b>Cумма:</b> {user_data[1]}" \
                f"\n<b>Хэш транзакции:</b> {user_data[2]}"
         if language[4] == "EN":
-            text = f"<b>Date:</b> {str(user_data[0]).split('+')[0]}\n<b>Amount:</b> {user_data[1]}" \
-                   f"\n<b>Transaction Hash:</b> {user_data[2]}"
+            hash_ = user_data[2]
+            hash_ = 'Personal Account' if hash_ == 'Личный аккаунт' else hash_
+            text = f"<b>Date:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}\n<b>Amount:</b> {user_data[1]}" \
+                   f"\n<b>Transaction Hash:</b> {hash_}"
         await call.message.answer(text)
     if not all_user_data:
         text = f'У вас нет истории {history_text}!'

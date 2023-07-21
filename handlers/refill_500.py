@@ -1,5 +1,6 @@
 import asyncio
 
+import decouple
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -200,10 +201,13 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
         await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'))
         await thedex_db.insert_status(call.from_user.id, data.get('invoiceId'), status)
-
         await state.finish()
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
+        user_name = "@"+call.from_user.username if call.from_user.username is not None else call.from_user.full_name
+        await call.bot.send_message(decouple.config("GROUP_ID"),
+                                    f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
+                                    f'{data.get("amount")} USDT!'
+                                    f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
     if status == "Rejected":
         text = "Произошла ошибка. Деньги вернуться к вам на счет."
         if language[4] == "EN":
@@ -238,7 +242,7 @@ async def smalluser_check(call: types.CallbackQuery, row):
         await balance.insert_deposit(call.from_user.id, row[1])
         await balance.insert_balance_history(call.from_user.id, row[1], row[2])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
-
+        user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
     if status == "Rejected":
@@ -252,6 +256,7 @@ async def smalluser_check(call: types.CallbackQuery, row):
 async def smalluser_check_2(call: types.CallbackQuery):
     await call.message.delete()
     rows = await thedex_db.get_transaction(call.from_user.id)
+    user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
     try:
         row = rows[0]
         language = await users.user_data(call.from_user.id)
@@ -278,7 +283,6 @@ async def smalluser_check_2(call: types.CallbackQuery):
             await balance.insert_deposit(call.from_user.id, row[1])
             await balance.insert_balance_history(call.from_user.id, row[1], row[2])
             await thedex_db.insert_status(call.from_user.id, row[2], status)
-
             await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
         if status == "Rejected":
