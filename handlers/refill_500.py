@@ -194,8 +194,9 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer(text)
 
     if status == "Successful":
-        text = "🥳 Оплата прошла успешно! " \
-               "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
+        text = "🥳 Payment was successful! " \
+               "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
+
         if language[4] == "EN":
             text = "Payment was successful."
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
@@ -237,14 +238,18 @@ async def smalluser_check(call: types.CallbackQuery, row):
         text = "🥳 Оплата прошла успешно! " \
                "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
         if language[4] == "EN":
-            text = "Payment was successful."
+            text = "🥳 Payment was successful! " \
+                   "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
 
         await balance.insert_deposit(call.from_user.id, row[1])
         await balance.insert_balance_history(call.from_user.id, row[1], row[2])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
+        await call.bot.send_message(decouple.config("GROUP_ID"),
+                                    f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
+                                    f'{row[1]} USDT!'
+                                    f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
     if status == "Rejected":
         text = "Произошла ошибка. Деньги вернуться к вам на счет."
         if language[4] == "EN":
@@ -284,7 +289,10 @@ async def smalluser_check_2(call: types.CallbackQuery):
             await balance.insert_balance_history(call.from_user.id, row[1], row[2])
             await thedex_db.insert_status(call.from_user.id, row[2], status)
             await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
+            await call.bot.send_message(decouple.config("GROUP_ID"),
+                                        f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
+                                        f'{row[1]} USDT!'
+                                        f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
         if status == "Rejected":
             text = "Произошла ошибка. Деньги вернуться к вам на счет."
             if language[4] == "EN":

@@ -63,7 +63,7 @@ async def insert_balance_j2m_sunday(balance_usdt, balance_busd):
     db, cur = connect()
     try:
         sunday = datetime.datetime.now().date()
-        monday = sunday - datetime.timedelta(days=7) #sunday.weekday()
+        monday = sunday - datetime.timedelta(days=sunday.weekday())
         cur.execute("SELECT balance_monday_usdt, balance_monday_busd FROM app_balancej2m WHERE "
                     "date_monday = %s", (monday, ))
         monday_balance = cur.fetchone()

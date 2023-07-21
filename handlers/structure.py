@@ -365,9 +365,9 @@ async def all_referral_lines(call: types.CallbackQuery):
                     deposit_balance, referral_balance = await balance.get_balance_line(tg_id)
                     text += f"• {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
                 except TypeError:
-                    text += f"• {tg_id} (@{user_name}) | Пользователь еще не заключил смарт-контракт\n"
+                    text += f"• {tg_id} (@{user_name}) | Пользователь еще не создал кошелек J2M\n"
                     if language[4] == "EN":
-                        text += f"• {tg_id} (@{user_name}) | User has not yet entered into a smart contract\n"
+                        text += f"• {tg_id} (@{user_name}) | User has not yet entered wallet J2M\n"
             else:
                 text += f"• {tg_id} (Не зарегистрирован в системе) | Пользователь еще не заключил смарт-контракт\n"
     else:
@@ -400,7 +400,7 @@ async def change_user_data(call: types.CallbackQuery):
         await call.message.edit_text(text)
         await ChangeForm.name.set()
     elif call.data == 'change_socials':
-        text = 'Введите новые соц.сети:'
+        text = 'Введите новые социальные сети сети:'
         if language[4] == "EN":
             text = 'Input new socials:'
         await call.message.edit_text(text)

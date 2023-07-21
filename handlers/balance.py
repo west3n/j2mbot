@@ -11,18 +11,18 @@ async def balance_handler(call: types.CallbackQuery):
     user_balance = await balance.get_balance(call.from_user.id)
     photo = decouple.config("BANNER_BALANCE")
     dao = await nft.nft_id(call.from_user.id)
-    balance_id = await balance.get_balance_status(call.from_user.id)
     binance_balance = await binance_db.get_binance_ac(call.from_user.id)
     text = f"Ваш индивидуальный номер участника DAO, зафиксированный в смарт-контракте: {dao}" \
            f"\n\n💵 <em>Коллективный аккаунт</em>" \
-           f"\n<b>Ваш баланс:</b> {user_balance[0]} USDT" \
-           f"\n<b>Активный депозит:</b> {user_balance[1]} USDT"
+           f"\n<b>Ваш баланс:</b> {round(user_balance[0], 2)} USDT" \
+           f"\n<b>Активный депозит:</b> {round(user_balance[1], 2)} USDT"
     text += f"\n\n💰 <em>Личный аккаунт</em>" \
-            f"\n<b>Баланс Binance API:</b> {binance_balance[0]}" \
-            f"\n<b>Баланс J2M:</b> {binance_balance[1]}" \
-            f"\n<b>Активный депозит:</b> {binance_balance[2]}" if binance_balance is not None else ""
-    text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {user_balance[3]} USDT"
-    text += f"\n\n<b>Сумма зарезервированная на вывод:</b> {user_balance[2]} USDT" if int(user_balance[2]) > 0 else ""
+            f"\n<b>Баланс Binance API:</b> {round(binance_balance[0], 2)}" \
+            f"\n<b>Баланс J2M:</b> {round(binance_balance[1], 2)}" \
+            f"\n<b>Активный депозит:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
+    text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(user_balance[3], 2)} USDT"
+    text += f"\n\n<b>Сумма зарезервированная на вывод:</b> {round(user_balance[2], 2)} " \
+            f"USDT" if int(user_balance[2]) > 0 else ""
     text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>График работы " \
             "торгового бота</a>"
 

@@ -1,4 +1,6 @@
 import asyncio
+
+import aiogram.utils.exceptions
 import decouple
 
 from datetime import datetime, timedelta
@@ -90,7 +92,7 @@ async def scheduler_balance_j2m():
     while True:
         now = datetime.now()
         user_balance = await get_balance_j2m()
-        if now.hour == 16 and now.minute == 57:
+        if now.hour == 3 and now.minute == 00:
             await binance_db.insert_balance_everyday(user_balance[0], user_balance[1])
             print(f"Insert everyday balance at {now.date()}")
         if now.weekday() == 0 and now.hour == 15 and now.minute == 0:
