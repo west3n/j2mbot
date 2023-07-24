@@ -28,51 +28,82 @@ async def count_users_profit():
             elif deposit_ >= 5000:
                 weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.45
             await balance.add_weekly_profit(weekly_profit, tg_id)
-            bot = Bot(token=decouple.config("BOT_TOKEN"))
-            session = await bot.get_session()
             line_3 = await referral.get_inviter_id_line3(tg_id)
             line_2 = await referral.get_inviter_id_line2(tg_id)
             line_1 = await referral.get_inviter_id_line1(tg_id)
+            print(line_1)
             try:
-                referral_profit_1 = 0
                 if line_1[0]:
                     referral_profit_1 = round(weekly_profit * 0.05, 2)
                     await balance.update_referral_profit(line_1[0], referral_profit_1)
             except TypeError:
-                referral_profit_1 = 0
+                pass
             try:
-                referral_profit_2 = 0
                 if line_2[0]:
                     referral_profit_2 = round(weekly_profit * 0.03, 2)
                     await balance.update_referral_profit(line_2[0], referral_profit_2)
             except TypeError:
-                referral_profit_2 = 0
+                pass
             try:
-                referral_profit_3 = 0
                 if line_3[0]:
                     referral_profit_3 = round(weekly_profit * 0.02, 2)
                     await balance.update_referral_profit(line_3[0], referral_profit_3)
             except TypeError:
-                referral_profit_3 = 0
-            try:
-                await bot.send_message(
-                    chat_id=tg_id,
-                    text=f"<b>📨 Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
-                         f"\n\n<em>💰 Ваша доходность за торговую неделю:"
-                         f"</em> {round(weekly_profit, 2)} USDT"
-                         f"<em>\n\n📈 Общий профит J2M:</em> {round(profit_percentage[0], 2)} %"
-                         f"\n\n<em>👨‍👦‍👦 Партнерские начисления:</em>"
-                         f"\n   ↳ <em>1 линия (5% от дохода): {referral_profit_1} USDT </em>"
-                         f"\n   ↳ <em>2 линия (3% от дохода): {referral_profit_2} USDT </em>"
-                         f"\n   ↳ <em>3 линия (2% от дохода): {referral_profit_3} USDT </em>"
-                         f"\n\n\n<em>Баланс будет обновлен в течение суток!</em> "
-                         f"\n\n<a href='https://telegra.ph/Kak-vyschityvaetsya-dohodnost-polzovatelya-J2M-07-21-2'>"
-                         f"Подробнее о правилах начисления доходности</a>",
-                    parse_mode=types.ParseMode.HTML)
-            except aiogram.utils.exceptions.BotBlocked:
-                await bot.send_message(chat_id=decouple.config("GROUP_ID"),
-                                       text=f"Пользователь с ID {tg_id} заблокировал бота!")
-            await session.close()
+                pass
+
+
+async def count_referral_profit():
+    all_tg_ids = await users.get_all_tg_id()
+    now = datetime.now().date() - timedelta(days=1)
+    profit_percentage = await binance_db.get_weekly_profit(now)
+    # for tg_id in all_tg_ids:
+    tg_id = 346898810
+    user_data = await balance.get_balance_status(tg_id)
+    weekly_profit = user_data[8] if user_data is not None else 0
+    line_1_ids = await referral.get_line_1(tg_id)
+    line_2_ids = await referral.get_line_2(tg_id)
+    line_3_ids = await referral.get_line_3(tg_id)
+    referral_profit_line1 = 0
+    referral_profit_line2 = 0
+    referral_profit_line3 = 0
+    if line_1_ids:
+        for line_1_id in line_1_ids[1]:
+            referral_profit_line1_data = await balance.get_balance_status(line_1_id)
+            referral_profit_line1 += float(referral_profit_line1_data[8])*0.05 if referral_profit_line1_data is not None else 0
+    if line_2_ids:
+        for line_2_id in line_2_ids[1]:
+            referral_profit_line2_data = await balance.get_balance_status(line_2_id)
+            referral_profit_line2 += float(referral_profit_line2_data[8])*0.03 if referral_profit_line2_data is not None else 0
+    if line_3_ids:
+        for line_3_id in line_3_ids[1]:
+            referral_profit_line3_data = await balance.get_balance_status(line_3_id)
+            referral_profit_line3 += float(referral_profit_line3_data[8])*0.02 if referral_profit_line3_data is not None else 0
+    bot = Bot(token=decouple.config("BOT_TOKEN"))
+    session = await bot.get_session()
+    try:
+        await bot.send_message(
+            chat_id=254465569,
+            text=f"<b>📨 Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
+                 f"\n\n<em>💰 Ваша доходность за торговую неделю:"
+                 f"</em> {round(weekly_profit, 2)} USDT"
+                 f"<em>\n\n📈 Общий профит J2M:</em> {round(profit_percentage[0], 2)} %"
+                 f"\n\n<em>👨‍👦‍👦 Партнерские начисления:</em>"
+                 f"\n   ↳ <em>1 линия (5% от дохода): {round(referral_profit_line1, 2)} USDT </em>"
+                 f"\n   ↳ <em>2 линия (3% от дохода): {round(referral_profit_line2, 2)} USDT </em>"
+                 f"\n   ↳ <em>3 линия (2% от дохода): {round(referral_profit_line3, 2)} USDT </em>"
+                 f"\n   ↳ <em> Общие партнерские начисления: "
+                 f"{round(referral_profit_line1 + referral_profit_line2 + referral_profit_line3, 2)} USDT</em>"
+                 f"\n\n\n<em>Баланс будет обновлен в течение суток!</em> "
+                 f"\n\n<a href='https://telegra.ph/Kak-vyschityvaetsya-dohodnost-polzovatelya-J2M-07-21-2'>"
+                 f"Подробнее о правилах начисления доходности</a>",
+            parse_mode=types.ParseMode.HTML)
+    except aiogram.utils.exceptions.BotBlocked:
+        await bot.send_message(chat_id=decouple.config("GROUP_ID"),
+                               text=f"Пользователь с ID {tg_id} заблокировал бота!")
+    await session.close()
+
+
+asyncio.run(count_referral_profit())
 
 
 async def weekly_deposit_update():
