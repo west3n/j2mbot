@@ -80,8 +80,8 @@ async def weekly_deposit_update():
     for tg_id in tg_ids:
         try:
             weekly_deposit = await balance.get_balance_status(tg_id)
-            if weekly_deposit[9] != 0 and weekly_deposit[4] == 0:
-                await balance.update_weekly_deposit(tg_id, round(weekly_deposit[9], 2))
+            if weekly_deposit[8] != 0 and weekly_deposit[4] == 0:
+                await balance.update_weekly_deposit(tg_id, round(weekly_deposit[8], 2))
         except TypeError:
             pass
 
@@ -92,7 +92,7 @@ async def scheduler_balance_j2m():
     while True:
         now = datetime.now()
         user_balance = await get_balance_j2m()
-        if now.hour == 3 and now.minute == 00:
+        if now.hour == 11 and now.minute == 6:
             await binance_db.insert_balance_everyday(user_balance[0], user_balance[1])
             print(f"Insert everyday balance at {now.date()}")
         if now.weekday() == 0 and now.hour == 15 and now.minute == 0:
@@ -130,6 +130,8 @@ async def deposit_to_balance():
         if now.weekday() == 6 and now.hour == 20 and now.minute == 0:
             await balance.transfer_deposit_to_balance()
         await asyncio.sleep(60 - now.second)
+
+
 
 
 async def main():
