@@ -132,17 +132,15 @@ async def deposit_to_balance():
         await asyncio.sleep(60 - now.second)
 
 
-
-
-async def main():
-    loop = asyncio.get_running_loop()
-    tasks = [
-        loop.create_task(scheduler_balance_j2m()),
-        loop.create_task(balance_to_deposit()),
-        loop.create_task(deposit_to_balance())
-    ]
-    await asyncio.gather(*tasks)
-
-
-if __name__ == '__main__':
-    asyncio.run(main())
+# async def main():
+#     loop = asyncio.get_running_loop()
+#     tasks = [
+#         loop.create_task(scheduler_balance_j2m()),
+#         loop.create_task(balance_to_deposit()),
+#         loop.create_task(deposit_to_balance())
+#     ]
+#     await asyncio.gather(*tasks)
+#
+#
+# if __name__ == '__main__':
+#     asyncio.run(main())
