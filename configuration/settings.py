@@ -10,7 +10,11 @@ from handlers.withdrawal import register as reg_withdrawal
 from handlers.information import register as reg_information
 from handlers.registration import register as reg_registration
 from handlers.refill_500 import register as reg_refill_500
-
+from demo.dm_commands import register as reg_demo_commands
+from demo.dm_balance import register as reg_demo_balance
+from demo.dm_refill import register as reg_demo_refill
+from demo.dm_refill_500 import register as reg_demo_refill_500
+from demo.dm_withdrawal import register as reg_demo_withdrawal
 
 bot_token = config("BOT_TOKEN")
 logger = logging.getLogger(__name__)
@@ -32,3 +36,8 @@ def register_handlers(dp: Dispatcher):
     reg_information(dp)
     reg_registration(dp)
     reg_refill_500(dp)
+    reg_demo_commands(dp)
+    reg_demo_balance(dp)
+    reg_demo_refill(dp)
+    reg_demo_refill_500(dp)
+    reg_demo_withdrawal(dp)

@@ -164,7 +164,8 @@ async def bot_start(msg: types.Message, state: FSMContext):
                                f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
                                f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
                                f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
-                               f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                               f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем " \
+                               f"дальнейшем " \
                                f"развитии совместно с DAO J2M!" \
                                f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
                                f"Данные по NFT отправляются автоматически вам на почту." \
@@ -177,17 +178,20 @@ async def bot_start(msg: types.Message, state: FSMContext):
                                      f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
                                      f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
                                      f"\nТеперь вам доступен полный функционал бота." \
-                                     f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
+                                     f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет " \
+                                     f"служить " \
                                      f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
                                      f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
-                                     f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                                     f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем " \
+                                     f"дальнейшем " \
                                      f"развитии совместно с DAO J2M!" \
                                      f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
                                      f"\n\nАдрес кошелька с NFT: {address}\n" \
                                      f"Приватный ключ: {private_key}\n\n" \
                                      f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
                                      f"\n\nNFT хранится на сервере DAO J2M, " \
-                                     f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
+                                     f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу " \
+                                     f"поддержки."
                         if language[4] == "EN":
                             video = decouple.config("NFT_ANIMATION_EN")
                             text = f"Transaction completed successfully!" \
@@ -207,13 +211,16 @@ async def bot_start(msg: types.Message, state: FSMContext):
                             f"\nNow you have access to the full functionality of the bot."
                             f"\n\nYou have become part of our active and growing organization. Your NFT will serve as"
                             f"confirmation of your status and rights within our DAO."
-                            f"\n\nTogether, we make sustainable decisions to increase our digital assets, create the future,"
-                            f"and consciously use modern technologies. Good luck in your future development with DAO J2M!"
+                            f"\n\nTogether, we make sustainable decisions to increase our digital assets, create the " \
+                            f"future,"
+                            f"and consciously use modern technologies. Good luck in your future development with DAO " \
+                            f"J2M!"
                             f"\n\nThe NFT is stored in a secure wallet created specifically for you."
                             f"\n\nWallet address with NFT: {address}\n"
                             f"Private key: {private_key}\n\n"
                             f"\n\nIn the future, you will be able to transfer it to any other wallet you own."
-                            f"\n\nThe NFT is stored on the DAO J2M server. If you have lost or forgotten the wallet address"
+                            f"\n\nThe NFT is stored on the DAO J2M server. If you have lost or forgotten the wallet " \
+                            f"address"
                             f"or key, please contact customer support."
                         await send_email_message(to=email_ad[0],
                                                  subject="DAO J2M Smart Contract",
@@ -288,8 +295,8 @@ async def bot_start(msg: types.Message, state: FSMContext):
             except MessageToDeleteNotFound:
                 pass
             await msg.answer("Ой, я не умею работать в группе 😰"
-                             f"\n{msg.from_user.full_name}, ты можешь поблагодарить @Caramba и @miroshnikov за создание "
-                             f"меня!")
+                             f"\n{msg.from_user.full_name}, ты можешь поблагодарить @Caramba и @miroshnikov за создание"
+                             f" меня!")
 
 
 async def nft_start(msg: types.Message):
@@ -505,20 +512,20 @@ async def bot_start_call(call: types.CallbackQuery):
                            f"Данные по NFT отправляются автоматически вам на почту." \
                            f"\n\nСсылка-приглашение в закрытый DAO J2M чат: {invite_link.invite_link}"
                     email_text = f"Транзакция прошла успешно!" \
-                           f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
-                           f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
-                           f"\nТеперь вам доступен полный функционал бота." \
-                           f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
-                           f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
-                           f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
-                           f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
-                           f"развитии совместно с DAO J2M!" \
-                           f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
-                           f"\n\nАдрес кошелька с NFT: {address}\n" \
-                           f"Приватный ключ: {private_key}\n\n"\
-                           f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
-                           f"\n\nNFT хранится на сервере DAO J2M, " \
-                           f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
+                                 f"\n\nПоздравляем с приобретением NFT участия в нашем ДАО!" \
+                                 f"\nВаш индивидуальный номер участника DAO: {dao[0]}" \
+                                 f"\nТеперь вам доступен полный функционал бота." \
+                                 f"\n\nВы стали частью нашей активной и развивающейся организации. Ваш NFT будет служить " \
+                                 f"подтверждением вашего статуса и прав в рамках нашего ДАО." \
+                                 f"\n\nВместе мы выбираем устойчивые решения по увеличению своих цифровых активов, " \
+                                 f"создаем будущее и осознанно используем современные технологии. Удачи в Вашем дальнейшем " \
+                                 f"развитии совместно с DAO J2M!" \
+                                 f"\n\nNFT хранится на защищенном кошельке созданном специально для вас. " \
+                                 f"\n\nАдрес кошелька с NFT: {address}\n" \
+                                 f"Приватный ключ: {private_key}\n\n" \
+                                 f"\n\nВ дальнейшем Вы сможете перевести её на любой другой ваш кошелек. " \
+                                 f"\n\nNFT хранится на сервере DAO J2M, " \
+                                 f"если вы потеряли или забыли номер кошелька или ключ обратитесь в службу поддержки."
                     if language[4] == "EN":
                         video = decouple.config("NFT_ANIMATION_EN")
                         text = f"Transaction completed successfully!" \
@@ -611,8 +618,8 @@ async def all_support(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     photo = decouple.config('BANNER_SUPPORT')
     language = await users.user_data(call.from_user.id)
-    text = "Добро пожаловать в службу поддержки!\n\nВ зависимости от вашего вопроса, вы можете обратиться к поддержке " \
-           "DAO J2M или к поддержке наших партнеров по предоставлению IT продуктов.\n\nПоддержка DAO J2M\nМы " \
+    text = "Добро пожаловать в службу поддержки!\n\nВ зависимости от вашего вопроса, вы можете обратиться к поддержке" \
+           " DAO J2M или к поддержке наших партнеров по предоставлению IT продуктов.\n\nПоддержка DAO J2M\nМы " \
            "предоставляем поддержку не только в использовании нашего бота, но и во всех вопросах, связанных с " \
            "участием в DAO J2M. Наша команда готова помочь вам с любыми техническими вопросами и решить возникшие " \
            "проблемы.\n\nПоддержка компании SONERA - партнеров DAO J2M\nОни стремятся сделать ваш опыт использования " \
@@ -624,10 +631,10 @@ async def all_support(call: types.CallbackQuery, state: FSMContext):
            "можно быстрее. "
     if language[4] == "EN":
         photo = decouple.config('BANNER_SUPPORT_EN')
-        text = "Welcome to the support service!\n\nDepending on your question, you can contact DAO J2M support or our " \
-               "partners' support for IT products.\n\nDAO J2M Support\nWe provide support not only in using our bot " \
-               "but also in all matters related to participating in DAO J2M. Our team is ready to assist you with any " \
-               "technical questions and resolve any issues that may arise.\n\nSONERA Company - DAO J2M Partners " \
+        text = "Welcome to the support service!\n\nDepending on your question, you can contact DAO J2M support or our" \
+               " partners' support for IT products.\n\nDAO J2M Support\nWe provide support not only in using our bot " \
+               "but also in all matters related to participating in DAO J2M. Our team is ready to assist you with any" \
+               " technical questions and resolve any issues that may arise.\n\nSONERA Company - DAO J2M Partners " \
                "Support\nThey strive to make your experience with their products as convenient and efficient as " \
                "possible. They offer reliable and intuitively understandable procedures that will help you access " \
                "integration and all the features offered by the products.\n\nWe guarantee that you will receive the " \
@@ -708,7 +715,8 @@ async def cancel_payment(call: types.CallbackQuery, state: FSMContext):
     if language[4] == "EN":
         text = "Transaction successfully canceled!"
         photo = decouple.config('BANNER_MAIN_EN')
-    await call.message.answer_photo(photo=photo, caption=text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    await call.message.answer_photo(photo=photo, caption=text,
+                                    reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
 
 async def email(msg: types.Message):
@@ -744,10 +752,10 @@ async def email_message(msg: types.Message, state: FSMContext):
         text = f"На указанную почту {msg.text} было отправлено письмо.\n\n" \
                f"Пожалуйста, введите уникальный код из письма:"
         email_text = f"Вас приветствует команда DAO J2M!\n\n" \
-                         f"Для завершения верификации, отправьте боту этот код: {code}" \
-                         f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по " \
-                                   f"этой электронной почте ответным письмом, или напишите нам в телеграм: " \
-                                   f"https://t.me/J2M_Support "
+                     f"Для завершения верификации, отправьте боту этот код: {code}" \
+                     f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по " \
+                     f"этой электронной почте ответным письмом, или напишите нам в телеграм: " \
+                     f"https://t.me/J2M_Support "
         if language[4] == "EN":
             text = f"An email has been sent to the provided email address {msg.text}.\n\n"
             f"Please enter the unique code from the email:"
@@ -820,14 +828,15 @@ async def one_more(call: types.CallbackQuery, state: FSMContext):
                f"восстановить свой аккаунт через почту!</em>"
         if language[4] == "EN":
             text = f"To proceed, please provide your current personal email.\n\n"
-            f"<em>You will receive a message with a verification code to your email. In case you lose access to the bot, "
+            f"<em>You will receive a message with a verification code to your email. " \
+            f"In case you lose access to the bot, "
             f"you will be able to recover your account through email!</em>"
         await call.message.answer(text)
         await state.set_state(Email.email.state)
 
 
 async def tax_payment(call: types.CallbackQuery):
-    pass 
+    pass
 
 
 def register(dp: Dispatcher):

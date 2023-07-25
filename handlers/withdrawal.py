@@ -324,10 +324,10 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
             await output.insert_new_output(call.from_user.id, data.get('amount'), wallet[6])
             await balance.save_withdrawal_amount(data.get('amount'), call.from_user.id)
             text = f'Ваша заявка на сумму: {data.get("amount")} USDT принята' \
-                   '\nОтслеживать статус заявки Вы можете в меню "История выводов"'
+                   f'\nОжидайте сообщение о результатах рассмотрения заявки.'
             if language[4] == 'EN':
                 text = f'Your withdrawal request for the amount of: {data.get("amount")} USDT has been accepted.' \
-                       '\nYou can track the status of your request in the "Withdrawal History" menu.'
+                       f'\nExpect a message regarding the results of your application review.'
         await call.message.answer(text, reply_markup=inline.back_button(language[4]))
         wallet = await users.user_data(call.from_user.id)
         username = call.from_user.username

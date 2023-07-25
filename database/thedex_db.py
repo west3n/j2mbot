@@ -45,3 +45,12 @@ async def delete_transaction(t_id):
         db.close()
         cur.close()
 
+
+async def delete_transaction_by_invoice_id(invoice_id):
+    db, cur = connect()
+    try:
+        cur.execute("DELETE FROM app_thedex WHERE \"invoiceId\"=%s", (invoice_id,))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()
