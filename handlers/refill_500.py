@@ -196,9 +196,9 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     if status == "Successful":
         text = "🥳 Payment was successful! " \
                "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
-
-        if language[4] == "EN":
-            text = "Payment was successful."
+        if language[4] == "RU":
+            text = "DEMO!\n\n🥳 Оплата прошла успешно! " \
+                   "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
         await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'))
         await thedex_db.insert_status(call.from_user.id, data.get('invoiceId'), status)
