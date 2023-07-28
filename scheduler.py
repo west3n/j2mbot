@@ -20,33 +20,35 @@ async def count_users_profit():
             deposit_ = deposit[2]
         except TypeError:
             deposit_ = 0
-        if deposit_ < 15000:
+        if deposit_ < 75000:
             if deposit_ == 0:
                 pass
             elif deposit_ < 5000:
                 weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.4
-            elif deposit_ >= 5000:
+            elif deposit_ >= 5000 and deposit < 15000:
                 weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.45
+            elif deposit_ >= 15000:
+                weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.5
             await balance.add_weekly_profit(weekly_profit, tg_id)
             line_3 = await referral.get_inviter_id_line3(tg_id)
             line_2 = await referral.get_inviter_id_line2(tg_id)
             line_1 = await referral.get_inviter_id_line1(tg_id)
-            print(line_1)
+            referral_percentage = deposit_ * (profit_percentage[0] / 100)
             try:
                 if line_1[0]:
-                    referral_profit_1 = round(weekly_profit * 0.05, 2)
+                    referral_profit_1 = round(referral_percentage * 0.05, 2)
                     await balance.update_referral_profit(line_1[0], referral_profit_1)
             except TypeError:
                 pass
             try:
                 if line_2[0]:
-                    referral_profit_2 = round(weekly_profit * 0.03, 2)
+                    referral_profit_2 = round(referral_percentage * 0.03, 2)
                     await balance.update_referral_profit(line_2[0], referral_profit_2)
             except TypeError:
                 pass
             try:
                 if line_3[0]:
-                    referral_profit_3 = round(weekly_profit * 0.02, 2)
+                    referral_profit_3 = round(referral_percentage * 0.02, 2)
                     await balance.update_referral_profit(line_3[0], referral_profit_3)
             except TypeError:
                 pass
@@ -83,7 +85,7 @@ async def count_referral_profit():
         try:
             await bot.send_message(
                 chat_id=tg_id,
-                text=f"<b>📨 Актуальный отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
+                text=f"<b>📨 Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
                      f"\n\n<em>💰 Ваша доходность за торговую неделю:"
                      f"</em> {round(weekly_profit, 2)} USDT"
                      f"<em>\n\n📈 Общий профит J2M:</em> {round(profit_percentage[0], 2)} %"
@@ -101,9 +103,6 @@ async def count_referral_profit():
             await bot.send_message(chat_id=decouple.config("GROUP_ID"),
                                    text=f"Пользователь с ID {tg_id} заблокировал бота!")
         await session.close()
-
-
-asyncio.run(count_referral_profit())
 
 
 async def weekly_deposit_update():

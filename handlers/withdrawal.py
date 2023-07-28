@@ -15,6 +15,7 @@ from database import users, balance, output, binance_db
 class NewWallet(StatesGroup):
     wallet = State()
     amount = State()
+    email = State()
 
 
 class ChangeWallet(StatesGroup):
@@ -262,7 +263,7 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
                                            f"'Deposit' or 'Information' section.</em>"
                                 await call.message.answer_photo(photo, text,
                                                                 reply_markup=inline.main_withdraw(language[4]))
-                    elif date_first + datetime.timedelta(days=hold) <= now:
+                    elif date_first + datetime.timedelta(days=hold if hold else 0) <= now:
                         text = f"<b>Баланс, доступный к выводу:</b> {balance_user} USDT" \
                                f"\nCумма минимального вывода 50 USDT" \
                                f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
@@ -438,6 +439,61 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
         await state.finish()
         await handlers.commands.bot_start_call(call)
 
+
+async def confirm_email_withdrawal(msg: types.Message, state: FSMContext):
+    language = await users.user_data(msg.from_user.id)
+    async with state.proxy() as data:
+        wallet = await users.user_data(msg.from_user.id)
+        if msg.text == data.get('code'):
+            try:
+                await msg.delete()
+            except MessageToDeleteNotFound:
+                pass
+            try:
+                await msg.bot.delete_message(msg.chat.id, data.get('email_message'))
+            except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+                pass
+            try:
+                await msg.bot.delete_message(msg.chat.id, data.get('error_message'))
+            except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+                pass
+            await output.insert_new_output(msg.from_user.id, data.get('amount'), wallet[6])
+            await balance.save_withdrawal_amount(data.get('amount'), msg.from_user.id)
+            username = msg.from_user.username
+            text = f'Ваша заявка на сумму: {data.get("amount")} USDT принята к рассмотрению!\n\n' \
+                   f'<em>Ожидайте одобрения администратора!</em>'
+            await msg.bot.send_message(
+                decouple.config("GROUP_ID"),
+                f'Пользователь {"@" + username if username is not None else msg.from_user.id} '
+                f'отправил заявку на вывод средств:\n<b>Cумма:</b> {data.get("amount")}'
+                f'\n<b>Кошелёк TRC-20:</b> {wallet[6]}'
+                f'\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/output/'
+                f'\n\nИнструкция (временно, в АПИ автоматизируем): 1. Подтвердите транзакцию и добавьте хэш транзакции!'
+                f'\n2. Создайте успешный в вывод во вкладке "Истории пополнения и вывода" -> '
+                f'\n3. Измените баланс юзера во вкладке "Коллективный аккаунт - Балансы" и '
+                f'уберите Зарезервированный баланс (0,0)')
+            await msg.answer(text, reply_markup=inline.main_withdraw(language[4]))
+            await state.finish()
+        else:
+            try:
+                await msg.delete()
+            except MessageToDeleteNotFound:
+                pass
+            try:
+                await msg.bot.delete_message(msg.chat.id, data.get('email_message'))
+            except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+                pass
+            try:
+                await msg.bot.delete_message(msg.chat.id, data.get('error_message'))
+            except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+                pass
+            text = f'🚫 Введённый код {msg.text} не совпадает с тем, который был отправлен на почту, попробуйте ' \
+                   f'еще раз!'
+            if language[4] == 'EN':
+                text = f"🚫 The entered code {msg.text} does not match the one that was " \
+                       f"sent to your email. Please try again!"
+            error_message = await msg.answer(text)
+            data['error_message'] = error_message.message_id
 
 
 def register(dp: Dispatcher):
