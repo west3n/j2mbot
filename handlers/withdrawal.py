@@ -1,13 +1,13 @@
 import asyncio
 import datetime
 import decouple
-from aiogram.utils.exceptions import MessageToDeleteNotFound
-
 import handlers.commands
 
+from aiogram.utils.exceptions import MessageToDeleteNotFound, MessageIdentifierNotSpecified
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from handlers import commands, google
 from keyboards import inline
 from database import users, balance, output, binance_db
 
@@ -18,6 +18,7 @@ class NewWallet(StatesGroup):
 
 
 class ChangeWallet(StatesGroup):
+    email = State()
     wallet = State()
 
 
@@ -36,24 +37,98 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.main_withdraw(language[4]))
 
 
-async def change_wallet_new(call: types.CallbackQuery):
-    await call.message.delete()
+async def change_wallet_new(call: types.CallbackQuery, state: FSMContext):
+    code = commands.generate_random_code()
+    email = await users.check_email(call.from_user.id)
     language = await users.user_data(call.from_user.id)
-    text = "👛 Пришлите новый адрес криптокошелька TRON TRC-20 для вывода:"
-    if language[4] == 'EN':
-        text = "👛 Please provide a new cryptocurrency wallet TRON TRC-20 address for withdrawal:"
-    await call.message.answer(text)
-    await ChangeWallet.wallet.set()
+    if email:
+        parts = email[0].split('@')
+        username = parts[0]
+        domain = parts[1]
+        masked_username = username[:3] + '*' * (len(username) - 3)
+        masked_email = masked_username + '@' + domain
+        text = f'📧 Вам на почту {masked_email} отправлен код подтверждения смены кошелька, ' \
+               f'введите его в ответном сообщении:'
+        email_text = f"Вас приветствует команда DAO J2M!\n\n" \
+                     f"Для смены кошелька отправьте боту этот код: {code}" \
+                     f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по " \
+                     f"этой электронной почте ответным письмом, или напишите нам в телеграм: " \
+                     f"https://t.me/J2M_Support "
+        await google.send_email_message(to=email[0],
+                                        subject="DAO J2M change wallet",
+                                        message_text=email_text)
+        if language[4] == "EN":
+            text = f"You have been sent a confirmation code to your " \
+                   f"email {email[0]}. Please enter it in your reply message:"
+    else:
+        text = 'Произошла ошибка, связанная с отсутствием email в вашем профиле. Обратитесь в тех.поддержку'
+        if language[4] == "EN":
+            text = "An error occurred due to the absence of an email in your profile. Please contact technical support."
+    await call.message.delete()
+    email_message = await call.message.answer(text)
+    await ChangeWallet.email.set()
+    async with state.proxy() as data:
+        data['code'] = code
+        data['email_message'] = email_message.message_id
+
+
+async def change_wallet_step1(msg: types.Message, state: FSMContext):
+    language = await users.user_data(msg.from_user.id)
+    async with state.proxy() as data:
+        if msg.text == data['code']:
+            try:
+                await msg.delete()
+            except MessageToDeleteNotFound:
+                pass
+            try:
+                await msg.bot.delete_message(msg.chat.id, data.get('email_message'))
+            except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+                pass
+            text = "👛 Пришлите новый адрес криптокошелька TRON TRC-20 для вывода:"
+            if language[4] == 'EN':
+                text = "👛 Please provide a new cryptocurrency wallet TRON TRC-20 address for withdrawal:"
+            second_message = await msg.answer(text)
+            data['second_message'] = second_message.message_id
+            await ChangeWallet.next()
+        else:
+            try:
+                await msg.delete()
+            except MessageToDeleteNotFound:
+                pass
+            try:
+                await msg.bot.delete_message(msg.chat.id, data.get('email_message'))
+            except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+                pass
+            text = f'🚫 Введённый код {msg.text} не совпадает с тем, который был отправлен на почту, попробуйте ' \
+                   f'еще раз!'
+            if language[4] == 'EN':
+                text = f"🚫 The entered code {msg.text} does not match the one that was " \
+                       f"sent to your email. Please try again!"
+            error_message = await msg.answer(text)
+            data['error_message'] = error_message.message_id
 
 
 async def change_wallet_step2(msg: types.Message, state: FSMContext):
-    language = await users.user_data(msg.from_user.id)
-    await users.save_wallet(msg.text, msg.from_id)
-    text = "Кошелек успешно обновлен!"
-    if language[4] == 'EN':
-        text = "Wallet successfully updated!"
-    await msg.answer(text, reply_markup=inline.main_withdraw(language[4]))
-    await state.finish()
+    async with state.proxy() as data:
+        language = await users.user_data(msg.from_user.id)
+        await users.save_wallet(msg.text, msg.from_id)
+        text = "Кошелек успешно обновлен!"
+        if language[4] == 'EN':
+            text = "Wallet successfully updated!"
+        try:
+            await msg.delete()
+        except MessageToDeleteNotFound:
+            pass
+        try:
+            await msg.bot.delete_message(msg.chat.id, data.get('second_message'))
+        except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+            pass
+        try:
+            await msg.bot.delete_message(msg.chat.id, data.get('error_message'))
+        except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+            pass
+        await msg.answer(text, reply_markup=inline.main_withdraw(language[4]))
+        await state.finish()
 
 
 async def change_percentage(call: types.CallbackQuery):
@@ -273,7 +348,7 @@ async def handle_amount(msg: types.Message, state: FSMContext):
         async with state.proxy() as data:
             await msg.delete()
             await msg.bot.delete_message(msg.from_id, data.get('del_msg'))
-    except MessageToDeleteNotFound:
+    except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
         pass
     if not msg.text.isdigit():
         text = 'Пожалуйста, используйте только цифры!\n\n' \
@@ -319,28 +394,40 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
             text = "Select an option to proceed."
         await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.main_withdraw(language[4]))
     elif call.data == 'confirm_withdrawal':
-        wallet = await users.user_data(call.from_user.id)
         async with state.proxy() as data:
-            await output.insert_new_output(call.from_user.id, data.get('amount'), wallet[6])
-            await balance.save_withdrawal_amount(data.get('amount'), call.from_user.id)
-            text = f'Ваша заявка на сумму: {data.get("amount")} USDT принята' \
-                   f'\nОжидайте сообщение о результатах рассмотрения заявки.'
-            if language[4] == 'EN':
-                text = f'Your withdrawal request for the amount of: {data.get("amount")} USDT has been accepted.' \
-                       f'\nExpect a message regarding the results of your application review.'
-        await call.message.answer(text, reply_markup=inline.back_button(language[4]))
-        wallet = await users.user_data(call.from_user.id)
-        username = call.from_user.username
-        await call.bot.send_message(
-            decouple.config("GROUP_ID"),
-            f'Пользователь {"@" + username if username is not None else call.from_user.id} '
-            f'отправил заявку на вывод средств:\n<b>Cумма:</b> {data.get("amount")}\n<b>Кошелёк TRC-20:</b> {wallet[6]}'
-            f'\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/output/'
-            f'\n\nИнструкция: 1. Подтвердите транзакцию и добавьте хэш транзакции!'
-            f'\n2. Создайте успешный в вывод во вкладке "Истории пополнения и вывода" -> '
-            f'\n3. Измените баланс юзера во вкладке "Коллективный аккаунт - Балансы" и '
-            f'уберите Зарезервированный баланс (0,0)')
-        await state.finish()
+            code = commands.generate_random_code()
+            email = await users.check_email(call.from_user.id)
+            wallet = await users.user_data(call.from_user.id)
+            parts = email[0].split('@')
+            username = parts[0]
+            domain = parts[1]
+            masked_username = username[:3] + '*' * (len(username) - 3)
+            masked_email = masked_username + '@' + domain
+            if email:
+                data['code'] = code
+                text = f'🏧 Заявка на сумму: {data.get("amount")} USDT\n' \
+                       f'Кошелек вывода: {wallet[6]}' \
+                       f'\n\n📧Пришлите код, отправленный на почту {masked_email} для подтверждения вывода:'
+                if language[4] == 'EN':
+                    text = f'Your withdrawal request for the amount of: {data.get("amount")} USDT has been accepted.' \
+                           f'\nExpect a message regarding the results of your application review.'
+                email_text = f"Вы заказываете вывод средств {data.get('amount')} USDT на кошелек {wallet[6]} !\n\n" \
+                             f"Для подтверждения создания заявки отправьте боту этот код: {code}" \
+                             f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по" \
+                             f" этой электронной почте ответным письмом, или напишите нам в телеграм: " \
+                             f"https://t.me/J2M_Support "
+                await google.send_email_message(to=email[0],
+                                                subject="DAO J2M withdrawal",
+                                                message_text=email_text)
+                await NewWallet.next()
+            else:
+                text = 'Произошла ошибка, связанная с отсутствием email в вашем профиле. Обратитесь в тех.поддержку'
+                if language[4] == "EN":
+                    text = "An error occurred due to the absence of an email in your profile. " \
+                           "Please contact technical support."
+                await state.finish()
+            email_message = await call.message.answer(text)
+            data['email_message'] = email_message.message_id
     else:
         text = 'Вы отменили операцию!'
         if language[4] == "EN":
@@ -352,6 +439,7 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
         await handlers.commands.bot_start_call(call)
 
 
+
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(withdraw_main_menu, text='withdrawal')
     dp.register_callback_query_handler(withdrawal_handler, text='withdrawal_funds')
@@ -360,6 +448,8 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(change_wallet_new, text='change_wallet')
     dp.register_callback_query_handler(change_percentage, text='change_percentage')
     dp.register_callback_query_handler(change_percentage_step2, state=ChangePercentage.percentage)
+    dp.register_message_handler(change_wallet_step1, state=ChangeWallet.email)
     dp.register_message_handler(change_wallet_step2, state=ChangeWallet.wallet)
     dp.register_message_handler(handle_amount, state=NewWallet.amount)
     dp.register_callback_query_handler(finish_withdrawal, state=NewWallet.amount)
+    dp.register_message_handler(confirm_email_withdrawal, state=NewWallet.email)
