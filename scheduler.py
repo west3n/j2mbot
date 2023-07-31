@@ -128,8 +128,6 @@ async def send_message_with_profit():
                                    text=f"Пользователь с ID {tg_id} заблокировал бота!")
             await session.close()
 
-asyncio.run(send_message_with_profit())
-
 
 async def weekly_deposit_update():
     tg_ids = await users.get_all_tg_id()
