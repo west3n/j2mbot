@@ -30,11 +30,32 @@ class ChangePercentage(StatesGroup):
 async def withdraw_main_menu(call: types.CallbackQuery):
     await call.message.delete()
     photo = decouple.config("BANNER_WITHDRAWAL")
+    current_date = datetime.datetime.now()
+    week_number = (current_date.day - 1) // 7 + 1
+    is_even_week = week_number % 2 == 0
+    amount, out = await balance.get_amount(call.from_user.id)
+    balance_ = await balance.get_balance(call.from_user.id)
+    body = amount - out
+    income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
-    text = "Выберите пункт для продолжения."
+    first_trans = await balance.get_first_transaction(call.from_user.id)
+    date_first = first_trans[2] if first_trans is not None else None
+    hold = await balance.get_hold(call.from_user.id)
+    hold = hold[0] if hold is not None else 0
+    withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first else None
+    text = f"<em>Дата: {current_date.date().strftime('%d.%m.%Y')}</em>"
+    text += f"\n<em>Вывод на этой неделе доступен ограничено!</em>" if is_even_week is False else ""
+    text += f"\n\n<b>Тело:</b> {body} USDT" if body else ""
+    text += f"\n\n<b>Начисления:</b> {income} USDT"
+    text += f"\n\n<b>Дата окончания холда:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
+
     if language[4] == 'EN':
         photo = decouple.config("BANNER_WITHDRAWAL_EN")
-        text = "Select an option to proceed."
+        text = f"<em>Date: {current_date.date().strftime('%d.%m.%Y')}</em>"
+        text += f"\n<em>Output is limited this week!</em>" if is_even_week is False else ""
+        text += f"\n\n<b>Body:</b> {body} USDT" if body else ""
+        text += f"\n\n<b>Income:</b> {income} USDT"
+        text += f"\n\n<b>Withdrawal Date:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
     await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.main_withdraw(language[4]))
 
 

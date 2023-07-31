@@ -43,6 +43,30 @@ async def get_balance_history(tg_id, transaction):
         cur.close()
         db.close()
 
+async def get_amount(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT amount FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
+                    (tg_id, "IN"))
+        amount = 0
+        try:
+            for x in cur.fetchall():
+                amount += int(x)
+        except TypeError:
+            amount += 0
+        cur.execute("SELECT amount FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
+                    (tg_id, "OUT"))
+        out = 0
+        try:
+            for x in cur.fetchall():
+                out += int(x)
+        except TypeError:
+            out += 0
+        return amount, out
+    finally:
+        cur.close()
+        db.close()
+
 
 async def insert_balance_history(tg_id, amount, hash):
     db, cur = connect()
