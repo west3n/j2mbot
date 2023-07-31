@@ -36,13 +36,14 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     amount, out = await balance.get_amount(call.from_user.id)
     balance_ = await balance.get_balance(call.from_user.id)
     body = amount - out
+    print(body)
     income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
     date_first = first_trans[2] if first_trans is not None else None
     hold = await balance.get_hold(call.from_user.id)
     hold = hold[0] if hold is not None else 0
-    withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first else None
+    withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
     text = f"<em>Дата: {current_date.date().strftime('%d.%m.%Y')}</em>"
     text += f"\n<em>Вывод на этой неделе доступен ограничено!</em>" if is_even_week is False else ""
     text += f"\n\n<b>Тело:</b> {body} USDT" if body else ""

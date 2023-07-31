@@ -49,17 +49,19 @@ async def get_amount(tg_id):
         cur.execute("SELECT amount FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, "IN"))
         amount = 0
+        result = cur.fetchall()
         try:
-            for x in cur.fetchall():
-                amount += int(x)
+            for x in result:
+                amount += int(x[0])
         except TypeError:
             amount += 0
         cur.execute("SELECT amount FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, "OUT"))
         out = 0
+        result_ = cur.fetchall()
         try:
-            for x in cur.fetchall():
-                out += int(x)
+            for x in result_:
+                out += int(x[0])
         except TypeError:
             out += 0
         return amount, out
