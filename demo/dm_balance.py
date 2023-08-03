@@ -21,7 +21,6 @@ async def balance_handler(call: types.CallbackQuery):
             f"\n<b>Баланс Binance API:</b> {round(user_balance[5], 2) if user_balance[5] is not None else 0.0}" \
             f"\n<b>Баланс J2M:</b> {round(user_balance[6], 2)}" \
             f"\n<b>Активный депозит:</b> {round(user_balance[7], 2)}"
-    text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(referral[3], 2)} USDT"
     text += f"\n\n<b>Сумма зарезервированная на вывод:</b> 0.0 USDT " \
             f"USDT" if int(user_balance[2]) > 0 else ""
     text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>График работы " \
@@ -35,7 +34,6 @@ async def balance_handler(call: types.CallbackQuery):
                 f"\n<b>Binance API balance:</b> {round(user_balance[5], 2)}" \
                 f"\n<b>J2M balance:</b> {round(user_balance[6], 2)}" \
                 f"\n<b>Active deposit:</b> {round(user_balance[7], 2)}"
-        text += f"\n\n<b>👨‍👦‍👦 Partner earnings:</b> {round(referral[3], 2)} USDT"
         text += f"\n\n<b>Amount reserved for withdrawal:</b> {round(user_balance[2], 2)} USDT" if int(
             user_balance[2]) > 0 else ""
         text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>" \

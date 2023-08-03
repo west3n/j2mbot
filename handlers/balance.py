@@ -16,10 +16,13 @@ async def balance_handler(call: types.CallbackQuery):
            f"\n\n💵 <em>Коллективный аккаунт</em>" \
            f"\n<b>Ваш баланс:</b> {round(user_balance[0], 2)} USDT" \
            f"\n<b>Активный депозит:</b> {round(user_balance[1], 2)} USDT"
-    text += f"\n\n💰 <em>Личный аккаунт</em>" \
-            f"\n<b>Баланс Binance API:</b> {round(binance_balance[0], 2)}" \
-            f"\n<b>Баланс J2M:</b> {round(binance_balance[1], 2)}" \
-            f"\n<b>Активный депозит:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
+    try:
+        text += f"\n\n💰 <em>Личный аккаунт</em>" \
+                f"\n<b>Баланс Binance API:</b> {round(binance_balance[0], 2)}" \
+                f"\n<b>Баланс J2M:</b> {round(binance_balance[1], 2)}" \
+                f"\n<b>Активный депозит:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
+    except TypeError:
+        pass
     text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(user_balance[3], 2)} USDT"
     text += f"\n\n<b>Сумма зарезервированная на вывод:</b> {round(user_balance[2], 2)} " \
             f"USDT" if int(user_balance[2]) > 0 else ""
@@ -58,13 +61,13 @@ async def balance_handler(call: types.CallbackQuery):
                           f"\n\n<em>It is recommended to delete this message after saving your secret key.</em>"
             message = await call.message.answer(text_x)
             await call.bot.send_chat_action(call.message.chat.id, "typing")
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
 
             await call.bot.delete_message(chat_id=call.message.chat.id,
                                           message_id=message.message_id)
             await call.message.answer(text_x2)
             await call.bot.send_chat_action(call.message.chat.id, "upload_photo")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
     except IndexError:
         pass
     await call.message.answer_photo(
