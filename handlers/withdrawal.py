@@ -258,107 +258,50 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
         await call.message.delete()
     except MessageToDeleteNotFound:
         pass
+    amount, out = await balance.get_amount(call.from_user.id)
+    balance_ = await balance.get_balance(call.from_user.id)
+    body = amount - out
+    income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
     date_first = first_trans[2] if first_trans is not None else None
+    hold = await balance.get_hold(call.from_user.id)
+    hold = hold[0] if hold is not None else 0
+    withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
+    now = datetime.datetime.now()
+    now = now.replace(tzinfo=datetime.timezone.utc)
+    if withdrawal_date:
+        if now <= date_first + datetime.timedelta(days=hold):
+            withdrawal_balance = income
+        else:
+            withdrawal_balance = balance_[0] + balance_[1]
+    else:
+        if balance_[0] + balance_[1] >= 1000:
+            withdrawal_balance = balance_[0] + balance_[1]
+        else:
+            withdrawal_balance = 0
     if first_trans:
         wallet = await users.user_data(call.from_user.id)
         if wallet[6]:
-            balance_user, deposit, withdraw, referral_balance = await balance.get_balance(call.from_user.id)
-            if balance_user > 0:
-                if withdraw == 0:
-                    now = datetime.datetime.now()
-                    if now.tzinfo is None:
-                        now = now.replace(tzinfo=datetime.timezone.utc)
-                    hold = await balance.get_hold(call.from_user.id)
-                    hold = hold[0] if hold is not None else 0
-                    if hold == 0:
-                        if first_trans[3] > 1000:
-                            pass
-                        else:
-                            if balance_user > 1000:
-                                text = f"<b>Баланс, доступный к выводу:</b> {balance_user} USDT" \
-                                       f"\nCумма минимального вывода 50 USDT" \
-                                       f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
-                                if language[4] == 'EN':
-                                    text = f"The balance available for withdrawal: {balance_user} USDT" \
-                                           f"\nMinimum withdrawal amount is 50 USDT." \
-                                           f"\n\n💳 Please write the amount of USDT you want to withdraw:"
-                                del_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
-                                await state.set_state(NewWallet.amount.state)
-                                await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
-                            else:
-                                photo = decouple.config("BANNER_WITHDRAWAL")
-                                text = f"<b>Баланс:</b> {balance_user} USDT" \
-                                       f"\n\n<em>❗Ваш баланс должен быть больше 1000 USDT, " \
-                                       f"так как ваше пополнение было на сумму от 500 USDT!" \
-                                       f"\nПодробнее об условиях можно прочитать в разделе 'Пополнение' или " \
-                                       f"'Информация'</em>"
-                                if language[4] == "EN":
-                                    photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                                    text = f"<b>Balance:</b> {balance_user} USDT" \
-                                           f"\n\n<em>❗️Your balance should be greater than 1000 USDT, " \
-                                           f"since your deposit was in the amount of 500 USDT!" \
-                                           f"\nFor more information about the conditions, please refer to the " \
-                                           f"'Deposit' or 'Information' section.</em>"
-                                await call.message.answer_photo(photo, text,
-                                                                reply_markup=inline.main_withdraw(language[4]))
-                    elif date_first + datetime.timedelta(days=hold if hold else 0) <= now:
-                        text = f"<b>Баланс, доступный к выводу:</b> {balance_user} USDT" \
-                               f"\nCумма минимального вывода 50 USDT" \
-                               f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
-                        if language[4] == 'EN':
-                            text = f"The balance available for withdrawal: {balance_user} USDT" \
-                                   f"\nMinimum withdrawal amount is 50 USDT." \
-                                   f"\n\n💳 Please write the amount of USDT you want to withdraw:"
-                        del_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
-                        await state.set_state(NewWallet.amount.state)
-                        await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
-                    else:
-                        if deposit >= balance_user:
-                            text = f"<b>Баланс, доступный к выводу:</b> {balance_user} USDT" \
-                                   f"\nCумма минимального вывода 50 USDT" \
-                                   f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
-                            if language[4] == 'EN':
-                                text = f"The balance available for withdrawal: {balance_user} USDT" \
-                                       f"\nMinimum withdrawal amount is 50 USDT." \
-                                       f"\n\n💳 Please write the amount of USDT you want to withdraw:"
-                            del_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
-                            await state.set_state(NewWallet.amount.state)
-                            await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
-                        else:
-                            photo = decouple.config("BANNER_WITHDRAWAL")
-                            withdrawal_date = date_first + datetime.timedelta(days=hold)
-                            text = f"<b>Баланс:</b> {balance_user} USDT\n\n❗<b>Ближайшая дата для вывода:</b> " \
-                                   f"{withdrawal_date.strftime('%d-%m-%Y %H:%M:%S')} GMT." \
-                                   f"\n\n<em> Вы можете поменять настройки реинвестирования по кнопке ниже!</em>"
-                            if language[4] == "EN":
-                                photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                                text = f"️<b>Balance:</b> {balance_user} USDT\n\n❗<b>Next withdrawal date:</b> " \
-                                       f"{withdrawal_date.strftime('%d-%m-%Y %H:%M:%S')} GMT.\n\n<em>You can change " \
-                                       f"the reinvestment settings by clicking the button below!</em>"
-                            await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
-                else:
-                    photo = decouple.config("BANNER_WITHDRAWAL")
-                    text = f"<b>Баланс, зарезервированный для вывода:</b> {withdraw} USDT" \
-                           f"\n\n<em>❗У вас есть зарезервированная сумма для вывода, " \
-                           f"пожалуйста, ожидайте поступления средств!</em>"
-                    if language[4] == "EN":
-                        photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                        text = f"<b>Reserved balance for withdrawal:</b> {withdraw} USDT" \
-                               f"\n\n<em>❗️You have a reserved amount for withdrawal, please wait for the " \
-                               f"funds to be credited!</em>"
-                    await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
+            if withdrawal_balance > 50:
+                text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2)} USDT" \
+                       f"\nCумма минимального вывода 50 USDT" \
+                       f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
+                if language[4] == "EN":
+                    text = f"<b>Available withdrawal balance:</b> {round(withdrawal_balance, 2)} USDT" \
+                           f"\nMinimum withdrawal amount: 50 USDT" \
+                           f"\n\n💳 Please enter the amount of USDT you want to withdraw:"
+                del_msg = await call.message.answer(text)
+                await state.set_state(NewWallet.amount.state)
+                await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
             else:
                 photo = decouple.config("BANNER_WITHDRAWAL")
-                withdrawal_date = date_first + datetime.timedelta(days=14)
-                text = f"<b>Баланс:</b> {balance_user} USDT" \
-                       f"\n\n<b>Ближайшая дата для вывода:</b> {withdrawal_date.strftime('%d-%m-%Y %H:%M:%S')} GMT" \
+                text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
                        f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                    text = f"❗️<b>Balance:</b> {balance_user} USDT" \
-                           f"\n\n⏰ <b>Next withdrawal date:</b> {withdrawal_date.strftime('%d-%m-%Y %H:%M:%S')} GMT" \
+                    text = f"❗️<b>Available withdrawal balance:</b> " \
+                           f"{withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
                            f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
                 await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
         else:
@@ -399,13 +342,35 @@ async def handle_amount(msg: types.Message, state: FSMContext):
         await msg.answer(text)
     else:
         personal_balance_user = await binance_db.get_binance_ac(msg.from_user.id)
-        collective_balance_user = await balance.get_balance(msg.from_user.id)
+        amount, out = await balance.get_amount(msg.from_user.id)
+        balance_ = await balance.get_balance(msg.from_user.id)
+        body = amount - out
+        income = (balance_[0] + balance_[1]) - body
+        language = await users.user_data(msg.from_user.id)
+        first_trans = await balance.get_first_transaction(msg.from_user.id)
+        date_first = first_trans[2] if first_trans is not None else None
+        hold = await balance.get_hold(msg.from_user.id)
+        hold = hold[0] if hold is not None else 0
+        withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
+        now = datetime.datetime.now()
+        now = now.replace(tzinfo=datetime.timezone.utc)
+        if withdrawal_date:
+            if now <= date_first + datetime.timedelta(days=hold):
+                withdrawal_balance = income
+            else:
+                withdrawal_balance = balance_[0] + balance_[1]
+        else:
+            if balance_[0] + balance_[1] >= 1000:
+                withdrawal_balance = balance_[0] + balance_[1]
+            else:
+                withdrawal_balance = 0
+        collective_balance_user = round(withdrawal_balance, 2)
         async with state.proxy() as data:
             data['amount'] = msg.text
             if data.get("status") == "Личный":
                 user_balance = personal_balance_user[1]
             else:
-                user_balance = collective_balance_user[0]
+                user_balance = collective_balance_user
             if user_balance >= int(msg.text):
                 wallet = await users.user_data(msg.from_user.id)
                 text = f"Вы заказываете вывод {data.get('amount')} USDT на TRC-20 кошелёк {wallet[6]}"
