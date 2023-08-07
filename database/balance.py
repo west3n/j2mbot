@@ -108,6 +108,9 @@ async def save_withdrawal_amount(amount, tg_id):
     try:
         cur.execute("UPDATE app_balance SET withdrawal = %s WHERE tg_id_id = %s", (amount, tg_id,))
         db.commit()
+        cur.execute("UPDATE app_balance SET balance = balance - %s WHERE tg_id_id = %s",
+                    (amount, tg_id,))
+        db.commit()
     finally:
         cur.close()
         db.close()

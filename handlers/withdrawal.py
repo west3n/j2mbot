@@ -36,7 +36,6 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     amount, out = await balance.get_amount(call.from_user.id)
     balance_ = await balance.get_balance(call.from_user.id)
     body = amount - out
-    print(body)
     income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
@@ -44,19 +43,38 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     hold = await balance.get_hold(call.from_user.id)
     hold = hold[0] if hold is not None else 0
     withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
-    text = f"<em>Дата: {current_date.date().strftime('%d.%m.%Y')}</em>"
-    text += f"\n<em>Вывод на этой неделе доступен ограничено!</em>" if is_even_week is False else ""
-    text += f"\n\n<b>Тело:</b> {body} USDT" if body else ""
-    text += f"\n\n<b>Начисления:</b> {income} USDT"
-    text += f"\n\n<b>Дата окончания холда:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
+    now = datetime.datetime.now()
+    now = now.replace(tzinfo=datetime.timezone.utc)
+    if withdrawal_date:
+        if now <= date_first + datetime.timedelta(days=hold):
+            withdrawal_balance = income
+        else:
+            withdrawal_balance = balance_[0] + balance_[1]
+    else:
+        if balance_[0] + balance_[1] >= 1000:
+            withdrawal_balance = balance_[0] + balance_[1]
+        else:
+            withdrawal_balance = 0
+    if is_even_week is False and datetime.datetime.now().weekday() == 0:
+        date_withdraw = datetime.datetime.now().strftime("%d.%m.%Y")
+    else:
+        now_weekday = datetime.datetime.now().weekday()
+        days_until_monday = (7 - now_weekday) % 7
+        days_until_monday = 7 if days_until_monday == 0 else days_until_monday
+        date_withdraw = (datetime.datetime.now() + datetime.timedelta(days=days_until_monday)).date().strftime(
+            "%d.%m.%Y")
+
+    text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0} USDT"
+    text += f"\n<b>Дата окончания холда:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
+    text += f"\n<b>Дата возможного перечисления:</b> {date_withdraw}"
 
     if language[4] == 'EN':
         photo = decouple.config("BANNER_WITHDRAWAL_EN")
-        text = f"<em>Date: {current_date.date().strftime('%d.%m.%Y')}</em>"
-        text += f"\n<em>Output is limited this week!</em>" if is_even_week is False else ""
-        text += f"\n\n<b>Body:</b> {body} USDT" if body else ""
-        text += f"\n\n<b>Income:</b> {income} USDT"
-        text += f"\n\n<b>Withdrawal Date:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
+        text = f"<b>Available withdrawal balance:</b>" \
+               f" {round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0} USDT"
+        text += f"\n<b>Hold end date:</b> " \
+                f"{withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
+        text += f"\n<b>Possible transfer date:</b> {date_withdraw}"
     await call.message.answer_photo(photo=photo, caption=text, reply_markup=inline.main_withdraw(language[4]))
 
 

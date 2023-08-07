@@ -4,3 +4,4 @@
 *.doc
 *.png
 *.txt
+/test.py

@@ -54,7 +54,6 @@ async def count_users_profit():
                 pass
 
 
-
 async def send_message_with_profit():
     all_tg_ids = await users.get_all_tg_id()
     now = datetime.now().date() - timedelta(days=1)
@@ -81,7 +80,8 @@ async def send_message_with_profit():
                         count = 0.4
                     elif referral_profit_line1_data[2] > 15000:
                         count = 0.5
-                    referral_profit_line1 += float(referral_profit_line1_data[8] / count) * 0.05 if referral_profit_line1_data is not None else 0
+                    referral_profit_line1 += float(
+                        referral_profit_line1_data[8] / count) * 0.05 if referral_profit_line1_data is not None else 0
         if line_2_ids:
             for line_2_id in line_2_ids[1]:
                 referral_profit_line2_data = await balance.get_balance_status(line_2_id)
@@ -92,7 +92,8 @@ async def send_message_with_profit():
                         count = 0.4
                     elif referral_profit_line2_data[2] > 15000:
                         count = 0.5
-                    referral_profit_line2 += float(referral_profit_line2_data[8] / count) * 0.03 if referral_profit_line2_data is not None else 0
+                    referral_profit_line2 += float(
+                        referral_profit_line2_data[8] / count) * 0.03 if referral_profit_line2_data is not None else 0
         if line_3_ids:
             for line_3_id in line_3_ids[1]:
                 referral_profit_line3_data = await balance.get_balance_status(line_3_id)
@@ -103,13 +104,15 @@ async def send_message_with_profit():
                         count = 0.4
                     elif referral_profit_line3_data[2] > 15000:
                         count = 0.5
-                    referral_profit_line3 += (referral_profit_line3_data[8] / count) * 0.02 if referral_profit_line3_data is not None else 0
+                    referral_profit_line3 += (referral_profit_line3_data[
+                                                  8] / count) * 0.02 if referral_profit_line3_data is not None else 0
         bot = Bot(token=decouple.config("BOT_TOKEN"))
         session = await bot.get_session()
 
         try:
             if weekly_profit > 0 or referral_profit_line1 > 0 or referral_profit_line2 > 0 or referral_profit_line3 > 0:
-                print(f"{tg_id} - WP: {weekly_profit} - 1 {referral_profit_line1}, 2 {referral_profit_line2}, 3 {referral_profit_line3} -- !{ref_x + ref_x2 + ref_x3}")
+                print(
+                    f"{tg_id} - WP: {weekly_profit} - 1 {referral_profit_line1}, 2 {referral_profit_line2}, 3 {referral_profit_line3} -- !{ref_x + ref_x2 + ref_x3}")
                 try:
                     await bot.send_message(
                         chat_id=tg_id,
@@ -138,7 +141,6 @@ async def send_message_with_profit():
                                    text=f"Пользователь с ID {tg_id} заблокировал бота!")
             await session.close()
 
-asyncio.run(send_message_with_profit())
 
 async def weekly_deposit_update():
     tg_ids = await users.get_all_tg_id()
