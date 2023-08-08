@@ -61,8 +61,14 @@ async def withdraw_main_menu(call: types.CallbackQuery):
         now_weekday = datetime.datetime.now().weekday()
         days_until_monday = (7 - now_weekday) % 7
         days_until_monday = 7 if days_until_monday == 0 else days_until_monday
-        date_withdraw = (datetime.datetime.now() + datetime.timedelta(days=days_until_monday)).date().strftime(
-            "%d.%m.%Y")
+        date_withdraw = (datetime.datetime.now() + datetime.timedelta(days=days_until_monday))
+        week_number = (date_withdraw.day - 1) // 7 + 1
+        is_even_week_withdraw = week_number % 2 == 0
+        if is_even_week_withdraw is True:
+            date_withdraw = date_withdraw + datetime.timedelta(days=7)
+            date_withdraw = date_withdraw.date().strftime("%d.%m.%Y")
+        else:
+            date_withdraw = date_withdraw.date().strftime("%d.%m.%Y")
 
     text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0} USDT"
     text += f"\n<b>Дата окончания холда:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
@@ -296,7 +302,7 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
                 await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
             else:
                 photo = decouple.config("BANNER_WITHDRAWAL")
-                text = f"<b>Баланс, доступный к выводу:</b> {withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
+                text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
                        f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
