@@ -106,7 +106,7 @@ async def get_withdrawal_history(tg_id):
 async def save_withdrawal_amount(amount, tg_id):
     db, cur = connect()
     try:
-        cur.execute("UPDATE app_balance SET withdrawal = %s WHERE tg_id_id = %s", (amount, tg_id,))
+        cur.execute("UPDATE app_balance SET withdrawal = withdrawal + %s WHERE tg_id_id = %s", (amount, tg_id,))
         db.commit()
         cur.execute("UPDATE app_balance SET balance = balance - %s WHERE tg_id_id = %s",
                     (amount, tg_id,))
