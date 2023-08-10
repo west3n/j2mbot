@@ -1,12 +1,13 @@
 import asyncio
 
 import decouple
+
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.utils.exceptions import MessageToDeleteNotFound
-
 from database import users, balance, thedex_db
+from handlers.google import sheets_connection
 from keyboards import inline
 from binance import thedex
 

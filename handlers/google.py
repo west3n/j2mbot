@@ -1,11 +1,21 @@
 import base64
 import decouple
-import requests
-from google.oauth2 import credentials
+import gspread
 
+from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from email.mime.text import MIMEText
+
+
+async def sheets_connection():
+    sheet_url = decouple.config("SHEET_URL")
+    credentials_path = "../j2m-project-395212-6143ef593cd0.json"
+    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(credentials_path, scope)
+    gc = gspread.authorize(credentials)
+    sh = gc.open_by_url(sheet_url)
+    return sh
 
 
 async def send_email_message(to: str, subject: str, message_text: str):
