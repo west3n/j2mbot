@@ -19,7 +19,6 @@ async def sheets_connection():
 
 
 async def send_email_message(to: str, subject: str, message_text: str):
-    print(to)
     user_id = 'me'
     service = build('gmail', 'v1', credentials=Credentials(
         None,

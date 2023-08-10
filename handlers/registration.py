@@ -1,3 +1,5 @@
+import datetime
+
 import decouple
 import asyncio
 import re
@@ -10,7 +12,7 @@ from binance import thedex, microservice
 from handlers import commands
 from keyboards import inline
 from handlers.commands import Registration, SmartContract, Email, generate_random_code
-from handlers.google import send_email_message
+from handlers.google import send_email_message, sheets_connection
 
 
 async def language_handler(call: types.CallbackQuery, state: FSMContext):
@@ -559,6 +561,11 @@ async def nft_refresh(call: types.CallbackQuery):
             await call.bot.send_message(chat_id=decouple.config('GROUP_ID'),
                                         text=f"Пользователь {call.from_user.id} - {call.from_user.username} получил NFT (РЕКЛАМА)"
                                              f"\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/nft/")
+            sh = await sheets_connection()
+            worksheet_name = "NFT"
+            worksheet = sh.worksheet(worksheet_name)
+            worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                                  call.from_user.id, "РЕКЛАМА"))
         else:
             text = "Произошла ошибка, обратитесь в поддержку"
             if language[4] == "EN":
@@ -661,6 +668,11 @@ async def nft_refresh(call: types.CallbackQuery):
                 await call.bot.send_message(chat_id=decouple.config('GROUP_ID'),
                                             text=f"Пользователь {call.from_user.id} - {call.from_user.username} купил NFT"
                                                  f"\n\nПодробнее по ссылке: http://89.223.121.160:8000/admin/app/nft/")
+                sh = await sheets_connection()
+                worksheet_name = "NFT"
+                worksheet = sh.worksheet(worksheet_name)
+                worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                                      call.from_user.id, "Successful"))
             else:
                 text = "Произошла ошибка, обратитесь в поддержку"
                 if language[4] == "EN":
