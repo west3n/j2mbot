@@ -56,11 +56,16 @@ async def count_users_profit():
 
 async def send_message_with_profit():
     all_tg_ids = await users.get_all_tg_id()
+    # all_tg_ids = [340862178, 452517420]
     now = datetime.now().date() - timedelta(days=1)
     profit_percentage = await binance_db.get_weekly_profit(now)
     for tg_id in all_tg_ids:
+        print(tg_id)
         user_data = await balance.get_balance_status(tg_id)
-        weekly_profit = user_data[8] if user_data is not None else 0
+        try:
+            weekly_profit = user_data[8] if user_data[8] is not None else 0
+        except TypeError:
+            weekly_profit = 0
         line_1_ids = await referral.get_line_1(tg_id)
         line_2_ids = await referral.get_line_2(tg_id)
         line_3_ids = await referral.get_line_3(tg_id)
@@ -78,10 +83,12 @@ async def send_message_with_profit():
                     ref_x += referral_profit_line1_data[2]
                     if referral_profit_line1_data[2] < 5000:
                         count = 0.4
-                    elif referral_profit_line1_data[2] > 15000:
+                    if referral_profit_line1_data[2] > 15000:
                         count = 0.5
-                    referral_profit_line1 += float(
-                        referral_profit_line1_data[8] / count) * 0.05 if referral_profit_line1_data is not None else 0
+                    try:
+                        referral_profit_line1 += float(referral_profit_line1_data[8] / count) * 0.05 if referral_profit_line1_data is not None else 0
+                    except TypeError:
+                        referral_profit_line1 += 0
         if line_2_ids:
             for line_2_id in line_2_ids[1]:
                 referral_profit_line2_data = await balance.get_balance_status(line_2_id)
@@ -90,10 +97,12 @@ async def send_message_with_profit():
                     ref_x2 += referral_profit_line2_data[2]
                     if referral_profit_line2_data[2] < 5000:
                         count = 0.4
-                    elif referral_profit_line2_data[2] > 15000:
+                    if referral_profit_line2_data[2] > 15000:
                         count = 0.5
-                    referral_profit_line2 += float(
-                        referral_profit_line2_data[8] / count) * 0.03 if referral_profit_line2_data is not None else 0
+                    try:
+                        referral_profit_line2 += float(referral_profit_line2_data[8] / count) * 0.03 if referral_profit_line2_data is not None else 0
+                    except TypeError:
+                        referral_profit_line2 += 0
         if line_3_ids:
             for line_3_id in line_3_ids[1]:
                 referral_profit_line3_data = await balance.get_balance_status(line_3_id)
@@ -102,17 +111,20 @@ async def send_message_with_profit():
                     count = 0.45
                     if referral_profit_line3_data[2] < 5000:
                         count = 0.4
-                    elif referral_profit_line3_data[2] > 15000:
+                    if referral_profit_line3_data[2] > 15000:
                         count = 0.5
-                    referral_profit_line3 += (referral_profit_line3_data[
-                                                  8] / count) * 0.02 if referral_profit_line3_data is not None else 0
+                    try:
+                        referral_profit_line3 += (referral_profit_line3_data[8] / count) * 0.02 if referral_profit_line3_data is not None else 0
+                    except TypeError:
+                        referral_profit_line3 += 0
         bot = Bot(token=decouple.config("BOT_TOKEN"))
         session = await bot.get_session()
-
         try:
             if weekly_profit > 0 or referral_profit_line1 > 0 or referral_profit_line2 > 0 or referral_profit_line3 > 0:
-                print(
-                    f"{tg_id} - WP: {weekly_profit} - 1 {referral_profit_line1}, 2 {referral_profit_line2}, 3 {referral_profit_line3} -- !{ref_x + ref_x2 + ref_x3}")
+                # dop = 62.98
+                # if tg_id == 340862178:
+                #     dop = 65.78
+                print(f"{tg_id} - WP: {weekly_profit} - 1 {referral_profit_line1}, 2 {referral_profit_line2}, 3 {referral_profit_line3} -- !{ref_x + ref_x2 + ref_x3} ")
                 try:
                     await bot.send_message(
                         chat_id=tg_id,
@@ -126,6 +138,7 @@ async def send_message_with_profit():
                              f"\n   ↳ <em>3 линия (2% от дохода): {round(referral_profit_line3, 2)} USDT </em>"
                              f"\n   ↳ <em> Общие партнерские начисления: "
                              f"{round(referral_profit_line1 + referral_profit_line2 + referral_profit_line3, 2)} USDT</em>"
+                             # f"\n\n<em>Дополнительные начисления J2M:</em> {dop} USDT "
                              f"\n\n\n<em>Баланс будет обновлен в течение суток!"
                              f"Возможны незначительные отличия партнерских начислений в отчете от реальных (в пределах 1%)</em>"
                              f"\n\n<a href='https://telegra.ph/Kak-vyschityvaetsya-dohodnost-polzovatelya-J2M-07-21-2'>"
@@ -134,6 +147,7 @@ async def send_message_with_profit():
                     await session.close()
                 except:
                     await session.close()
+
             else:
                 await session.close()
         except aiogram.utils.exceptions.BotBlocked:
