@@ -195,7 +195,7 @@ async def balance_to_deposit():
             print(f"Update deposit with weekly profit for all users at {now.date()}")
         if now.weekday() == 0 and now.hour == 20 and now.minute == 0:
             await balance.balance_to_deposit_autoreinvest()
-            print(f"Update balance to deposit on autoreinvest users at {now.date()}")
+            print(f"Update balance to deposit on auto-reinvest users at {now.date()}")
             await balance.balance_to_deposit_invest()
             print(f"Update balance to deposit on invest users at {now.date()}")
         await asyncio.sleep(60 - now.second)
