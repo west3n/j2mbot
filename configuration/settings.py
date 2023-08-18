@@ -1,7 +1,10 @@
 import logging
 
+
 from aiogram import Dispatcher, types
 from decouple import config
+
+
 from handlers.commands import register as reg_handlers
 from handlers.balance import register as reg_balance
 from handlers.refill import register as reg_refill
@@ -18,6 +21,9 @@ from demo.dm_withdrawal import register as reg_demo_withdrawal
 
 bot_token = config("BOT_TOKEN")
 logger = logging.getLogger(__name__)
+
+
+
 
 
 async def set_default_commands(dp):

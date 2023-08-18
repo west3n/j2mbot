@@ -15,6 +15,7 @@ from handlers.commands import Registration, SmartContract, Email, generate_rando
 from handlers.google import send_email_message, sheets_connection
 
 
+
 async def language_handler(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         data['language'] = call.data.upper()

@@ -7,7 +7,8 @@ from database.connection import connect
 async def get_balance(tg_id):
     db, cur = connect()
     try:
-        cur.execute("SELECT balance, deposit, withdrawal, referral_balance FROM app_balance WHERE tg_id_id=%s", (tg_id,))
+        cur.execute("SELECT balance, deposit, withdrawal, referral_balance "
+                    "FROM app_balance WHERE tg_id_id=%s", (tg_id,))
         result = cur.fetchone()
         if result:
             return result
@@ -43,28 +44,19 @@ async def get_balance_history(tg_id, transaction):
         cur.close()
         db.close()
 
+
 async def get_amount(tg_id):
     db, cur = connect()
     try:
-        cur.execute("SELECT amount FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
+        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, "IN"))
-        amount = 0
-        result = cur.fetchall()
-        try:
-            for x in result:
-                amount += int(x[0])
-        except TypeError:
-            amount += 0
-        cur.execute("SELECT amount FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
+        refill = cur.fetchone()
+        refill = float(refill[0]) if refill[0] else 0
+        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, "OUT"))
-        out = 0
-        result_ = cur.fetchall()
-        try:
-            for x in result_:
-                out += int(x[0])
-        except TypeError:
-            out += 0
-        return amount, out
+        out = cur.fetchone()
+        out = float(out[0]) if out[0] else 0
+        return refill, out
     finally:
         cur.close()
         db.close()
@@ -161,7 +153,7 @@ async def get_first_transaction(tg_id):
 async def update_percentage(tg_id, settings):
     db, cur = connect()
     try:
-        cur.execute("UPDATE app_balance SET settings=%s WHERE tg_id_id=%s", (settings, tg_id,))
+        cur.execute("UPDATE app_balance SET settings = %s WHERE tg_id_id=%s", (settings, tg_id,))
         db.commit()
     finally:
         cur.close()
@@ -197,12 +189,12 @@ async def balance_to_deposit_autoreinvest():
         for tg_id in tg_ids:
             balance = await get_my_balance(tg_id)
             print(f"{balance} - {tg_id}")
-            cur.execute("UPDATE app_balance SET deposit = deposit + %s, balance = %s WHERE tg_id_id = %s", (float(round(balance, 2)), 0.0, tg_id,))
+            cur.execute("UPDATE app_balance SET deposit = deposit + %s, "
+                        "balance = %s WHERE tg_id_id = %s", (float(round(balance, 2)), 0.0, tg_id,))
             db.commit()
     finally:
         cur.close()
         db.close()
-
 
 
 async def balance_to_deposit_invest():
