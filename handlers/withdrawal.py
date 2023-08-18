@@ -35,7 +35,7 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     is_even_week = week_number % 2 == 0
     amount, out = await balance.get_amount(call.from_user.id)
     balance_ = await balance.get_balance(call.from_user.id)
-    body = amount - out
+    body = amount + out
     income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
@@ -266,7 +266,7 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
         pass
     amount, out = await balance.get_amount(call.from_user.id)
     balance_ = await balance.get_balance(call.from_user.id)
-    body = amount - out
+    body = amount + out
     income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
     first_trans = await balance.get_first_transaction(call.from_user.id)
@@ -350,7 +350,7 @@ async def handle_amount(msg: types.Message, state: FSMContext):
         personal_balance_user = await binance_db.get_binance_ac(msg.from_user.id)
         amount, out = await balance.get_amount(msg.from_user.id)
         balance_ = await balance.get_balance(msg.from_user.id)
-        body = amount - out
+        body = amount + out
         income = (balance_[0] + balance_[1]) - body
         language = await users.user_data(msg.from_user.id)
         first_trans = await balance.get_first_transaction(msg.from_user.id)
