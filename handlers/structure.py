@@ -53,6 +53,7 @@ async def structure_handler(call: types.CallbackQuery):
             await call.message.answer(text_2, reply_markup=inline.user_terms(language[4]))
             await UserForm.accept.set()
         else:
+            collective_sum = await balance.get_collective_refill_sum(call.from_user.id)
             ref_tg = await referral.get_id_from_line_1_id(call.from_user.id)
             ref_balance = await balance.get_balance(call.from_user.id)
             try:
@@ -121,14 +122,20 @@ async def structure_handler(call: types.CallbackQuery):
                    f"\n\n*Партнёрские начисления за весь период:* _{ref_balance} USDT_" \
                    f"\n\n*1 Линия:*  " \
                    f"\n ↳ _Количество человек_: _{ref_line_1}_" \
-                   f"\n ↳ _Оборот_: {balance_line_1} USDT" \
-                   f"\n*2 Линия:*  " \
-                   f"\n ↳ _Количество человек_: _{ref_line_2}_" \
-                   f"\n ↳ _Оборот_: {balance_line_2} USDT" \
-                   f"\n*3 Линия:*  " \
-                   f"\n ↳ _Количество человек_: _{ref_line_3}_" \
-                   f"\n ↳ _Оборот_: {balance_line_3} USDT" \
-                   f"\n\n_❔ Подробно о том, как начисляются бонусы можно узнать в разделе 'Информация'_"
+                   f"\n ↳ _Оборот_: {balance_line_1} USDT"
+            if collective_sum >= 500:
+                text += f"\n*2 Линия:*  " \
+                        f"\n ↳ _Количество человек_: _{ref_line_2}_" \
+                        f"\n ↳ _Оборот_: {balance_line_2} USDT"
+            else:
+                text += "\n*2 Линия станет доступна после пополнения от 500 USD*"
+            if collective_sum >= 1000:
+                text += f"\n*3 Линия:* " \
+                        f"\n ↳ _Количество человек_: _{ref_line_3}_" \
+                        f"\n ↳ _Оборот_: {balance_line_3} USDT"
+            else:
+                text += f"\n*3 Линия станет доступна после пополнения от 1000 USD*"
+            text += f"\n\n_❔ Подробно о том, как начисляются бонусы можно узнать в разделе 'Информация'_"
             for char in special_chars:
                 text = text.replace(char, "\\" + char)
             if language[4] == 'EN':

@@ -31,7 +31,7 @@ async def balance_handler(call: types.CallbackQuery):
             f'\n<b>Баланс:</b> {stabpool_balance} USDT' if stabpool_balance else ''
     text += f'\n<b>Активный депозит:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
     text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(user_balance[3], 2)} USDT"
-    text += f"\n\n<b>Сумма зарезервированная на вывод:</b> {round(user_balance[2], 2)} " \
+    text += f"\n\n<b>Сумма зарезервированная на вывод (коллективный аккаунт):</b> {round(user_balance[2], 2)} " \
             f"USDT" if int(user_balance[2]) > 0 else ""
     text += f"\n\n<b>Сумма зарезервированная на вывод (стабилизационный пул):</b> {stabpool_withdrawal} " \
             f"USDT" if stabpool_withdrawal else ""
@@ -99,12 +99,15 @@ async def withdrawal_refill_history(call: types.CallbackQuery):
     all_user_data = await balance.get_balance_history(call.from_user.id, history_type)
     for user_data in all_user_data:
         text = f"<b>Дата:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}\n<b>Cумма:</b> {user_data[1]}" \
-               f"\n<b>Хэш транзакции:</b> {user_data[2]}"
+               f"\n<b>Хэш транзакции:</b> {user_data[2]}" \
+               f"\n<b>Тип аккаунта:</b> {user_data[3]}"
         if language[4] == "EN":
             hash_ = user_data[2]
             hash_ = 'Personal Account' if hash_ == 'Личный аккаунт' else hash_
-            text = f"<b>Date:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}\n<b>Amount:</b> {user_data[1]}" \
-                   f"\n<b>Transaction Hash:</b> {hash_}"
+            text = f"<b>Date:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}" \
+                   f"\n<b>Amount:</b> {user_data[1]}" \
+                   f"\n<b>Transaction Hash:</b> {hash_}" \
+                   f"\n<b>Account type:</b> {user_data[3]}"
         await call.message.answer(text)
     if not all_user_data:
         text = f'У вас нет истории {history_text}!'

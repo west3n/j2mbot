@@ -38,7 +38,7 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     body = amount + out
     income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
-    first_trans = await balance.get_first_transaction(call.from_user.id)
+    first_trans = await balance.get_first_transaction(call.from_user.id, "Коллективный аккаунт")
     date_first = first_trans[2] if first_trans is not None else None
     hold = await balance.get_hold(call.from_user.id)
     hold = hold[0] if hold is not None else 0
@@ -69,10 +69,40 @@ async def withdraw_main_menu(call: types.CallbackQuery):
             date_withdraw = date_withdraw.date().strftime("%d.%m.%Y")
         else:
             date_withdraw = date_withdraw.date().strftime("%d.%m.%Y")
+    try:
+        amount_st, out_st = await balance.get_amount(call.from_user.id, "Стабилизационный пул")
+        balance_st = await stabpool.get_balance(call.from_user.id)
+        body_st = amount_st + out_st
+        income_st = (balance_st[0] + balance_st[1]) - body_st
+        first_trans_st = await balance.get_first_transaction(call.from_user.id, "Стабилизационный пул")
+        date_first_st = first_trans_st[2] if first_trans_st is not None else None
+        hold_st = await stabpool.get_hold(call.from_user.id)
+        hold_st = hold_st[0] if hold_st is not None else 0
+        withdrawal_date_st = date_first_st + datetime.timedelta(days=hold_st) if date_first_st and hold_st else None
+        if withdrawal_date_st:
+            if now <= date_first_st + datetime.timedelta(days=hold_st):
+                withdrawal_balance_st = income_st
+            else:
+                withdrawal_balance_st = balance_st[0] + balance_st[1]
+        else:
+            if balance_st[0] + balance_st[1] >= 1000:
+                withdrawal_balance_st = balance_[0] + balance_[1]
+            else:
+                withdrawal_balance_st = 0
+        stabpool_balance_user = round(withdrawal_balance_st, 2)
+    except TypeError:
+        stabpool_balance_user = 0
+        withdrawal_date_st = None
 
-    text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0} USDT"
-    text += f"\n<b>Дата окончания холда:</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
-    text += f"\n<b>Дата возможного перечисления:</b> {date_withdraw}"
+    text = f"<em>[Коллективный аккаунт]</em> \n<b>Баланс, доступный к выводу:" \
+           f"</b> {round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0} USDT"
+    text += f"\n<b>Дата окончания холда:" \
+            f"</b> {withdrawal_date.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date else ""
+    text += f"\n\n<em>[Стабилизационный пул]</em> \n<b>Баланс, доcтупный к выводу:</b>"\
+            f"{stabpool_balance_user}" if stabpool_balance_user > 0 else ""
+    text += f"\n<b>Дата окончания холда:" \
+            f"</b> {withdrawal_date_st.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date_st else ""
+    text += f"\n\n<b>Дата возможного перечисления:</b> {date_withdraw}"
 
     if language[4] == 'EN':
         photo = decouple.config("BANNER_WITHDRAWAL_EN")
@@ -180,9 +210,10 @@ async def change_wallet_step2(msg: types.Message, state: FSMContext):
 
 async def change_percentage(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
+    reinvest = await balance.get_percentage(call.from_user.id)
     await call.message.delete()
     text = "📈 Выберите процент, который вы хотите реинвестировать после каждой торговой недели:\n\n" \
-           "<em>По умолчанию реинвестируется 100%</em>"
+           f"<em>В данный момент вы реинвестируете: {reinvest}%</em>"
     if language[4] == 'EN':
         text = "Wallet successfully updated!"
     await call.message.answer(text, reply_markup=inline.withdraw_percentage(language[4]))
@@ -264,12 +295,12 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
         await call.message.delete()
     except MessageToDeleteNotFound:
         pass
-    amount, out = await balance.get_amount(call.from_user.id)
+    amount, out = await balance.get_amount(call.from_user.id, "Коллективный аккаунт")
     balance_ = await balance.get_balance(call.from_user.id)
     body = amount + out
     income = (balance_[0] + balance_[1]) - body
     language = await users.user_data(call.from_user.id)
-    first_trans = await balance.get_first_transaction(call.from_user.id)
+    first_trans = await balance.get_first_transaction(call.from_user.id, "Коллективный аккаунт")
     date_first = first_trans[2] if first_trans is not None else None
     hold = await balance.get_hold(call.from_user.id)
     hold = hold[0] if hold is not None else 0
@@ -333,6 +364,80 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
 
+async def withdrawal_handler_stabpool(call: types.CallbackQuery, state: FSMContext):
+    try:
+        await call.message.delete()
+    except MessageToDeleteNotFound:
+        pass
+    amount, out = await balance.get_amount(call.from_user.id, "Стабилизационный пул")
+    balance_ = await stabpool.get_balance(call.from_user.id)
+    body = amount + out
+    income = (balance_[0] + balance_[1]) - body
+    language = await users.user_data(call.from_user.id)
+    first_trans = await balance.get_first_transaction(call.from_user.id, "Стабилизационный пул")
+    date_first = first_trans[2] if first_trans is not None else None
+    hold = await stabpool.get_hold(call.from_user.id)
+    hold = hold[0] if hold is not None else 0
+    withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
+    now = datetime.datetime.now()
+    now = now.replace(tzinfo=datetime.timezone.utc)
+    if withdrawal_date:
+        if now <= date_first + datetime.timedelta(days=hold):
+            withdrawal_balance = income
+        else:
+            withdrawal_balance = balance_[0] + balance_[1]
+    else:
+        if balance_[0] + balance_[1] >= 1000:
+            withdrawal_balance = balance_[0] + balance_[1]
+        else:
+            withdrawal_balance = 0
+    if first_trans:
+        wallet = await users.user_data(call.from_user.id)
+        if wallet[6]:
+            if withdrawal_balance > 50:
+                text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2)} USDT" \
+                       f"\nCумма минимального вывода 50 USDT" \
+                       f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
+                if language[4] == "EN":
+                    text = f"<b>Available withdrawal balance:</b> {round(withdrawal_balance, 2)} USDT" \
+                           f"\nMinimum withdrawal amount: 50 USDT" \
+                           f"\n\n💳 Please enter the amount of USDT you want to withdraw:"
+                del_msg = await call.message.answer(text)
+                await state.set_state(NewWallet.amount.state)
+                await state.update_data({"del_msg": del_msg.message_id, "status": "Стабпул"})
+            else:
+                photo = decouple.config("BANNER_WITHDRAWAL")
+                text = f"<b>Баланс, доступный к выводу:" \
+                       f"</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
+                       f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
+                if language[4] == "EN":
+                    photo = decouple.config("BANNER_WITHDRAWAL_EN")
+                    text = f"❗️<b>Available withdrawal balance:</b> " \
+                           f"{withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
+                           f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
+                await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
+        else:
+            photo = decouple.config("BANNER_WITHDRAWAL")
+            text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
+                   "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
+                   "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
+            if language[4] == "EN":
+                photo = decouple.config("BANNER_WITHDRAWAL_EN")
+                text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
+                       "\n\n<em>Click the button below to add a wallet!" \
+                       "You can always change the withdrawal wallet in this menu.</em>"
+            await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
+    else:
+        photo = decouple.config("BANNER_WITHDRAWAL")
+        text = "❗️Для активации функции вывода средств <b>нужно пополнить Баланс.</b>" \
+               "\n\n<em>В данный момент у вас нет Истории Пополнений!</em>"
+        if language[4] == "EN":
+            photo = decouple.config("BANNER_WITHDRAWAL_EN")
+            text = "❗To activate the withdrawal function, you need to replenish your balance." \
+                   "\n\n <em>Currently, you have no Deposit History!</em>"
+        await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
+
+
 async def handle_amount(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     try:
@@ -353,8 +458,56 @@ async def handle_amount(msg: types.Message, state: FSMContext):
             data['amount'] = msg.text
             if data.get("status") == "Личный":
                 user_balance = personal_balance_user[1]
-            else:
+            elif data.get("status") == "Коллективный":
+                amount, out = await balance.get_amount(msg.from_user.id, "Коллективный аккаунт")
+                balance_ = await balance.get_balance(msg.from_user.id)
+                body = amount + out
+                income = (balance_[0] + balance_[1]) - body
+                language = await users.user_data(msg.from_user.id)
+                first_trans = await balance.get_first_transaction(msg.from_user.id, "Коллективный аккаунт")
+                date_first = first_trans[2] if first_trans is not None else None
+                hold = await balance.get_hold(msg.from_user.id)
+                hold = hold[0] if hold is not None else 0
+                withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
+                now = datetime.datetime.now()
+                now = now.replace(tzinfo=datetime.timezone.utc)
+                if withdrawal_date:
+                    if now <= date_first + datetime.timedelta(days=hold):
+                        withdrawal_balance = income
+                    else:
+                        withdrawal_balance = balance_[0] + balance_[1]
+                else:
+                    if balance_[0] + balance_[1] >= 1000:
+                        withdrawal_balance = balance_[0] + balance_[1]
+                    else:
+                        withdrawal_balance = 0
+                collective_balance_user = round(withdrawal_balance, 2)
                 user_balance = collective_balance_user
+            else:
+                amount, out = await balance.get_amount(msg.from_user.id, "Стабилизационный пул")
+                balance_ = await stabpool.get_balance(msg.from_user.id)
+                body = amount + out
+                income = (balance_[0] + balance_[1]) - body
+                language = await users.user_data(msg.from_user.id)
+                first_trans = await balance.get_first_transaction(msg.from_user.id, "Стабилизационный пул")
+                date_first = first_trans[2] if first_trans is not None else None
+                hold = await stabpool.get_hold(msg.from_user.id)
+                hold = hold[0] if hold is not None else 0
+                withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
+                now = datetime.datetime.now()
+                now = now.replace(tzinfo=datetime.timezone.utc)
+                if withdrawal_date:
+                    if now <= date_first + datetime.timedelta(days=hold):
+                        withdrawal_balance = income
+                    else:
+                        withdrawal_balance = balance_[0] + balance_[1]
+                else:
+                    if balance_[0] + balance_[1] >= 1000:
+                        withdrawal_balance = balance_[0] + balance_[1]
+                    else:
+                        withdrawal_balance = 0
+                stabpool_balance_user = round(withdrawal_balance, 2)
+                user_balance = stabpool_balance_user
             if user_balance >= int(msg.text):
                 wallet = await users.user_data(msg.from_user.id)
                 text = f"Вы заказываете вывод {data.get('amount')} USDT на TRC-20 кошелёк {wallet[6]}"

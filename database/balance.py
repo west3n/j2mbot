@@ -37,7 +37,7 @@ async def get_balance_status(tg_id):
 async def get_balance_history(tg_id, transaction):
     db, cur = connect()
     try:
-        cur.execute("SELECT date, amount, description FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
+        cur.execute("SELECT date, amount, description, transaction_type FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, transaction))
         return cur.fetchall()
     finally:
@@ -100,12 +100,12 @@ async def get_amount(tg_id, transaction_type):
         db.close()
 
 
-async def insert_balance_history(tg_id, amount, hash):
+async def insert_balance_history(tg_id, amount, hash, transaction_type):
     db, cur = connect()
     try:
         now = datetime.datetime.now()
-        cur.execute("INSERT INTO app_balancehistory (tg_id_id, transaction, date, amount, status, description) "
-                    "VALUES (%s, %s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True, hash))
+        cur.execute("INSERT INTO app_balancehistory (tg_id_id, transaction, date, amount, status, description, transaction_type) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True, hash, transaction_type, ))
         db.commit()
     finally:
         cur.close()
@@ -180,7 +180,8 @@ async def get_hold(tg_id):
 async def get_first_transaction(tg_id, transaction_type):
     db, cur = connect()
     try:
-        cur.execute("SELECT * FROM app_balancehistory WHERE tg_id_id = %s AND transaction = %s", (tg_id, "IN"))
+        cur.execute("SELECT * FROM app_balancehistory WHERE tg_id_id = %s AND transaction = %s "
+                    "AND transaction_type = %s", (tg_id, "IN", transaction_type,))
         result = cur.fetchone()
         return result
     finally:
@@ -193,6 +194,20 @@ async def update_percentage(tg_id, settings):
     try:
         cur.execute("UPDATE app_balance SET settings = %s WHERE tg_id_id=%s", (settings, tg_id,))
         db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_percentage(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT settings FROM app_balance WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        if result:
+            return result[0]
+        else:
+            return 100
     finally:
         cur.close()
         db.close()

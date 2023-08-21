@@ -611,17 +611,17 @@ async def count_refill(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     ad = await binance_db.check_binance_keys(msg.from_id)
     if ad[1] == "Реклама":
-        x = [15380, 15621, 15342, 16100, 15432]
+        x = [25380, 25621, 25342, 26100, 25432]
         balance_binance = random.choice(x)
         if msg.text.isdigit():
-            if int(msg.text) >= 15000:
+            if int(msg.text) >= 25000:
                 async with state.proxy() as data:
                     data['count'] = msg.text
-                if balance_binance >= 15000 and balance_binance > int(msg.text):
+                if balance_binance >= 25000 and balance_binance > int(msg.text):
                     await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                     deposit = await balance.get_balance(msg.from_id)
-                    await users.set_status("15000", msg.from_id)
-                    await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
+                    await users.set_status("25000", msg.from_id)
+                    await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт", "Личный аккаунт")
                     text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
                            f"Пополнение выполнено успешно.\n\n" \
                            f"<b>Активный депозит J2M: {deposit[1]} USDT</b>\n\n" \
@@ -659,11 +659,11 @@ async def count_refill(msg: types.Message, state: FSMContext):
                     await msg.answer(text)
             else:
                 deposit = await balance.get_balance(msg.from_id)
-                if int(deposit[1]) + int(msg.text) >= 15000:
+                if int(deposit[1]) + int(msg.text) >= 25000:
                     if int(balance_binance) >= int(msg.text):
                         await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
-                        await users.set_status("15000", msg.from_id)
-                        await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
+                        await users.set_status("25000", msg.from_id)
+                        await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт", "Личный аккаунт")
                         text = f"Ваш Баланс Binance: {balance_binance}\n\n" \
                                f"Пополнение выполнено успешно.\n\n" \
                                f"<b>Активный депозит J2M: {int(deposit[1]) + int(msg.text)} USDT</b>\n\n" \
@@ -693,8 +693,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
                         await msg.answer(text)
                     else:
                         x = int(msg.text)
-                        if 15000 > int(msg.text):
-                            x = 15000
+                        if 25000 > int(msg.text):
+                            x = 25000
                         text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!</b>" \
                                f"\n\n<em>Для продолжения пополните аккаунт на сумму " \
                                f"{x - int(balance_binance)} USDT и создайте новую заявку!</em>"
@@ -704,9 +704,9 @@ async def count_refill(msg: types.Message, state: FSMContext):
                                    f"{x - int(balance_binance)} USDT and create a new request!</em>"
                         await msg.answer(text)
                 else:
-                    text = f"<b>Сумма пополнения не может быть меньше, чем 15 000 USDT!</b>"
+                    text = f"<b>Сумма пополнения не может быть меньше, чем 25 000 USDT!</b>"
                     if language[4] == "EN":
-                        text = f"<b>The top-up amount cannot be less than 15 000 USDT!</b>"
+                        text = f"<b>The top-up amount cannot be less than 25 000 USDT!</b>"
                     await msg.answer(text)
         else:
             text = f"<b>Введите сумму целыми числами, без букв, запятых и прочего.</b>"
@@ -720,14 +720,14 @@ async def count_refill(msg: types.Message, state: FSMContext):
             balance_binance = None
         if balance_binance:
             if msg.text.isdigit():
-                if int(msg.text) >= 15000:
+                if int(msg.text) >= 25000:
                     async with state.proxy() as data:
                         data['count'] = msg.text
-                    if balance_binance[0] >= 15000:
+                    if balance_binance[0] >= 25000:
                         await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                         deposit = await balance.get_balance(msg.from_id)
-                        await users.set_status("15000", msg.from_id)
-                        await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
+                        await users.set_status("25000", msg.from_id)
+                        await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт", "Личный аккаунт")
                         text = f"Ваш Баланс Binance: {balance_binance[0]}\n\n" \
                                f"Пополнение выполнено успешно.\n\n" \
                                f"<b>Активный депозит J2M: {deposit[1]} USDT</b>\n\n" \
@@ -765,11 +765,11 @@ async def count_refill(msg: types.Message, state: FSMContext):
                         await msg.answer(text)
                 else:
                     deposit = await balance.get_balance(msg.from_id)
-                    if int(deposit[1]) + int(msg.text) >= 15000:
+                    if int(deposit[1]) + int(msg.text) >= 25000:
                         if int(balance_binance[0]) >= int(msg.text):
                             await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
-                            await users.set_status("15000", msg.from_id)
-                            await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт")
+                            await users.set_status("25000", msg.from_id)
+                            await balance.insert_balance_history(msg.from_id, int(msg.text), "Личный аккаунт", "Личный аккаунт")
                             text = f"Ваш Баланс Binance: {balance_binance[0]}\n\n" \
                                    f"Пополнение выполнено успешно.\n\n" \
                                    f"<b>Активный депозит J2M: {int(deposit[1]) + int(msg.text)} USDT</b>\n\n" \
@@ -799,8 +799,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
                             await msg.answer(text)
                         else:
                             x = int(msg.text)
-                            if 15000 > int(msg.text):
-                                x = 15000
+                            if 25000 > int(msg.text):
+                                x = 25000
                             text = f"<b>Сумма на вашем аккаунте Binance не может быть меньше, чем сумма пополнения!" \
                                    f"</b>\n\n<em>Для продолжения пополните аккаунт на сумму " \
                                    f"{x - int(balance_binance[0])} USDT и создайте новую заявку!</em>"
@@ -811,9 +811,9 @@ async def count_refill(msg: types.Message, state: FSMContext):
                             await msg.answer(text)
 
                     else:
-                        text = f"<b>Сумма пополнения не может быть меньше, чем 15 000 USDT!</b>"
+                        text = f"<b>Сумма пополнения не может быть меньше, чем 25 000 USDT!</b>"
                         if language[4] == "EN":
-                            text = f"<b>The top-up amount cannot be less than 15 000 USDT!</b>"
+                            text = f"<b>The top-up amount cannot be less than 25 000 USDT!</b>"
                         await msg.answer(text)
             else:
                 text = f"<b>Введите сумму целыми числами, без букв, запятых и прочего.</b>"
