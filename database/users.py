@@ -131,4 +131,15 @@ async def check_email(tg_id):
         cur.close()
 
 
-
+async def get_text(action, lang):
+    db, cur = connect()
+    try:
+        if lang == 'EN':
+            cur.execute("SELECT english FROM text_text WHERE action=%s", (action,))
+            return cur.fetchone()[0]
+        if lang == 'RU':
+            cur.execute("SELECT russian FROM text_text WHERE action=%s", (action,))
+            return cur.fetchone()[0]
+    finally:
+        cur.close()
+        db.close()

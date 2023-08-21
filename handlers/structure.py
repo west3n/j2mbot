@@ -108,12 +108,12 @@ async def structure_handler(call: types.CallbackQuery):
                 ref_name = await users.get_tg_username(ref_tg[0])
                 invitor_data = await structure.get_user_form(ref_tg[0])
                 text_x = f"\n\n‍👦*Вас пригласил:* _@{ref_name}_"
+                text_x_e = f"\n\n👨‍👦 *You were invited by:* _@{ref_name}_"
                 if invitor_data:
                     text_x += f"\n   ↳ _Имя_: {invitor_data[1]}" \
                               f"\n   ↳ _Социальные сети_: {invitor_data[2]}"
                     text_x_e += f"\n   ↳ _Name_: {invitor_data[1]}" \
                                 f"\n   ↳ _Social media_: {invitor_data[2]}"
-                text_x_e = f"\n\n👨‍👦 *You were invited by:* _@{ref_name}_"
             text = f"🆔 *Ваш ID:* `{call.from_user.id}`" \
                    f"{text_x}" \
                    f"\n\n🔗 *Ваша партнёрская ссылка:*" \
@@ -140,15 +140,21 @@ async def structure_handler(call: types.CallbackQuery):
                        f"\n\n*Total earned for the entire period:* _{ref_balance} USDT_" \
                        f"\n\n*1 Line:* " \
                        f"\n ↳ Number of people: _{ref_line_1}_ " \
-                       f"\n ↳ Turnover: _{balance_line_1} USDT_" \
-                       f"\n*2 Line:* " \
-                       f"\n ↳ Number of people: _{ref_line_2}_ " \
-                       f"\n ↳ Turnover: _{balance_line_2} USDT_" \
-                       f"\n*3 Line:*" \
-                       f"\n ↳ Number of people: _{ref_line_3}_ " \
-                       f"\n ↳ Turnover: _{balance_line_3} USDT_" \
-                       f"\n\n_❔ For detailed information on how bonuses are calculated, " \
-                       f"please refer to the 'Information' section_"
+                       f"\n ↳ Turnover: _{balance_line_1} USDT_"
+                if collective_sum >= 500:
+                    text += f"\n*2 Line:* " \
+                            f"\n ↳ Number of people: _{ref_line_2}_ " \
+                            f"\n ↳ Turnover: _{balance_line_2} USDT_"
+                else:
+                    text += "\n*Line 2 will be available after refill more than 500 USD*"
+                if collective_sum >= 1000:
+                    text += f"\n*3 Line:*" \
+                            f"\n ↳ Number of people: _{ref_line_3}_ " \
+                            f"\n ↳ Turnover: _{balance_line_3} USDT_"
+                else:
+                    text += "\n*Line 3 will be available after refill more than 1000 USD*"
+                text += f"\n\n_❔ For detailed information on how bonuses are calculated, " \
+                        f"please refer to the 'Information' section_"
                 for char in special_chars:
                     text = text.replace(char, "\\" + char)
             try:

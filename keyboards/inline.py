@@ -448,28 +448,77 @@ def distribution(lang) -> InlineKeyboardMarkup:
     return kb
 
 
-def active_500(lang) -> InlineKeyboardMarkup:
-    button, button_2, back = "Разместить активы коллективный аккаунт", "Изучить условия от 15 000 USDT", "Назад"
+def active_50(lang) -> InlineKeyboardMarkup:
+    partner, button_1, button_2, stabpool, back = "Условия партнерской программы", "Изучить условия от 5000 USDT", \
+        "Изучить условия от 15000 USDT", "Стабилизационный пул", "Назад"
     if lang == "EN":
-        button, button_2, back = "Place assets in a collective account", \
-            "Explore conditions starting from 15,000 USDT", "Go back"
+        partner, button_1, button_2, stabpool, back = "Partner Program Terms", "Explore terms from 5000 USDT", \
+            "Explore terms from 15000 USDT", "Stabilization Pool", "Back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"💵 {button}", callback_data="500")],
-        [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_15000")],
+        [InlineKeyboardButton(f"👪 {partner}", callback_data="partners")],
+        [InlineKeyboardButton(f"💵 {button_1}", callback_data="active_5000")],
+        [InlineKeyboardButton(f"💵 {button_2}", callback_data="active_15000")],
+        [InlineKeyboardButton(f"💵 {stabpool}", callback_data='stabpool_terms')],
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='distribution')]
+    ])
+    return kb
+
+
+def active_5000(lang) -> InlineKeyboardMarkup:
+    partner, button_1, button_2, stabpool, back = "Условия партнерской программы", "Изучить условия от 50 USDT", \
+        "Изучить условия от 15000 USDT", "Стабилизационный пул", "Назад"
+    if lang == "EN":
+        partner, button_1, button_2, stabpool, back = "Partner Program Terms", "Explore terms from 50 USDT", \
+            "Explore terms from 15000 USDT", "Stabilization Pool", "Back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"👪 {partner}", callback_data="partners")],
+        [InlineKeyboardButton(f"💵 {button_1}", callback_data="active_50")],
+        [InlineKeyboardButton(f"💵 {button_2}", callback_data="active_15000")],
+        [InlineKeyboardButton(f"💵 {stabpool}", callback_data='stabpool_terms')],
         [InlineKeyboardButton(f'◀️ {back}', callback_data='distribution')]
     ])
     return kb
 
 
 def active_15000(lang) -> InlineKeyboardMarkup:
-    button, button_2, back = "Разместить активы личный аккаунт", "Изучить условия от 500 USDT", "Назад"
+    partner, button_1, button_2, stabpool, back = "Условия партнерской программы", "Изучить условия от 50 USDT", \
+        "Изучить условия от 5000 USDT", "Стабилизационный пул", "Назад"
     if lang == "EN":
-        button, button_2, back = "Place assets in a personal account", "Explore conditions starting from 500 USDT", \
-            "Go back"
+        partner, button_1, button_2, stabpool, back = "Partner Program Terms", "Explore terms from 5000 USDT", \
+            "Explore terms from 15000 USDT", "Stabilization Pool", "Back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"💵 {button}", callback_data="15000")],
-        [InlineKeyboardButton(f"📖 {button_2}", callback_data="active_500")],
+        [InlineKeyboardButton(f"👪 {partner}", callback_data="partners")],
+        [InlineKeyboardButton(f"💵 {button_1}", callback_data="active_50")],
+        [InlineKeyboardButton(f"💵 {button_2}", callback_data="active_5000")],
+        [InlineKeyboardButton(f"💵 {stabpool}", callback_data='stabpool_terms')],
         [InlineKeyboardButton(f'◀️ {back}', callback_data='distribution')]
+    ])
+    return kb
+
+
+def stabpool_kb(lang) -> InlineKeyboardMarkup:
+    button, button_1, button_2, button_3, back = "Участвовать в стабилизационном пуле", "Изучить условия от 50 USDT", \
+        "Изучить условия от 5000 USDT", "Изучить условия от 15000 USDT", "Назад"
+    if lang == "EN":
+        button, button_1, button_2, button_3, back = "Participate in stabilization pool", \
+            "Explore terms from 50 USDT", "Explore terms from 5000 USDT", "Explore terms from 15000 USDT", "Back"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"💰 {button}", callback_data="stabpool")],
+        [InlineKeyboardButton(f"💵 {button_1}", callback_data="active_50")],
+        [InlineKeyboardButton(f"💵 {button_2}", callback_data="active_5000")],
+        [InlineKeyboardButton(f"💵 {button_3}", callback_data="active_15000")],
+        [InlineKeyboardButton(f'◀️ {back}', callback_data='distribution')]
+    ])
+    return kb
+
+
+def partners_kb(lang) -> InlineKeyboardMarkup:
+    button_1, button_2 = "Вернуться к описанию категорий", "Разместить активы"
+    if lang == "EN":
+        button_1, button_2 = "Return to Category Descriptions", "Place Assets"
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(f"👪 {button_1}", callback_data="distribution")],
+        [InlineKeyboardButton(f"📖 {button_2}", callback_data="deposit_funds")],
     ])
     return kb
 
@@ -506,14 +555,16 @@ def change_data(lang) -> InlineKeyboardMarkup:
 
 
 def refill_account_3(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, back = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT", \
-        "Назад"
+    first_button, second_button, third_button, stabpool, back = "Категория 1 (от 50 USDT до 4999 USDT)", \
+        "Категория 2 (от 5000 USDT до 14 999 USDT)", "Категория 3 (от 15000 USDT)", "Стабилизационный пул", "Назад"
     if lang == "EN":
-        first_button, second_button, back = "Personal account starting from 15,000 USDT", \
-            "Collective account starting from 500 USDT.", "Go back"
+        first_button, second_button, third_button, stabpool, back = "Category 1 (from 50 USDT to 4999 USDT)", \
+            "Category 2 (from 5000 USDT to 14,999 USDT)", "Category 3 (from 15000 USDT)", "Stabilization Pool", "Back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"💰 {first_button}", callback_data="active_15000")],
-        [InlineKeyboardButton(f"💵 {second_button}", callback_data="active_500")],
+        [InlineKeyboardButton(f"💰 {first_button}", callback_data="active_50")],
+        [InlineKeyboardButton(f"💵 {second_button}", callback_data="active_5000")],
+        [InlineKeyboardButton(f"💵 {third_button}", callback_data='active_15000')],
+        [InlineKeyboardButton(f"💵 {stabpool}", callback_data='stabpool_terms')],
         [InlineKeyboardButton(f'◀️ {back}', callback_data='review_terms')]
     ])
     return kb
@@ -547,14 +598,15 @@ def tax_fee() -> InlineKeyboardMarkup:
 
 
 def withdrawal_account(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, back = "Вывод с личного аккаунта (от 15 000 USDT)", \
-        "Вывод с коллективного аккаунта (от 500 USDT)", "Назад"
+    first_button, second_button, third_button, back = "Вывод с личного аккаунта (от 15 000 USDT)", \
+        "Вывод с коллективного аккаунта (от 500 USDT)", "Вывод со стабилизационного пула", "Назад"
     if lang == "EN":
-        first_button, second_button, back = "Withdrawal from personal account (starting from 15,000 USDT)", \
-            "Withdrawal from collective account (starting from 500 USDT)", "Go back"
+        first_button, second_button, third_button, back = "Withdrawal from personal account (starting from 15,000 USDT)", \
+            "Withdrawal from collective account (starting from 500 USDT)", "Withdraw from stabilization pool", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💰 {first_button}", callback_data="withdrawal_15000")],
         [InlineKeyboardButton(f"💵 {second_button}", callback_data="withdrawal_500")],
+        [InlineKeyboardButton(f"💲 {third_button}", callback_data="withdrawal_stabpool")],
         [InlineKeyboardButton(f'◀️ {back}', callback_data='withdrawal')]
     ])
     return kb

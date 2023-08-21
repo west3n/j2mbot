@@ -45,15 +45,53 @@ async def get_balance_history(tg_id, transaction):
         db.close()
 
 
-async def get_amount(tg_id):
+async def get_stabpool_refill_sum(tg_id):
     db, cur = connect()
     try:
-        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
-                    (tg_id, "IN"))
+        cur.execute(
+            "SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s AND transaction_type = %s",
+            (tg_id, "IN", "Стабилизационный пул"))
+        result = cur.fetchone()
+        try:
+            if result[0]:
+                return int(result[0])
+            else:
+                return 0
+        except TypeError:
+            return 0
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_collective_refill_sum(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute(
+            "SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s AND transaction_type = %s",
+            (tg_id, "IN", "Коллективный аккаунт"))
+        result = cur.fetchone()
+        try:
+            if result[0]:
+                return int(result[0])
+            else:
+                return 0
+        except TypeError:
+            return 0
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_amount(tg_id, transaction_type):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s "
+                    "AND transaction_type = %s", (tg_id, "IN", transaction_type,))
         refill = cur.fetchone()
         refill = float(refill[0]) if refill[0] else 0
-        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s",
-                    (tg_id, "OUT"))
+        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE tg_id_id=%s AND transaction=%s "
+                    "AND transaction_type = %s", (tg_id, "OUT", transaction_type,))
         out = cur.fetchone()
         out = float(out[0]) if out[0] else 0
         return refill, out
@@ -139,7 +177,7 @@ async def get_hold(tg_id):
         db.close()
 
 
-async def get_first_transaction(tg_id):
+async def get_first_transaction(tg_id, transaction_type):
     db, cur = connect()
     try:
         cur.execute("SELECT * FROM app_balancehistory WHERE tg_id_id = %s AND transaction = %s", (tg_id, "IN"))

@@ -3,7 +3,7 @@ import asyncio
 import decouple
 from aiogram import Dispatcher, types
 from keyboards import inline
-from database import users, balance, nft, binance_db
+from database import users, balance, nft, binance_db, stabpool
 
 
 async def balance_handler(call: types.CallbackQuery):
@@ -12,6 +12,10 @@ async def balance_handler(call: types.CallbackQuery):
     photo = decouple.config("BANNER_BALANCE")
     dao = await nft.nft_id(call.from_user.id)
     binance_balance = await binance_db.get_binance_ac(call.from_user.id)
+    stabpool_data = await stabpool.get_stabpool_data(call.from_user.id)
+    stabpool_balance = round(stabpool_data[0], 2) if stabpool_data else None
+    stabpool_deposit = round(stabpool_data[1], 2) if stabpool_data else None
+    stabpool_withdrawal = round(stabpool_data[2], 2) if stabpool_data else None
     text = f"Ваш индивидуальный номер участника DAO, зафиксированный в смарт-контракте: {dao}" \
            f"\n\n💵 <em>Коллективный аккаунт</em>" \
            f"\n<b>Ваш баланс:</b> {round(user_balance[0], 2)} USDT" \
@@ -23,12 +27,16 @@ async def balance_handler(call: types.CallbackQuery):
                 f"\n<b>Активный депозит:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
     except TypeError:
         pass
+    text += f'\n\n<em>Стабилизационный пул</em>' \
+            f'\n<b>Баланс:</b> {stabpool_balance} USDT' if stabpool_balance else ''
+    text += f'\n<b>Активный депозит:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
     text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(user_balance[3], 2)} USDT"
     text += f"\n\n<b>Сумма зарезервированная на вывод:</b> {round(user_balance[2], 2)} " \
             f"USDT" if int(user_balance[2]) > 0 else ""
+    text += f"\n\n<b>Сумма зарезервированная на вывод (стабилизационный пул):</b> {stabpool_withdrawal} " \
+            f"USDT" if stabpool_withdrawal else ""
     text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>График работы " \
             "торгового бота</a>"
-
     if language[4] == "EN":
         text = f"Your individual DAO participant number recorded in the smart contract: {dao}" \
                f"\n\n💵 <em>Collective Account</em>" \

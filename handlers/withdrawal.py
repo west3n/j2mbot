@@ -9,7 +9,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from handlers import commands, google
 from keyboards import inline
-from database import users, balance, output, binance_db
+from database import users, balance, output, binance_db, stabpool
 
 
 class NewWallet(StatesGroup):
@@ -33,7 +33,7 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     current_date = datetime.datetime.now()
     week_number = (current_date.day - 1) // 7 + 1
     is_even_week = week_number % 2 == 0
-    amount, out = await balance.get_amount(call.from_user.id)
+    amount, out = await balance.get_amount(call.from_user.id, "Коллективный аккаунт")
     balance_ = await balance.get_balance(call.from_user.id)
     body = amount + out
     income = (balance_[0] + balance_[1]) - body
@@ -302,7 +302,8 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
                 await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
             else:
                 photo = decouple.config("BANNER_WITHDRAWAL")
-                text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
+                text = f"<b>Баланс, доступный к выводу:" \
+                       f"</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
                        f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
@@ -348,29 +349,6 @@ async def handle_amount(msg: types.Message, state: FSMContext):
         await msg.answer(text)
     else:
         personal_balance_user = await binance_db.get_binance_ac(msg.from_user.id)
-        amount, out = await balance.get_amount(msg.from_user.id)
-        balance_ = await balance.get_balance(msg.from_user.id)
-        body = amount + out
-        income = (balance_[0] + balance_[1]) - body
-        language = await users.user_data(msg.from_user.id)
-        first_trans = await balance.get_first_transaction(msg.from_user.id)
-        date_first = first_trans[2] if first_trans is not None else None
-        hold = await balance.get_hold(msg.from_user.id)
-        hold = hold[0] if hold is not None else 0
-        withdrawal_date = date_first + datetime.timedelta(days=hold) if date_first and hold else None
-        now = datetime.datetime.now()
-        now = now.replace(tzinfo=datetime.timezone.utc)
-        if withdrawal_date:
-            if now <= date_first + datetime.timedelta(days=hold):
-                withdrawal_balance = income
-            else:
-                withdrawal_balance = balance_[0] + balance_[1]
-        else:
-            if balance_[0] + balance_[1] >= 1000:
-                withdrawal_balance = balance_[0] + balance_[1]
-            else:
-                withdrawal_balance = 0
-        collective_balance_user = round(withdrawal_balance, 2)
         async with state.proxy() as data:
             data['amount'] = msg.text
             if data.get("status") == "Личный":
@@ -509,6 +487,7 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(withdrawal_handler, text='withdrawal_funds')
     dp.register_callback_query_handler(withdrawal_handler_collective, text="withdrawal_500")
     dp.register_callback_query_handler(withdrawal_handler_personal, text="withdrawal_15000")
+    dp.register_callback_query_handler(withdrawal_handler_stabpool, text='withdrawal_stabpool')
     dp.register_callback_query_handler(change_wallet_new, text='change_wallet')
     dp.register_callback_query_handler(change_percentage, text='change_percentage')
     dp.register_callback_query_handler(change_percentage_step2, state=ChangePercentage.percentage)

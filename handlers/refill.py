@@ -69,24 +69,27 @@ async def handle_deposit_funds(call: types.CallbackQuery):
     text = 'Выберите один из вариантов:'
     if language[4] == "EN":
         text = 'Select at least one option:'
-    await call.message.delete()
+    try:
+        await call.message.delete()
+    except MessageToDeleteNotFound:
+        pass
     await call.message.answer(text, reply_markup=inline.refill_account_2(language[4]))
 
 
 async def handle_review_terms(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    text = 'DAO J2M предоставляет возможность своим участникам использовать IT продукт партнера Sonera.' \
+    text = 'Участники DAO J2M могут воспользоваться технологиями от компании Sonera.' \
+           '\n\nПрежде чем принимать решения о совершении действий с цифровыми и крипто-сервисами, ' \
+           'важно изучить полную информацию о рисках и затратах, связанных с волатильностью рынков, ' \
+           'формированием законодательной базы в мире и другими особенностями развивающейся цифровой экономики.' \
+           '\n\nМы не рекомендуем брать кредиты, продавать имущество или привлекать заемные средства. Используйте ' \
+           'только свободные средства, которые вы готовы вложить, беря в расчет все возможные риски.' \
            '\n\nОсновы размещения крипто активов в любых новых инструментах:' \
            '\n- осведомленность' \
            '\n- своевременность' \
            '\n- умеренный авантюризм' \
-           '\n\nПрежде чем принимать решения о совершении действий с цифровыми и крипто-сервисами, ' \
-           'важно изучить полную информацию о рисках и затратах, связанных с волатильностью рынков, ' \
-           'формированием законодательной базы в мире и другими особенностями развивающейся цифровой экономики .' \
-           '\n\nМы рекомендуем отказаться от идей брать кредиты, продавать имущество, привлекать заемные ' \
-           'средства или использовать не свободные средства.' \
-           '\n\nПравильно оцените цели участия, свои возможности и допустимый уровень риска.' \
-           '\n\nДля большей уверенности обратитесь к нам или к своему пригласителю за консультацией.'
+           '\n\nПравильно оцените свои цели и взвесьте возможности, прежде чем принимать финансовое решение.' \
+           '\n\nДля большей уверенности обратитесь за консультацией к нам или к своему реферальному партнеру.'
     if language[4] == "EN":
         text = "DAO J2M provides participants with the opportunity to utilize the software of the partner company, " \
                "Sonera.\n\nFundamentals of depositing crypto assets in any new instruments:" \
@@ -106,15 +109,15 @@ async def handle_review_terms(call: types.CallbackQuery):
 
 async def handle_distribution(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    text = 'По условиям применения IT продукта, доходность рассчитывается еженедельно от результатов его работы.' \
-           ' Процент дохода участника ДАО зависит от суммы его личного актива.' \
-           '\n\nУчастники с личным криптоактивом от 500 USDT до 5000 USDT' \
-           'получают вознаграждение в размере 40% от прибыли своего активного депозита' \
-           '\n\nУчастники с личным криптоактивом от 5000 USDT до 15000 USDT' \
-           'получают вознаграждение в размере 45% от прибыли своего активного депозита' \
-           '\n\nУчастники с личным криптоактивом от 15000 USDT' \
-           'получают вознаграждение в размере 50% от прибыли своего активного депозита собственного ' \
-           'субаккаунта Binance.\n\nБолее детальные условия для какой суммы криптоактивов Вам интересны?'
+    text = "По условиям применения IT-продукта, доходность рассчитывается еженедельно от результатов его работы. " \
+           "Процент дохода участника ДАО зависит от суммы его личного актива. Чем выше личный актив, тем выше " \
+           "доходность и лучше условия. В нашей программе есть три категории участников:" \
+           "\n\n1) От 50 USDT до 4999 USDT. Участники этой категории получают 40% от проторговки собственного пула" \
+           '\n\n2) От 5000 USDT до 14 999 USDT. В этой категории участники получают 45% от проторговки ' \
+           'собственного пула' \
+           '\n\n3) 15 000 USDT и выше. Участники этой категории получают 50% от проторговки собственного пула' \
+           '\n\nПроцент проторговки — не единственный параметр, который отличается в разных категориях. ' \
+           'Кликните на категорию, о которой хотите узнать подробнее.'
     if language[4] == "EN":
         text = "According to the terms of use of the IT product, profitability is calculated on a weekly basis " \
                "based on its performance. The percentage \
@@ -132,23 +135,17 @@ async def handle_distribution(call: types.CallbackQuery):
 
 async def handle_500_15000(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    if call.data == 'active_500':
-        text = '<b>Условия формата участия от 500 USDT:</b>' \
+    if call.data == 'active_50':
+        text = '<b>Категория 1 (от 50 USDT до 4999 USDT):</b>' \
                '\n\nПреимущества формата участия:' \
-               '\n- Повышенный процент возможной доходности за счет того, что больший размер единого коллективного' \
-               ' актива позволяет использовать большее количество стратегий торговых бота.' \
-               '- Возможность использовать современные технологии высокочастотного алгоритмического трейдинга ' \
-               'коллективно, с минимальным размещением личных активов.' \
-               '\n\nПри размещении  активов от 500 USDT возможность вывода замораживается до того момента, ' \
-               'пока сумма депозита не достигнет объема в 1000 USDT.' \
-               '\n\nВарианты размещения активов от 1000 USDT:' \
+               '\n- Низкий порог входа для участников.' \
+               '\n- Возможность опробовать технологии алгоритмического трейдинга с минимальными вложениями.' \
+               '\n\n<b>Доходность: 40% от проторговки собственного пула</b>' \
+               '\n\nВарианты размещения активов от 50 USDT:' \
                '\n- Холд тела на 1 месяц с минимальной прогнозируемой доходностью от 3%' \
-               '\n- Холд тела на 3 месяца с минимальной  прогнозируемой доходностью от 12%' \
-               '\n- Холд тела на 6 месяцев с минимальной прогнозируемой доходностью от 30%' \
                '\n\nПравила участия:' \
-               '\n- Вывод процентов дохода осуществляется 1 раз в две недели.' \
-               '\n- Минимальная сумма вывода 50$.' \
-               '\n- Вывод в течении 24 часов. Расчетный день вывода Понедельник.' \
+               '\n- Вывод процентов дохода осуществляется раз в две недели.' \
+               '\n- Вывод в течении 24 часов. Расчетный день вывода - понедельник.' \
                '\n- Введенные средства поступают в работу раз в неделю в понедельник, в момент открытия торговой ' \
                'недели.' \
                '\n- День вывода тела депозита в соответствии с выбранным сроком холда рассчитывается с момента, ' \
@@ -158,75 +155,189 @@ async def handle_500_15000(call: types.CallbackQuery):
                '\n\nМаксимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, ' \
                'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
         if language[4] == "EN":
-            text = "Conditions of '500' participation format:" \
-                   "\n\nAdvantages of participation format:" \
-                   "\n- Increased potential profitability due to a larger size of the collective asset, allowing " \
-                   "for the use of more trading bot strategies." \
-                   "\n- The opportunity to collectively utilize modern high-frequency algorithmic trading " \
-                   "technologies with minimal placement of personal assets." \
-                   "\n\nWhen placing assets starting from 500 USDT, the withdrawal option is frozen until " \
-                   "the deposit amount reaches 1000 USDT." \
-                   "\n\nOptions for placing assets starting from 1000 USDT:" \
-                   "\n- Hold period of 1 month with a minimum projected profitability of 3%." \
-                   "\n- Hold period of 3 months with a minimum projected profitability of 12%." \
-                   "\n- Hold period of 6 months with a minimum projected profitability of 30%." \
+            text = "<b>Category 1 (from 50 USDT to 4999 USDT):</b>" \
+                   "\n\nAdvantages of participation in this format:" \
+                   "\n- Low entry threshold for participants." \
+                   "\n- Opportunity to experience algorithmic trading technologies with minimal investments." \
+                   "\n\n<b>Profitability: 40% of trading from your own pool</b>" \
+                   "\n\nAsset placement options from 50 USDT:" \
+                   "\n- Hold the body for 1 month with a minimum projected yield of 3%." \
                    "\n\nParticipation rules:" \
-                   "\n\n- Income percentages are withdrawn once every two weeks." \
-                   "\n- Minimum withdrawal amount is $50." \
-                   "\n- Withdrawals are processed within 24 hours. Withdrawal day is Monday." \
-                   "\n- Deposited funds are put into operation once a week on Monday at the beginning of " \
-                   "the trading week.\n- The withdrawal day for the deposit principal is calculated based on the " \
-                   "chosen hold period, starting from the moment the crypto asset starts operating." \
-                   "\n- The company has the right to return funds to the user's wallet and not put them into " \
-                   "operation if they fail AML verification." \
-                   "\n\nThe detailed conditions are described in Appendix No. 1 to the Terms of Use of the IT " \
-                   "product, which you have accepted. You can review the document again in the " \
+                   "\n- Profit percentage withdrawal occurs every two weeks." \
+                   "\n- Withdrawal within 24 hours. The withdrawal calculation day is Monday." \
+                   "\n- Deposited funds are put to work once a week on Monday, at the beginning of the trading week." \
+                   "\n- The withdrawal day of the deposit body is calculated based on the chosen hold period, " \
+                   "starting from the moment when the crypto asset started working." \
+                   "\n- The company has the right to return funds to the user's wallet and not put them to work " \
+                   "if they do not pass AML verification." \
+                   "\n\nThe most detailed conditions are outlined in Appendix No 1 to the Terms of Use of the " \
+                   "IT product that you have accepted. You can review the document again in the " \
                    "'Information' section of the bot."
-        await call.message.edit_text(text, reply_markup=inline.active_500(language[4]))
-    elif call.data == 'active_15000':
-        text = "<b>Условия формата участия от 15000 USDT:</b>" \
+        await call.message.edit_text(text, reply_markup=inline.active_50(language[4]))
+    elif call.data == 'active_5000':
+        text = "<b>Категория 2 (от 5000 USDT до 14 999 USDT):</b>" \
                "\n\nПреимущества формата участия:" \
-               "\n- Минимальная прогнозируемая доходность от 3% в месяц." \
-               "\n- Ваши криптоактивы находятся в Вашем постоянном доступе на Вашем субаккаунте Binance." \
-               "\n- Только Вы имеете возможность пополнять и выводить активы в любой момент." \
+               "\n- Выгодные условия при относительно низком пороге входа" \
+               "\n- Доступны расширенные возможности партнерской программы" \
+               "\n\nДоходность: 45 % от проторговки собственного пула" \
+               "\n\nВарианты размещения активов от 5000 USDT:" \
+               "\n- Холд тела на 1 месяц с минимальной прогнозируемой доходностью от 3%" \
                "\n\nПравила участия:" \
-               "\n- Работа по инструкции." \
-               "\n- Активация аккаунта 1 рабочая неделя (2-5 рабочих дней)." \
-               "\n- Запуск партнерского ПО на Вашем субаккаунте 48 часов." \
-               "\n- Расчет недельной доходности производится по воскресеньям." \
-               "\n- Распределение доходности между участником программы и DAO - 50/50." \
-               "\n- Участник еженедельно получает информацию о сумме доходности и размере вознаграждения в " \
-               "DAO за предоставленное ПО в воскресенье и обязуется осуществить перевод в понедельник." \
-               "\n- Вывод активного депозита возможен в любое время, по предварительной обязательной заявке " \
-               "в этом боте.\n- Согласование момента вывода для получения максимальной доходности. Срок " \
-               "рассмотрения до 24 часов.\n- При нарушении условий со стороны участника DAO, компания оставляет " \
-               "за собой право отключить аккаунт от партнерской и мотивационной программы с " \
-               "последующим баном на полгода." \
+               "\n- Вывод процентов дохода осуществляется раз в две недели." \
+               "\n- Вывод в течение 24 часов. Расчетный день вывода — понедельник." \
+               "\n- Введенные средства поступают в работу раз в неделю в понедельник, " \
+               "в момент открытия торговой недели." \
+               "\n- День вывода тела депозита в соответствии с выбранным сроком холда рассчитывается с момента, " \
+               "когда криптоактив поступил в работу." \
+               "\n- Компания имеет право вернуть средства на кошелек пользователя и не брать их в работу, " \
+               "если они не пройдут AML проверку." \
                "\n\n Максимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, " \
                'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
         if language[4] == 'EN':
-            text = "Conditions of '15000' participation format:" \
-                   "\n\nAdvantages of participation format:" \
-                   "\n-Minimum projected profitability of 3% per month." \
-                   "\n- Your crypto assets are accessible on your Binance sub-account." \
-                   "\n- Only you have the ability to deposit and withdraw assets at any time." \
+            text = "<b>Category 1 (from 5000 USDT to 14 999 USDT):</b>" \
+                   "\n\nAdvantages of participation in this format:" \
+                   "\n- Favorable terms with a relatively low entry threshold" \
+                   "\n- Advanced partner program features are available" \
+                   "\n\n<b>Profitability: 45% of trading from your own pool</b>" \
+                   "\n\nAsset placement options from 5000 USDT:" \
+                   "\n- Hold the body for 1 month with a minimum projected yield of 3%." \
                    "\n\nParticipation rules:" \
-                   "\n- Follow the instructions provided." \
+                   "\n- Profit percentage withdrawal occurs every two weeks." \
+                   "\n- Withdrawal within 24 hours. The withdrawal calculation day is Monday." \
+                   "\n- Deposited funds are put to work once a week on Monday, at the beginning of the trading week." \
+                   "\n- The withdrawal day of the deposit body is calculated based on the chosen hold period, " \
+                   "starting from the moment when the crypto asset started working." \
+                   "\n- The company has the right to return funds to the user's wallet and not put them to work " \
+                   "if they do not pass AML verification." \
+                   "\n\nThe most detailed conditions are outlined in Appendix No 1 to the Terms of Use of the " \
+                   "IT product that you have accepted. You can review the document again in the " \
+                   "'Information' section of the bot."
+        await call.message.edit_text(text, reply_markup=inline.active_5000(language[4]))
+    else:
+        text = "<b>Категория 3 (от 15000 USDT):</b>" \
+               "\n\nПреимущества формата участия:" \
+               "\n- Минимальная прогнозируемая доходность 3%" \
+               "\n- Ваши криптоактивы находятся в вашем постоянном доступе на вашем субаккаунте Binance." \
+               "\n- Эксклюзивные условия участия и заработка на партнерской программе" \
+               "\n\nДоходность: 50 % от проторговки собственного пула" \
+               "\n\nПравила участия:" \
+               "\n- Работа по инструкции." \
+               "\n- Активация аккаунта 1 рабочая неделя (2-5 рабочих дней)." \
+               "\n- Запуск партнерского ПО на вашем субаккаунте: 48 часов." \
+               "\n- Расчет недельной доходности производится по воскресеньям." \
+               "\n- Распределение доходности между участником программы и DAO: 50/50 " \
+               "(самая высокая доля по сравнению с другими категориями участников)." \
+               "\n- Участник еженедельно получает информацию о сумме доходности и размере вознаграждения в DAO за" \
+               " предоставленное ПО в воскресенье и обязуется осуществить перевод в понедельник." \
+               "\n- Вывод активного депозита возможен в любое время, по предварительной " \
+               "обязательной заявке в этом боте." \
+               "\n- Согласование момента вывода для получения максимальной доходности. Срок рассмотрения до 24 часов." \
+               "\n- При нарушении условий со стороны участника DAO, компания оставляет за собой право отключить " \
+               "аккаунт от партнерской и мотивационной программы с последующим баном на полгода." \
+               "\n\n Максимально подробно условия написаны в Приложении No 1 к Условиям применения IT продукта, " \
+               'которое Вы акцептовали. Повторно изучить документ можно в разделе бота "Информация".'
+        if language[4] == 'EN':
+            text = "<b>Category 3 (from 15000 USDT):</b>" \
+                   "\n\nParticipation format advantages:" \
+                   "\n- Minimum projected yield of 3%." \
+                   "\n- Your crypto assets are in your constant access on your Binance subaccount." \
+                   "\n- Exclusive participation and earning conditions in the partner program." \
+                   "\n\n<b>Profitability: 50% of trading from your own pool</b>" \
+                   "\n\nParticipation rules:" \
+                   "\n- Follow the instructions." \
                    "\n- Account activation takes 1 working week (2-5 working days)." \
-                   "\n- Partner software is launched on your sub-account within 48 hours." \
-                   "\n- Weekly profitability calculation is done on Sundays." \
-                   "\n- Profit distribution between the program participant and DAO is 50/50." \
-                   "\n- Participants receive information about the profitability amount and the size of the " \
-                   "reward in DAO for providing the software on Sundays and are required to make the " \
-                   "transfer on Monday.\n- Withdrawal of the active deposit is possible at any time, with a " \
-                   "mandatory request in this bot.\n- Agreement on the withdrawal timing is necessary to maximize " \
-                   "profitability. Processing time is up to 24 hours.\n- In case of violation of the conditions " \
-                   "by the DAO participant, the company reserves the right to deactivate the account from the " \
-                   "partner and incentive program, with subsequent banning for six months." \
-                   "\n\nThe detailed conditions are described in Appendix No. 1 to the Terms of Use of the IT " \
-                   "product, which you have accepted. You can review the " \
-                   "document again in the 'Information' section of the bot."
+                   "\n- Launch partner software on your subaccount: 48 hours." \
+                   "\n- Weekly profitability calculation takes place on Sundays." \
+                   "\n- Profit distribution between program participant and DAO: 50/50" \
+                   "(the highest share compared to other participant categories)." \
+                   "\n- The participant receives information about the profitability amount and the DAO reward " \
+                   "for provided software every Sunday and commits to making the transfer on Monday." \
+                   "\n- Withdrawal of active deposit is possible at any time, " \
+                   "with a prior mandatory request in this bot." \
+                   "\n- Agreement on the withdrawal timing for maximum profitability. Review period up to 24 hours." \
+                   "\n- In case of participant violation of conditions by the DAO, the company reserves the right to " \
+                   "deactivate the account from the partner and incentive program with subsequent ban for six months." \
+                   "\n\nThe most detailed conditions are outlined in Appendix No 1 to the Terms of Use of the " \
+                   "IT product that you have accepted. You can review the document again in the 'Information' " \
+                   "section of the bot."
         await call.message.edit_text(text, reply_markup=inline.active_15000(language[4]))
+
+
+async def stabpool_terms(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = '<b>СТАБИЛИЗАЦИОННЫЙ ПУЛ НА ВУВІТ</b>' \
+           '\n<b>ЭКСКЛЮЗИВНЫЕ УСЛОВИЯ ОТ DAO J2M</b>' \
+           '\n\nОбъем цифровых активов, необходимый для обеспечения устойчивой работы алгоритмов ' \
+           'бизнес-модели J2M: 250 000 USDT' \
+           '\n\nУчастникам, размещающим активы в стабилизационном пуле, доступны привилегированные условия ' \
+           'доходности: 65% от общей прибыли пула' \
+           '\n\nУсловия размещения средств в стабилизационном пуле:' \
+           '\n- от 1 000 до 20 000 USDT' \
+           '\n- холд «тела актива» на 3 месяца' \
+           '\n- вывод дивидендов и реферальных 2 раза в месяц' \
+           '\n- в случае вывода «тела актива» после снятия холда, через 3 месяца, ' \
+           'освобождает место для нового участника'
+    if language[4] == 'EN':
+        text = '<b>STABILIZATION POOL AT ВУВІТ</b>' \
+               '\n<b>EXCLUSIVE TERMS FROM DAO J2M</b>' \
+               "\n\nThe volume of digital assets required to ensure the stable operation of J2M's business " \
+               "model algorithms: 250,000 USDT." \
+               "\n\nParticipants placing assets in the stabilization pool enjoy privileged profitability " \
+               "conditions: 65% of the total pool profit." \
+               "\n\nTerms for placing funds in the stabilization pool:" \
+               "\n- From 1,000 to 20,000 USDT." \
+               "\n- Hold the 'asset body' for 3 months." \
+               "\n- Dividend and referral withdrawals twice a month." \
+               "\n- In case of asset body withdrawal after the hold period, after 3 months, the space " \
+               "becomes available for a new participant."
+    await call.message.edit_text(text, reply_markup=inline.stabpool_kb(language[4]))
+
+
+async def handle_partners(call: types.CallbackQuery):
+    language = await users.user_data(call.from_user.id)
+    text = 'Условия партнерской программы' \
+           '\n\n1) При депозите от 50 до 499 USDT:' \
+           '\n\nПартнерская программа: 1 уровень 5 %' \
+           '\n\nВывод дохода и бонусов на стандартных условиях раз в 2 недели.' \
+           '\n\n2) При депозите от 500 до 999 USDT и наличии 2 рекомендаций с открытым депозитом:' \
+           '\n\nПартнерская программа:' \
+           '\n1 уровень 5 %\n2 уровень 3 %' \
+           '\n+ дополнительный бонус 3% (начисляется сверх стандартных процентов уровня)' \
+           '\n\nВывод дохода и бонусов на стандартных условиях раз в 2 недели.' \
+           '\n\n3) При депозите от 1000 до бесконечности и наличии 3 рекомендации с открытым депозитом' \
+           '\n\nПартнерская программа:\n1 уровень 5 %\n2 уровень 3 %\n3 уровень 2 %' \
+           '\n+ дополнительный бонус 3% (начисляется сверх стандартных процентов уровня)' \
+           '\n\nВывод дохода и бонусов на стандартных условиях раз в 2 недели.' \
+           '\n\n4) При депозите от 25 000 USDT (личный аккаунт)' \
+           '\n\nПартнерская программа:\n1 уровень 5\n2 уровень 3%\n3 уровень 2%' \
+           '\n+ дополнительный бонус 3% (начисляется сверх стандартных процентов уровня)' \
+           '\n\n*Если у участника партнерской программы не открыта линия, то он с нее не получает доход. ' \
+           'Упущенный доход не компенсируется. Рефералы из этой линии не учитываются при подсчете приглашенных ' \
+           'для открытия новой линии глубины (2 и 3 линии).' \
+           "\n\nТакже с условиями партнерской программы DAO J2M можно ознакомиться в <a href='https://drive." \
+           "google.com/file/d/1ZhHtNpsE5Y8l1i5n6Mp1UtG44uOMiKnP/view?pli=1'>этой таблице.</a>"
+    if language[4] == 'EN':
+        text = 'Partner Program Terms' \
+               '\n\n1) For deposits from 50 to 499 USDT:\n\nPartner program: Level 1 - 5%' \
+               '\n\nIncome and bonus withdrawal on standard terms every 2 weeks.' \
+               '\n\n2) For deposits from 500 to 999 USDT and with 2 referrals having open deposits:' \
+               '\n\nPartner program:\nLevel 1 - 5%\nLevel 2 - 3%' \
+               '\n+ Additional bonus of 3% (credited in addition to standard level percentages)' \
+               '\n\nIncome and bonus withdrawal on standard terms every 2 weeks.' \
+               '\n\n3) For deposits from 1000 to infinity and with 3 referrals having open deposits:' \
+               '\n\nPartner program:\nLevel 1 - 5%\nLevel 2 - 3%\nLevel 3 - 2%' \
+               '\n+ Additional bonus of 3% (credited in addition to standard level percentages)' \
+               '\n\nIncome and bonus withdrawal on standard terms every 2 weeks.' \
+               '\n\n4) For deposits from 25,000 USDT (personal account):' \
+               '\n\nPartner program:\nLevel 1 - 5%\nLevel 2 - 3%\nLevel 3 - 2%' \
+               '\n+ Additional bonus of 3% (credited in addition to standard level percentages)' \
+               "\n\n* If a participant in the partner program doesn't have an active downline, " \
+               "they won't receive income from it. Missed income is not compensated. Referrals from " \
+               "this downline are not considered when calculating the depth (2nd and 3rd levels) of " \
+               "invited participants for opening a new line." \
+               "\n\nYou can also review the DAO J2M partner program terms in <a href='https://drive.google.com/" \
+               "file/d/1ZhHtNpsE5Y8l1i5n6Mp1UtG44uOMiKnP/view?pli=1'>this table.</a>"
+    await call.message.edit_text(text, reply_markup=inline.partners_kb(language[4]))
 
 
 async def biguser_registration(call: types.CallbackQuery):
@@ -722,7 +833,10 @@ def register(dp: Dispatcher):
     dp.register_callback_query_handler(handle_deposit_funds, text='deposit_funds')
     dp.register_callback_query_handler(handle_review_terms, text='review_terms')
     dp.register_callback_query_handler(handle_distribution, text='distribution')
-    dp.register_callback_query_handler(handle_500_15000, lambda c: c.data in ['active_500', 'active_15000'])
+    dp.register_callback_query_handler(handle_500_15000,
+                                       lambda c: c.data in ['active_50', 'active_5000', 'active_15000'])
+    dp.register_callback_query_handler(stabpool_terms, text='stabpool_terms')
+    dp.register_callback_query_handler(handle_partners, text='partners')
     dp.register_callback_query_handler(handle_emailing_documents, text='emailing_documents')
     dp.register_callback_query_handler(handle_emailing_alias, state=BinanceAPI.alias)
     dp.register_callback_query_handler(biguser_registration, text="15000")
