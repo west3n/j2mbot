@@ -270,7 +270,7 @@ async def stabpool_terms(call: types.CallbackQuery):
            '\n\nОбъем цифровых активов, необходимый для обеспечения устойчивой работы алгоритмов ' \
            'бизнес-модели J2M: 250 000 USDT' \
            '\n\nУчастникам, размещающим активы в стабилизационном пуле, доступны привилегированные условия ' \
-           'доходности: 65% от общей прибыли пула' \
+           'доходности: 60% от общей прибыли пула' \
            '\n\nУсловия размещения средств в стабилизационном пуле:' \
            '\n- от 1 000 до 20 000 USDT' \
            '\n- холд «тела актива» на 3 месяца' \
@@ -283,7 +283,7 @@ async def stabpool_terms(call: types.CallbackQuery):
                "\n\nThe volume of digital assets required to ensure the stable operation of J2M's business " \
                "model algorithms: 250,000 USDT." \
                "\n\nParticipants placing assets in the stabilization pool enjoy privileged profitability " \
-               "conditions: 65% of the total pool profit." \
+               "conditions: 60% of the total pool profit." \
                "\n\nTerms for placing funds in the stabilization pool:" \
                "\n- From 1,000 to 20,000 USDT." \
                "\n- Hold the 'asset body' for 3 months." \
