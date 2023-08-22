@@ -56,21 +56,12 @@ async def balance_handler(call: types.CallbackQuery):
     await call.message.delete()
     try:
         if user_balance[4]:
-            text_x = f"Ожидайте, бот создает ваш кошелек..."
-            text_x2 = f"Ваш кошелек успешно создан!\n\n" \
-                      f"<b>Важно! Сохраните это сообщение в виде скриншота или запишите в заметки.</b>\n" \
-                      f"Ваш ключ, для обращения в поддержку: <b>{user_balance[3]}</b>" \
-                      f"\n\n<em>Рекомендуется удалить данное сообщение после сохранения секретного ключа.</em>"
-            if language[4] == "EN":
-                text_x = f"Expect the bot to create your wallet..."
-                text_x2 = f"Your wallet has been successfully created!\n\n" \
-                          f"<b>Important! Please save this message as a screenshot or write it down in your notes.</b>\n" \
-                          f"Your key for contacting support: <b>{user_balance[3]}</b>" \
-                          f"\n\n<em>It is recommended to delete this message after saving your secret key.</em>"
+            text_x = await users.get_text("Создание кошелька #1", language[4])
+            text_x2 = await users.get_text("Создание кошелька #2", language[4])
+            text_x2 = text_x2.replace("{ключ}", f'{user_balance[3]}')
             message = await call.message.answer(text_x)
             await call.bot.send_chat_action(call.message.chat.id, "typing")
             await asyncio.sleep(1)
-
             await call.bot.delete_message(chat_id=call.message.chat.id,
                                           message_id=message.message_id)
             await call.message.answer(text_x2)
