@@ -83,7 +83,8 @@ async def invoice_one(invoice_id):
     }
     resp = requests.post(completeUrl, headers=headers, data=data_json)
     resp_json = json.dumps(resp.json(), sort_keys=True, indent=4)
-    return json.loads(resp_json)['statusName']
+    return json.loads(resp_json)['statusName'], \
+        json.loads(resp_json)['title']
 
 
 async def invoice_one_2(invoice_id):
@@ -110,4 +111,7 @@ async def invoice_one_2(invoice_id):
     return json.loads(resp_json)['statusName'], \
         json.loads(resp_json)['purse'], \
         json.loads(resp_json)['payCurrency'], \
-        json.loads(resp_json)['amountInPayCurrency']
+        json.loads(resp_json)['amountInPayCurrency'], \
+        json.loads(resp_json)['title']
+
+

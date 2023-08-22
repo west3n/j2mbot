@@ -573,10 +573,6 @@ async def one_more(call: types.CallbackQuery, state: FSMContext):
         await state.set_state(Email.email.state)
 
 
-async def tax_payment(call: types.CallbackQuery):
-    pass
-
-
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(cancel_payment, text="cancel_payment", state="*")
     dp.register_message_handler(file_id, content_types=['photo', 'document', 'animation', 'video'], state="*")

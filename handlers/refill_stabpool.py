@@ -206,164 +206,17 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         if language[4] == "EN":
             text = "An error occurred. The money will be refunded to your account."
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
-
-async def smalluser_check(call: types.CallbackQuery, row):
-    language = await users.user_data(call.from_user.id)
-    status = await thedex.invoice_one(row[2])
-    if status == "Waiting":
-        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
+    else:
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже. " \
+               "\n\n<em>Если вы не отправили нужную сумму, пожалуйста посмотрите Детали транзакции.</em>"
         if language[4] == "EN":
-            text = "We need a little more time for verification. Please try again later."
+            text = "We need a little more time for verification. Please try again later"
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-
-    if status == "Unpaid":
-        text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
-        if language[4] == "EN":
-            text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
-        await call.message.answer(text)
-        await thedex_db.insert_status(call.from_user.id, row[2], status)
-        call.data = "500"
-        await registration_500(call)
-
-    if status == "Successful":
-        text = "🥳 Оплата прошла успешно! " \
-               "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
-        if language[4] == "EN":
-            text = "🥳 Payment was successful! " \
-                   "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
-
-        hold = await stabpool.get_hold(call.from_user.id)
-        hold = hold[0] if hold is not None else None
-        if not hold or hold < 90:
-            await stabpool.update_hold(90, call.from_user.id)
-
-        await stabpool.insert_deposit(call.from_user.id, row[1])
-        await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Стабилизационный пул")
-        await thedex_db.insert_status(call.from_user.id, row[2], status)
-        user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
-        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-        sh = await sheets_connection()
-        worksheet_name = "Сумма пополнения пула"
-        worksheet = sh.worksheet(worksheet_name)
-        worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
-                              call.from_user.id, "Пополнение", row[1]))
-        await call.bot.send_message(decouple.config("GROUP_ID"),
-                                    f'Пользователь {user_name} успешно пополнил стабпул на '
-                                    f'{row[1]} USDT!'
-                                    f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
-    if status == "Rejected":
-        text = "Произошла ошибка. Деньги вернуться к вам на счет."
-        if language[4] == "EN":
-            text = "An error occurred. The money will be refunded to your account."
-        await thedex_db.insert_status(call.from_user.id, row[2], status)
-        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
-
-async def smalluser_check_2(call: types.CallbackQuery):
-    await call.message.delete()
-    rows = await thedex_db.get_transaction(call.from_user.id)
-    user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
-    try:
-        row = rows[0]
-        language = await users.user_data(call.from_user.id)
-        status = await thedex.invoice_one(row[2])
-        if status == "Waiting":
-            text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
-            if language[4] == "EN":
-                text = "We need a little more time for verification. Please try again later."
-            await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-        if status == "Unpaid":
-            text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
-            if language[4] == "EN":
-                text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
-            await call.message.answer(text)
-            await thedex_db.insert_status(call.from_user.id, row[2], status)
-            call.data = "500"
-            await registration_500(call)
-        if status == "Successful":
-            text = "🥳 Оплата прошла успешно! " \
-                   "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
-            if language[4] == "EN":
-                text = "Payment was successful."
-
-            hold = await stabpool.get_hold(call.from_user.id)
-            hold = hold[0] if hold is not None else None
-            if not hold or hold < 90:
-                await stabpool.update_hold(90, call.from_user.id)
-
-            await stabpool.insert_deposit(call.from_user.id, row[1])
-            await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Стабилизационный пул")
-            await thedex_db.insert_status(call.from_user.id, row[2], status)
-            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
-            await call.bot.send_message(decouple.config("GROUP_ID"),
-                                        f'Пользователь {user_name} успешно пополнил стабпул на '
-                                        f'{row[1]} USD!'
-                                        f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
-
-            sh = await sheets_connection()
-            worksheet_name = "Сумма пополнения пула"
-            worksheet = sh.worksheet(worksheet_name)
-            worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
-                                  call.from_user.id, "Пополнение", row[1]))
-        if status == "Rejected":
-            text = "Произошла ошибка. Деньги вернуться к вам на счет."
-            if language[4] == "EN":
-                text = "An error occurred. The money will be refunded to your account."
-            await thedex_db.insert_status(call.from_user.id, row[2], status)
-            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-    except IndexError:
-        text = 'Вы уже отменили данную транзакцию!'
-        language = await users.user_data(call.from_user.id)
-        if language[4] == "EN":
-            text = "Operation has been cancelled!"
-        message = await call.message.answer(text)
-        await asyncio.sleep(5)
-        await call.bot.delete_message(call.message.chat.id, message.message_id)
-
-
-async def transaction_detail(call: types.CallbackQuery):
-    language = await users.user_data(call.from_user.id)
-    await call.message.delete()
-    rows = await thedex_db.get_transaction(call.from_user.id)
-    try:
-        row = rows[0]
-        status = await thedex.invoice_one_2(row[2])
-        count = status[3]
-        try:
-            if "." in count:
-                count = count.replace(".", ",")
-            text = f"<b>Сумма к оплате:</b><em> {count} {status[2]} </em>\n" \
-                   f"<b>Статус оплаты:</b><em> {status[0]}</em>\n" \
-                   f"<b>Кошелек для оплаты:</b><em> {status[1]}</em>\n"
-
-            if language[4] == "EN":
-                text = f"<b>Payment amount:</b><em> {count} {status[2]} </em>\n" \
-                       f"<b>Payment status:</b><em> {status[0]}</em>\n" \
-                       f"<b>Payment wallet:</b><em> {status[1]}</em>\n"
-            await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-        except TypeError:
-            text = "Ошибка транзакции, попробуйте повторить еще раз!"
-            if language[4] == "EN":
-                text = f"Transaction error, please repeat one more time!"
-            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-            await thedex_db.delete_transaction(row[0])
-    except IndexError:
-        text = 'Вы уже отменили данную транзакцию!'
-        language = await users.user_data(call.from_user.id)
-        if language[4] == "EN":
-            text = "Operation has been cancelled!"
-        message = await call.message.answer(text)
-        await asyncio.sleep(5)
-        await call.bot.delete_message(call.message.chat.id, message.message_id)
 
 
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(registration_500, text='stabpool')
-    dp.register_callback_query_handler(transaction_detail, text="transaction_detail", state="*")
     dp.register_message_handler(smalluser_step1, state=StabPoolUser.amount)
     dp.register_callback_query_handler(back_menu, state=StabPoolUser.amount)
     dp.register_callback_query_handler(smalluser_step2, state=StabPoolUser.currency)
     dp.register_callback_query_handler(smalluser_finish, state=StabPoolUser.finish)
-    dp.register_callback_query_handler(smalluser_check_2, text="transaction_status")

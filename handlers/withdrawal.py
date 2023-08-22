@@ -28,7 +28,10 @@ class ChangePercentage(StatesGroup):
 
 
 async def withdraw_main_menu(call: types.CallbackQuery):
-    await call.message.delete()
+    try:
+        await call.message.delete()
+    except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
+        pass
     photo = decouple.config("BANNER_WITHDRAWAL")
     current_date = datetime.datetime.now()
     week_number = (current_date.day - 1) // 7 + 1
@@ -224,10 +227,16 @@ async def change_percentage_step2(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     await balance.update_percentage(call.from_user.id, int(call.data))
     await call.message.delete()
-    text = "Процент реинвестирования успешно изменен!"
+    text = f"Процент реинвестирования успешно изменен на {call.data}%!"
     if language[4] == 'EN':
         text = "Reinvestment percentage successfully updated!"
-    await call.message.answer(text, reply_markup=inline.main_withdraw(language[4]))
+    await call.answer(text, show_alert=True)
+    await withdraw_main_menu(call)
+    username = call.from_user.username
+    await call.bot.send_message(
+        decouple.config("GROUP_ID"),
+        f'Пользователь {"@" + username if username is not None else call.from_user.id} ' 
+        f'изменил процент реинвестирования на - {call.data}%')
     await state.finish()
 
 
@@ -269,24 +278,31 @@ async def withdrawal_handler_personal(call: types.CallbackQuery, state: FSMConte
             await state.set_state(NewWallet.amount.state)
             await state.update_data({"del_msg": del_msg.message_id, "status": "Личный"})
         else:
+
             photo = decouple.config("BANNER_WITHDRAWAL")
             text = f"<b>Баланс:</b> {binance_balance[1]} USDT" \
                    f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
+            alert = "❗Cумма минимального вывода 50 USDT"
             if language[4] == "EN":
                 photo = decouple.config("BANNER_WITHDRAWAL_EN")
                 text = f"<b>Balance:</b> {binance_balance[1]} USDT" \
                        f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
+                alert = "❗Minimum withdrawal amount is 50 USDT"
+            await call.answer(alert, show_alert=True)
             await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
     else:
         photo = decouple.config("BANNER_WITHDRAWAL")
         text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
                "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
                "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
+        alert = "❗️Для вывода средств необходимо добавить кошелек для вывода!"
         if language[4] == "EN":
             photo = decouple.config("BANNER_WITHDRAWAL_EN")
             text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
                    "\n\n<em>Click the button below to add a wallet!" \
                    "You can always change the withdrawal wallet in this menu.</em>"
+            alert = "❗️To withdraw funds, you need to add a withdrawal wallet!"
+        await call.answer(alert, show_alert=True)
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
 
@@ -336,31 +352,40 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
                 text = f"<b>Баланс, доступный к выводу:" \
                        f"</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
                        f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
+                alert = "❗Cумма минимального вывода 50 USDT!"
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
                     text = f"❗️<b>Available withdrawal balance:</b> " \
                            f"{withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
                            f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
+                    alert = "❗Minimum withdrawal amount is 50 USDT!"
+                await call.answer(alert, show_alert=True)
                 await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
         else:
             photo = decouple.config("BANNER_WITHDRAWAL")
             text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
                    "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
                    "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
+            alert = "❗️Для вывода средств необходимо добавить кошелек для вывода!"
             if language[4] == "EN":
                 photo = decouple.config("BANNER_WITHDRAWAL_EN")
                 text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
                        "\n\n<em>Click the button below to add a wallet!" \
                        "You can always change the withdrawal wallet in this menu.</em>"
+                alert = "❗️To withdraw funds, you need to add a withdrawal wallet!"
+            await call.answer(alert, show_alert=True)
             await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
     else:
         photo = decouple.config("BANNER_WITHDRAWAL")
         text = "❗️Для активации функции вывода средств <b>нужно пополнить Баланс.</b>" \
                "\n\n<em>В данный момент у вас нет Истории Пополнений!</em>"
+        alert = "❗️Для активации функции вывода средств нужно пополнить Баланс."
         if language[4] == "EN":
             photo = decouple.config("BANNER_WITHDRAWAL_EN")
             text = "❗To activate the withdrawal function, you need to replenish your balance." \
                    "\n\n <em>Currently, you have no Deposit History!</em>"
+            alert = "❗To activate the withdrawal function, you need to replenish your balance!"
+        await call.answer(alert, show_alert=True)
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
 
@@ -410,31 +435,40 @@ async def withdrawal_handler_stabpool(call: types.CallbackQuery, state: FSMConte
                 text = f"<b>Баланс, доступный к выводу:" \
                        f"</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
                        f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
+                alert = "❗Cумма минимального вывода 50 USDT!"
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
                     text = f"❗️<b>Available withdrawal balance:</b> " \
-                           f"{withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
+                           f"{withdrawal_balance if withdrawal_balance > 0 else 0} USDT" \
                            f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
+                    alert = "❗Minimum withdrawal amount is 50 USDT!"
+                await call.answer(alert, show_alert=True)
                 await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
         else:
             photo = decouple.config("BANNER_WITHDRAWAL")
             text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
                    "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
                    "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
+            alert = "❗️Для вывода средств необходимо добавить кошелек для вывода!"
             if language[4] == "EN":
                 photo = decouple.config("BANNER_WITHDRAWAL_EN")
                 text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
                        "\n\n<em>Click the button below to add a wallet!" \
                        "You can always change the withdrawal wallet in this menu.</em>"
+                alert = "❗️To withdraw funds, you need to add a withdrawal wallet!"
+            await call.answer(alert, show_alert=True)
             await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
     else:
         photo = decouple.config("BANNER_WITHDRAWAL")
         text = "❗️Для активации функции вывода средств <b>нужно пополнить Баланс.</b>" \
                "\n\n<em>В данный момент у вас нет Истории Пополнений!</em>"
+        alert = "❗️Для активации функции вывода средств нужно пополнить Баланс."
         if language[4] == "EN":
             photo = decouple.config("BANNER_WITHDRAWAL_EN")
             text = "❗To activate the withdrawal function, you need to replenish your balance." \
                    "\n\n <em>Currently, you have no Deposit History!</em>"
+            alert = "❗To activate the withdrawal function, you need to replenish your balance!"
+        await call.answer(alert, show_alert=True)
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
 

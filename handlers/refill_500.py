@@ -6,7 +6,7 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.utils.exceptions import MessageToDeleteNotFound
-from database import users, balance, thedex_db
+from database import users, balance, thedex_db, stabpool
 from handlers.google import sheets_connection
 from keyboards import inline
 from binance import thedex
@@ -158,13 +158,13 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
     if status == "Unpaid":
         text = "Вы не успели оплатить!" \
-               "\n\n<b>🆙 Введите сумму пополнения в USDT цифрами сообщением!</b>" \
-               "\n\n💵 Минимальная сумма - <b>500 USDT</b>" \
+               "\n\n<b>🆙 Введите сумму пополнения в USD цифрами сообщением!</b>" \
+               "\n\n💵 Минимальная сумма - <b>50 USD</b>" \
                "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
                "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
         if language[4] == 'EN':
-            text = "🆙 Enter the replenishment amount in USDT using digits.\n\n" \
-                   "💵Minimum amount - 500 USDT" \
+            text = "🆙 Enter the replenishment amount in USD using digits.\n\n" \
+                   "💵Minimum amount - 50 USD" \
                    "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
                    "The commission amount is calculated based on the network used for the deposit."
         await state.set_state(SmallUser.amount.state)
@@ -199,11 +199,17 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         if language[4] == "EN":
             text = "An error occurred. The money will be refunded to your account."
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+    else:
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже. " \
+               "\n\n<em>Если вы не отправили нужную сумму, пожалуйста посмотрите Детали транзакции.</em>"
+        if language[4] == "EN":
+            text = "We need a little more time for verification. Please try again later"
+        await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
 
 
 async def smalluser_check(call: types.CallbackQuery, row):
     language = await users.user_data(call.from_user.id)
-    status = await thedex.invoice_one(row[2])
+    status, title = await thedex.invoice_one(row[2])
     if status == "Waiting":
         text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
         if language[4] == "EN":
@@ -225,24 +231,45 @@ async def smalluser_check(call: types.CallbackQuery, row):
         if language[4] == "EN":
             text = "🥳 Payment was successful! " \
                    "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
-        hold = await balance.get_hold(call.from_user.id)
-        hold = hold[0] if hold is not None else None
-        if not hold or hold < 30:
-            await balance.update_hold(30, call.from_user.id)
-        await balance.insert_deposit(call.from_user.id, row[1])
-        await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллекктивный аккаунт")
-        await thedex_db.insert_status(call.from_user.id, row[2], status)
-        user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
-        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-        sh = await sheets_connection()
-        worksheet_name = "Сумма пополнения пула"
-        worksheet = sh.worksheet(worksheet_name)
-        worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
-                              call.from_user.id, "Пополнение", row[1]))
-        await call.bot.send_message(decouple.config("GROUP_ID"),
-                                    f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
-                                    f'{row[1]} USDT!'
-                                    f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
+        if title == "Стабилизационный пул":
+            hold = await stabpool.get_hold(call.from_user.id)
+            hold = hold[0] if hold is not None else None
+            if not hold or hold < 90:
+                await stabpool.update_hold(90, call.from_user.id)
+            await stabpool.insert_deposit(call.from_user.id, row[1])
+            await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Стабилизационный пул")
+            await thedex_db.insert_status(call.from_user.id, row[2], status)
+            user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
+            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+            sh = await sheets_connection()
+            worksheet_name = "Сумма пополнения пула"
+            worksheet = sh.worksheet(worksheet_name)
+            worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                                  call.from_user.id, "Пополнение (стабпул)", row[1]))
+            await call.bot.send_message(decouple.config("GROUP_ID"),
+                                        f'Пользователь {user_name} успешно пополнил стабпул на '
+                                        f'{row[1]} USDT!'
+                                        f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/stabpool/')
+
+        else:
+            hold = await balance.get_hold(call.from_user.id)
+            hold = hold[0] if hold is not None else None
+            if not hold or hold < 30:
+                await balance.update_hold(30, call.from_user.id)
+            await balance.insert_deposit(call.from_user.id, row[1])
+            await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллекктивный аккаунт")
+            await thedex_db.insert_status(call.from_user.id, row[2], status)
+            user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
+            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+            sh = await sheets_connection()
+            worksheet_name = "Сумма пополнения пула"
+            worksheet = sh.worksheet(worksheet_name)
+            worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                                  call.from_user.id, "Пополнение (коллективный акк)", row[1]))
+            await call.bot.send_message(decouple.config("GROUP_ID"),
+                                        f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
+                                        f'{row[1]} USDT!'
+                                        f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
     if status == "Rejected":
         text = "Произошла ошибка. Деньги вернуться к вам на счет."
         if language[4] == "EN":
@@ -258,7 +285,7 @@ async def smalluser_check_2(call: types.CallbackQuery):
     try:
         row = rows[0]
         language = await users.user_data(call.from_user.id)
-        status = await thedex.invoice_one(row[2])
+        status, title = await thedex.invoice_one(row[2])
         if status == "Waiting":
             text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
             if language[4] == "EN":
@@ -277,26 +304,43 @@ async def smalluser_check_2(call: types.CallbackQuery):
                    "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
             if language[4] == "EN":
                 text = "Payment was successful."
-            hold = await balance.get_hold(call.from_user.id)
-            hold = hold[0] if hold is not None else None
-            if not hold or hold < 30:
-                await balance.update_hold(30, call.from_user.id)
+            if title == "Стабилизационный пул":
+                hold = await stabpool.get_hold(call.from_user.id)
+                hold = hold[0] if hold is not None else None
+                if not hold or hold < 90:
+                    await stabpool.update_hold(90, call.from_user.id)
+                await stabpool.insert_deposit(call.from_user.id, row[1])
+                await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Стабилизационный пул")
+                await thedex_db.insert_status(call.from_user.id, row[2], status)
+                await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+                sh = await sheets_connection()
+                worksheet_name = "Сумма пополнения пула"
+                worksheet = sh.worksheet(worksheet_name)
+                worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                                      call.from_user.id, "Пополнение (стабпул)", row[1]))
+                await call.bot.send_message(decouple.config("GROUP_ID"),
+                                            f'Пользователь {user_name} успешно пополнил стабпул на '
+                                            f'{row[1]} USDT!'
+                                            f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/stabpool/')
 
-            await balance.insert_deposit(call.from_user.id, row[1])
-            await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллекктивный аккаунт")
-            await thedex_db.insert_status(call.from_user.id, row[2], status)
-            await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-
-            await call.bot.send_message(decouple.config("GROUP_ID"),
-                                        f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
-                                        f'{row[1]} USD!'
-                                        f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
-
-            sh = await sheets_connection()
-            worksheet_name = "Сумма пополнения пула"
-            worksheet = sh.worksheet(worksheet_name)
-            worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
-                                  call.from_user.id, "Пополнение", row[1]))
+            else:
+                hold = await balance.get_hold(call.from_user.id)
+                hold = hold[0] if hold is not None else None
+                if not hold or hold < 30:
+                    await balance.update_hold(30, call.from_user.id)
+                await balance.insert_deposit(call.from_user.id, row[1])
+                await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллекктивный аккаунт")
+                await thedex_db.insert_status(call.from_user.id, row[2], status)
+                await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
+                sh = await sheets_connection()
+                worksheet_name = "Сумма пополнения пула"
+                worksheet = sh.worksheet(worksheet_name)
+                worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                                      call.from_user.id, "Пополнение (коллективный акк)", row[1]))
+                await call.bot.send_message(decouple.config("GROUP_ID"),
+                                            f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
+                                            f'{row[1]} USDT!'
+                                            f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
         if status == "Rejected":
             text = "Произошла ошибка. Деньги вернуться к вам на счет."
             if language[4] == "EN":
@@ -324,12 +368,13 @@ async def transaction_detail(call: types.CallbackQuery):
         try:
             if "." in count:
                 count = count.replace(".", ",")
-            text = f"<b>Сумма к оплате:</b><em> {count} {status[2]} </em>\n" \
+            text = f"<b>Аккаунт пополнения:</b>: {status[4]}\n\n" \
+                   f"<b>Сумма к оплате:</b><em> {count} {status[2]} </em>\n" \
                    f"<b>Статус оплаты:</b><em> {status[0]}</em>\n" \
                    f"<b>Кошелек для оплаты:</b><em> {status[1]}</em>\n"
-
             if language[4] == "EN":
-                text = f"<b>Payment amount:</b><em> {count} {status[2]} </em>\n" \
+                text = f"<b>Acoount type</b>: {status[4]}\n\n" \
+                       f"<b>Payment amount:</b><em> {count} {status[2]} </em>\n" \
                        f"<b>Payment status:</b><em> {status[0]}</em>\n" \
                        f"<b>Payment wallet:</b><em> {status[1]}</em>\n"
             await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
