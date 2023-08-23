@@ -1,10 +1,12 @@
 import asyncio
 import datetime
-import aiogram.utils.exceptions
 
+import aiogram.utils.exceptions
 from aiogram import Bot
 from decouple import config
+
 from database.connection import connect
+
 
 
 async def get_language(tg_id):
@@ -40,6 +42,7 @@ async def get_tg_id_all():
     finally:
         cur.close()
         db.close()
+
 
 
 async def get_hold(tg_id):
@@ -91,7 +94,7 @@ async def autohold_collective():
                f"Новая дата окончания холда: {withdrawal_date}"
         if language == "EN":
             text = "Your hold has been automatically extended!\n\n" \
-                   f"New hold end date: {withdrawal_date}"
+               f"New hold end date: {withdrawal_date}"
         try:
             await bot.send_message(tg_id, text)
             await session.close()
@@ -109,7 +112,6 @@ async def main():
             next_minute = (now + datetime.timedelta(minutes=1)).replace(second=0, microsecond=0)
             seconds_until_next_minute = (next_minute - now).total_seconds()
             await asyncio.sleep(seconds_until_next_minute)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
