@@ -7,7 +7,15 @@ from decouple import config
 
 from database.connection import connect
 
-
+async def get_balance(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit FROM app_balance WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        cur.close()
+        db.close()
 
 async def get_language(tg_id):
     db, cur = connect()
@@ -24,11 +32,13 @@ async def get_first_transaction(tg_id):
     try:
         cur.execute("SELECT * FROM app_balancehistory WHERE tg_id_id = %s AND transaction = %s", (tg_id, "IN"))
         result = cur.fetchone()
+        print(result)
         return result
     finally:
         cur.close()
         db.close()
 
+asyncio.run(get_first_transaction(254465569))
 
 async def get_tg_id_all():
     db, cur = connect()
@@ -79,7 +89,9 @@ async def autohold_collective():
         now = now.replace(tzinfo=datetime.timezone.utc)
         if withdrawal_date:
             if now >= date_first + datetime.timedelta(days=hold):
-                new_list.append(tg_id)
+                balance, deposite = await get_balance(tg_id)
+                if float(first_trans) >= (float(balance) + float(deposite)):
+                    new_list.append(tg_id)
     tg_ids = new_list
     for tg_id in tg_ids:
         hold = await get_hold(tg_id)
@@ -102,7 +114,7 @@ async def autohold_collective():
             await session.close()
         except aiogram.utils.exceptions.BotBlocked:
             await session.close()
-asyncio.run(autohold_collective())
+
 # async def main():
 #     while True:
 #         now = datetime.datetime.now()
