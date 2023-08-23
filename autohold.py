@@ -83,14 +83,16 @@ async def autohold_collective():
     tg_ids = new_list
     for tg_id in tg_ids:
         hold = await get_hold(tg_id)
+        hold = hold[0] if hold is not None else 0
         await update_hold_collective(tg_id)
         first_trans = await get_first_transaction(tg_id)
         date_first = first_trans[2]
         withdrawal_date = date_first + datetime.timedelta(days=(hold + 30))
+        withdrawal_date = withdrawal_date.strftime("%d.%m.%Y")
         bot = Bot(config("BOT_TOKEN"))
         session = await bot.get_session()
         language = await get_language(tg_id)
-        text = "Ваш холд автоматически продлен!\n\n" \
+        text = "[Коллективный аккаунт] Ваш холд автоматически продлен.\n\n" \
                f"Новая дата окончания холда: {withdrawal_date}"
         if language == "EN":
             text = "Your hold has been automatically extended!\n\n" \
@@ -100,18 +102,17 @@ async def autohold_collective():
             await session.close()
         except aiogram.utils.exceptions.BotBlocked:
             await session.close()
-
-
-async def main():
-    while True:
-        now = datetime.datetime.now()
-        if now.weekday() == 2 and now.hour == 8 and now.minute == 0:
-            await autohold_collective()
-            break
-        else:
-            next_minute = (now + datetime.timedelta(minutes=1)).replace(second=0, microsecond=0)
-            seconds_until_next_minute = (next_minute - now).total_seconds()
-            await asyncio.sleep(seconds_until_next_minute)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(autohold_collective())
+# async def main():
+#     while True:
+#         now = datetime.datetime.now()
+#         if now.weekday() == 2 and now.hour == 8 and now.minute == 0:
+#             await autohold_collective()
+#             break
+#         else:
+#             next_minute = (now + datetime.timedelta(minutes=1)).replace(second=0, microsecond=0)
+#             seconds_until_next_minute = (next_minute - now).total_seconds()
+#             await asyncio.sleep(seconds_until_next_minute)
+#
+# if __name__ == "__main__":
+#     asyncio.run(main())
