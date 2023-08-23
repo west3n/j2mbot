@@ -43,7 +43,6 @@ async def structure_handler(call: types.CallbackQuery):
                        "rules, confirm your agreement to participate, and fill out the participant form."
                 text_2 = "Do you accept the rules of the affiliate program?"
                 document = decouple.config("AFFILIATE_PROGRAM_EN")
-
             await call.message.answer(text)
             await call.bot.send_chat_action(call.message.chat.id, "upload_document")
             await asyncio.sleep(1)
