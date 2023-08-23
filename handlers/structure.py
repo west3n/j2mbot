@@ -7,7 +7,7 @@ from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.utils.exceptions import MessageToDeleteNotFound
 
 from keyboards import inline
-from database import users, referral, balance, structure, nft
+from database import users, referral, balance, structure, nft, stabpool
 
 
 class UserForm(StatesGroup):
@@ -34,14 +34,10 @@ async def structure_handler(call: types.CallbackQuery):
         photo = decouple.config("BANNER_STRUCTURE")
         user_form = await structure.get_user_form(call.from_user.id)
         if not user_form:
-            text = 'Для участия в партнерской программе, вам нужно ознакомится с правилами программы, подтвердить' \
-                   ' Ваше согласие на участие, а также заполнить анкету участника.'
-            text_2 = 'Принимаете правила партнерской программы?'
+            text = await users.get_text("Партнерская программа регистрация", language[4])
+            text_2 = await users.get_text("Партнерская программа регистрация №2", language[4])
             document = decouple.config("AFFILIATE_PROGRAM")
             if language[4] == "EN":
-                text = "To participate in the affiliate program, you need to familiarize yourself with the program's " \
-                       "rules, confirm your agreement to participate, and fill out the participant form."
-                text_2 = "Do you accept the rules of the affiliate program?"
                 document = decouple.config("AFFILIATE_PROGRAM_EN")
             await call.message.answer(text)
             await call.bot.send_chat_action(call.message.chat.id, "upload_document")
@@ -72,7 +68,13 @@ async def structure_handler(call: types.CallbackQuery):
                     ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
                 except:
                     ref_user_balance = 0
+                try:
+                    stabpool_user_balance = await stabpool.get_balance(ref_user)
+                    stabpool_user_balance = float(stabpool_user_balance[0] + float(stabpool_user_balance[1]))
+                except:
+                    stabpool_user_balance = 0
                 balance_line_1 += round(ref_user_balance, 2)
+                balance_line_1 += round(stabpool_user_balance, 2)
             try:
                 ref_line_1 = ref_line_1[0]
             except TypeError:
@@ -85,7 +87,13 @@ async def structure_handler(call: types.CallbackQuery):
                     ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
                 except:
                     ref_user_balance = 0
+                try:
+                    stabpool_user_balance = await stabpool.get_balance(ref_user)
+                    stabpool_user_balance = float(stabpool_user_balance[0] + float(stabpool_user_balance[1]))
+                except:
+                    stabpool_user_balance = 0
                 balance_line_2 += round(ref_user_balance, 2)
+                balance_line_2 += round(stabpool_user_balance, 2)
             try:
                 ref_line_2 = ref_line_2[0]
             except TypeError:
@@ -98,7 +106,13 @@ async def structure_handler(call: types.CallbackQuery):
                     ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
                 except:
                     ref_user_balance = 0
+                try:
+                    stabpool_user_balance = await stabpool.get_balance(ref_user)
+                    stabpool_user_balance = float(stabpool_user_balance[0] + float(stabpool_user_balance[1]))
+                except:
+                    stabpool_user_balance = 0
                 balance_line_3 += round(ref_user_balance, 2)
+                balance_line_3 += round(stabpool_user_balance, 2)
             try:
                 ref_line_3 = ref_line_3[0]
             except TypeError:
@@ -174,12 +188,9 @@ async def structure_handler(call: types.CallbackQuery):
                 parse_mode=types.ParseMode.MARKDOWN_V2)
     else:
         photo = decouple.config("BANNER_MAIN")
-        text = "Для принятия участия в партнерской программе J2M необходимо пополнить баланс. " \
-               "Подробнее в разделе 'Пополнение'"
+        text = await users.get_text("Партнерская программа регистрация ошибка (1000)", language[4])
         if language[4] == "EN":
             photo = decouple.config("BANNER_MAIN_EN")
-            text = "To participate in the J2M affiliate program, you need to replenish your balance. "
-            "For more details, please refer to the 'Replenishment' section."
         await call.message.answer_photo(photo=photo, caption=text,
                                         reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
@@ -207,33 +218,51 @@ async def structure_handler_msg(msg: types.Message):
             ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
         except:
             ref_user_balance = 0
-        balance_line_1 += ref_user_balance
+        try:
+            stabpool_user_balance = await stabpool.get_balance(ref_user)
+            stabpool_user_balance = float(stabpool_user_balance[0] + float(stabpool_user_balance[1]))
+        except:
+            stabpool_user_balance = 0
+        balance_line_1 += round(ref_user_balance, 2)
+        balance_line_1 += round(stabpool_user_balance, 2)
     try:
         ref_line_1 = ref_line_1[0]
     except TypeError:
         ref_line_1 = 0
     balance_line_2 = 0
-    ref_line_2 = await referral.get_line_2(msg.from_user.id)
+    ref_line_2 = await referral.get_line_2(call.from_user.id)
     for ref_user in ref_line_2[1]:
         try:
             ref_user_balance = await balance.get_balance_(ref_user)
             ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
         except:
             ref_user_balance = 0
-        balance_line_2 += ref_user_balance
+        try:
+            stabpool_user_balance = await stabpool.get_balance(ref_user)
+            stabpool_user_balance = float(stabpool_user_balance[0] + float(stabpool_user_balance[1]))
+        except:
+            stabpool_user_balance = 0
+        balance_line_2 += round(ref_user_balance, 2)
+        balance_line_2 += round(stabpool_user_balance, 2)
     try:
         ref_line_2 = ref_line_2[0]
     except TypeError:
         ref_line_2 = 0
     balance_line_3 = 0
-    ref_line_3 = await referral.get_line_3(msg.from_user.id)
+    ref_line_3 = await referral.get_line_3(call.from_user.id)
     for ref_user in ref_line_3[1]:
         try:
             ref_user_balance = await balance.get_balance_(ref_user)
             ref_user_balance = float(ref_user_balance[0]) + float(ref_user_balance[1])
         except:
             ref_user_balance = 0
-        balance_line_3 += ref_user_balance
+        try:
+            stabpool_user_balance = await stabpool.get_balance(ref_user)
+            stabpool_user_balance = float(stabpool_user_balance[0] + float(stabpool_user_balance[1]))
+        except:
+            stabpool_user_balance = 0
+        balance_line_3 += round(ref_user_balance, 2)
+        balance_line_3 += round(stabpool_user_balance, 2)
     try:
         ref_line_3 = ref_line_3[0]
     except TypeError:
@@ -306,9 +335,7 @@ async def handle_user_terms_kb(call: types.CallbackQuery):
 async def handle_name(call: types.CallbackQuery):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
-    text = 'Напишите ваше ФИО полностью (эта информация будет отображаться для приглашенных вами людей):'
-    if language[4] == "EN":
-        text = "Please write your full name:"
+    text = await users.get_text("Анкета имя", language[4])
     await call.message.answer(text)
     await UserForm.next()
 
@@ -317,28 +344,16 @@ async def handle_socials(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     async with state.proxy() as data:
         data['name'] = msg.text
-    text = '📝 Отправьте ссылки на ваши социальные сети и информационные ресурсы одним сообщением, ' \
-           'каждое с новой строки:'
-    if language[4] == "EN":
-        text = "Please send the links to your social media profiles and informational " \
-               "resources in a single message, with each link on a new line:"
+    text = await users.get_text("Анкета социальные сети", language[4])
     await msg.answer(text)
     await UserForm.next()
 
 
 async def save_form(msg: types.Message, state: FSMContext):
-    user_id = await nft.nft_id(msg.from_user.id)
     language = await users.user_data(msg.from_user.id)
     async with state.proxy() as data:
         data['socials'] = msg.text
-    text = f'🥳 Анкета заполнена! \n\nВаш индивидуальный номер в партнерской программе: {user_id}' \
-           f'\n\nВаша персональная ссылка-приглашение: https://t.me/DAO_J2M_bot?start={msg.from_user.id}' \
-           f'\n\nИзменить данные анкеты Вы сможете в дальнейшем в этом меню.'
-    if language[4] == "EN":
-        text = f"The form has been completed. " \
-               f"\n\nYour individual number in the affiliate program: {user_id}" \
-               f"\n\nYour personal invitation link: https://t.me/DAO_J2M_bot?start={msg.from_user.id}" \
-               f"\n\nYou will be able to update your form data in this menu in the future."
+    text = await users.get_text("Анкета сохранение", language[4])
     await msg.answer(text)
     await structure.save_user_form(data.get('name'), data.get('socials'), msg.from_id)
     await state.finish()
@@ -347,9 +362,7 @@ async def save_form(msg: types.Message, state: FSMContext):
 
 async def full_statistic(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    text = "Узнайте подробную статистику своих рефералов"
-    if language[4] == "EN":
-        text = "Get detailed statistics about your referrals."
+    text = await users.get_text("Подробная статистика рефералов", language[4])
     await call.message.delete()
     await call.message.answer(text, reply_markup=inline.referral_lines(language[4]))
 
@@ -375,11 +388,16 @@ async def all_referral_lines(call: types.CallbackQuery):
             if user_name:
                 try:
                     deposit_balance, referral_balance = await balance.get_balance_line(tg_id)
-                    text += f"• {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
+                    text += f"• [Коллективный аккаунт] {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
                 except TypeError:
-                    text += f"• {tg_id} (@{user_name}) | Пользователь еще не создал кошелек J2M\n"
+                    text += f"• [Коллективный аккаунт] {tg_id} (@{user_name}) | Пользователь еще не создал кошелек J2M\n"
                     if language[4] == "EN":
-                        text += f"• {tg_id} (@{user_name}) | User has not yet entered wallet J2M\n"
+                        text += f"• [Collective account] {tg_id} (@{user_name}) | User has not yet entered wallet J2M\n"
+                try:
+                    deposit_balance, referral_balance = await stabpool.get_balance_line(tg_id)
+                    text += f"• [Стабилизационный пул] {tg_id} (@{user_name}) | {deposit_balance} USDT | {referral_balance} USDT\n"
+                except TypeError:
+                    pass
             else:
                 text += f"• {tg_id} (Не зарегистрирован в системе) | Пользователь еще не заключил смарт-контракт\n"
     else:
@@ -392,12 +410,14 @@ async def handle_user_data(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_data = await structure.get_user_form(call.from_user.id)
     user_name = f"@{call.from_user.username}" if call.from_user.username else 'Добавьте в настройках Телеграм'
-    text = f'<b>🧔 Ваше имя:</b> {user_data[1]}\n\n<b>🪪 Username:</b> {user_name}' \
+    text = f'<b>🧔 Ваше имя:</b> {user_data[1]}\n\n' \
+           f'<b>🪪 Username:</b> {user_name}' \
            f'\n\n<b>🌐 Социальные сети:</b> {user_data[2]}' \
            f'\n\n<em>❔ Чтобы изменить неактуальную информацию, нажмите соответствующую кнопку ниже.</em>'
     if language[4] == "EN":
         user_name = f"@{call.from_user.username}" if call.from_user.username else 'Add username in Telegram settings'
-        text = f"Your name: {user_data[1]}\n\nUsername: {user_name}\n\nSocial media: {user_data[2]}" \
+        text = f"Your name: {user_data[1]}\n\nUsername: {user_name}\n\n" \
+               f"Social media: {user_data[2]}" \
                "\n\nTo update outdated information, click the corresponding button below."
     await call.message.delete()
     await call.message.answer(text, reply_markup=inline.change_data(language[4]))
@@ -406,15 +426,11 @@ async def handle_user_data(call: types.CallbackQuery):
 async def change_user_data(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     if call.data == 'change_name':
-        text = 'Введите новое имя:'
-        if language[4] == "EN":
-            text = 'Input new full name:'
+        text = await users.get_text("Анкета изменение имя", language[4])
         await call.message.edit_text(text)
         await ChangeForm.name.set()
     elif call.data == 'change_socials':
-        text = 'Введите новые социальные сети сети:'
-        if language[4] == "EN":
-            text = 'Input new socials:'
+        text = await users.get_text("Анкета изменение социальные сети", language[4])
         await call.message.edit_text(text)
         await ChangeForm.socials.set()
 
@@ -424,9 +440,7 @@ async def handle_name_change(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['name'] = msg.text
     await structure.update_name(msg.from_id, data.get('name'))
-    text = 'Данные успешно обновлены!'
-    if language[4] == "EN":
-        text = 'Data successfully updated!'
+    text = await users.get_text("Анкета изменено имя", language[4])
     await msg.answer(text, reply_markup=inline.referral_statistic(language[4]))
     await state.finish()
 
@@ -436,9 +450,7 @@ async def handle_socials_change(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['social'] = msg.text
     await structure.update_socials(msg.from_id, data.get('social'))
-    text = 'Данные успешно обновлены!'
-    if language[4] == "EN":
-        text = 'Data successfully updated!'
+    text = await users.get_text("Анкета изменено социальные сети", language[4])
     await msg.answer(text, reply_markup=inline.referral_statistic(language[4]))
     await state.finish()
 

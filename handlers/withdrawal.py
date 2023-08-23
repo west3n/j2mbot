@@ -413,6 +413,9 @@ async def handle_amount(msg: types.Message, state: FSMContext):
     if not msg.text.isdigit():
         text = await users.get_text("Ошибка ввода цифр (вывод)", language[4])
         await msg.answer(text)
+    if int(msg.text) <= 50:
+        text = await users.get_text("Ошибка суммы вывода #2", language[4])
+        await msg.answer(text)
     else:
         personal_balance_user = await binance_db.get_binance_ac(msg.from_user.id)
         async with state.proxy() as data:

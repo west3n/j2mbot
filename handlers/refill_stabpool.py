@@ -9,6 +9,7 @@ from aiogram.utils.exceptions import MessageToDeleteNotFound
 
 from database import users, balance, thedex_db, stabpool
 from handlers.google import sheets_connection
+from handlers.refill_500 import smalluser_check
 from keyboards import inline
 from binance import thedex
 
