@@ -38,7 +38,7 @@ async def get_first_transaction(tg_id):
         cur.close()
         db.close()
 
-asyncio.run(get_first_transaction(254465569))
+
 
 async def get_tg_id_all():
     db, cur = connect()
