@@ -27,7 +27,15 @@ async def registration_500(call: types.CallbackQuery):
     except MessageToDeleteNotFound:
         pass
     if not rows:
-        text = await users.get_text('Пополнение (коллективный аккаунт)', language[4])
+        text = "<b>🆙 Введите сумму пополнения в USD цифрами сообщением!</b>" \
+               "\n\n💵 Минимальная сумма - <b>50 USD</b>" \
+               "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
+               "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
+        if language[4] == 'EN':
+            text = "🆙 Enter the replenishment amount in USD using digits.\n\n" \
+                   "💵Minimum amount - 50 USD" \
+                   "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
+                   "The commission amount is calculated based on the network used for the deposit."
         dep_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
         await SmallUser.amount.set()
         state = Dispatcher.get_current().current_state()
@@ -36,14 +44,22 @@ async def registration_500(call: types.CallbackQuery):
         row = rows[0]
         await smalluser_check(call, row)
     if len(rows) > 1:
-        text = await users.get_text('Ошибка пополнения #5', language[4])
+        text = "У вас несколько незакрытых транзакций, пожалуйста напишите в поддержку, для решения вашей проблемы!"
         await call.message.answer(text)
 
 
 async def deposit_500(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     if call.data == 'from_500':
-        text = await users.get_text('Пополнение (коллективный аккаунт)', language[4])
+        text = "<b>🆙 Введите сумму пополнения в USD цифрами сообщением!</b>" \
+               "\n\n💵 Минимальная сумма - <b>50 USD</b>" \
+               "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
+               "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
+        if language[4] == 'EN':
+            text = "🆙 Enter the replenishment amount in USD using digits.\n\n" \
+                   "💵Minimum amount - 50 USD" \
+                   "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
+                   "The commission amount is calculated based on the network used for the deposit."
         dep_msg = await call.message.edit_text(text, reply_markup=inline.back_menu(language[4]))
         await SmallUser.amount.set()
         state = Dispatcher.get_current().current_state()
@@ -63,7 +79,8 @@ async def back_menu(call: types.CallbackQuery, state: FSMContext):
 async def smalluser_step1(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         try:
-            await msg.bot.delete_message(chat_id=msg.from_id, message_id=data.get('dep_msg'))
+            await msg.bot.delete_message(chat_id=msg.from_id,
+                                         message_id=data.get('dep_msg'))
             await msg.delete()
         except MessageToDeleteNotFound:
             pass
@@ -81,11 +98,15 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
             await thedex_db.insert_transaction(msg.from_id, int(msg.text), response)
             await SmallUser.next()
         elif int(msg.text) < 50:
-            text = await users.get_text('Ошибка пополнения #6', language[4])
+            text = "Сумма пополнения должна быть не менее 50 USD, введите сумму пополнения еще раз!"
+            if language[4] == "EN":
+                text = "The deposit amount must be at least 500 USD, please enter the deposit amount again!"
             dep_msg = await msg.answer(text)
             await state.update_data({"dep_msg": dep_msg.message_id})
     else:
-        text = await users.get_text('Ошибка пополнения #3', language[4])
+        text = "Введите желаемую сумму пополнения числом, без запятых, букв и прочего!"
+        if language[4] == "EN":
+            text = "Please enter the desired deposit amount as a number, without commas, letters, or other symbols!"
         await msg.answer(text)
 
 
@@ -113,13 +134,12 @@ async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):
                f"Перед совершением транзакции внимательно проверьте адрес получателя и сумму перевода, оба значения " \
                f"должны совпадать со значениями в сообщении" \
                f"\n\n*Срок действия кошелька для пополнения \- 60 минут, " \
-               f"если вы не успеваете пополнить за это время \- отмените транзакцию\!*"
+               f"если вы не успеваете пополнить за это время отмените транзакцию\!*"
+
         if language[4] == "EN":
             text = f"Please send {count} {currency_str} to the provided address:\n\n{wallet[0]}\n\n" \
                    f"Before making the transaction, carefully verify the recipient's address and the transfer amount." \
-                   f" Both values should match the ones in the message. " \
-                   f"\n\n*Wallet validity period for top-up is 60 minutes. If you are unable to complete the " \
-                   f"top-up within this time frame, please cancel the transaction!*"
+                   f" Both values should match the ones in the message."
         await call.message.answer(text, reply_markup=inline.finish_transaction(language[4]),
                                   parse_mode=types.ParseMode.MARKDOWN_V2)
     await SmallUser.next()
@@ -131,21 +151,36 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     async with state.proxy() as data:
         status = await thedex.invoice_one(data.get('invoiceId'))
     if status == "Waiting":
-        text = await users.get_text('Статус Waiting (thedex)', language[4])
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже. " \
+               "\n\n<em>Если вы не отправили нужную сумму, пожалуйста посмотрите Детали транзакции.</em>"
+        if language[4] == "EN":
+            text = "We need a little more time for verification. Please try again later"
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
     if status == "Unpaid":
-        text = await users.get_text('Статус Unpaid (thedex)', language[4])
+        text = "Вы не успели оплатить!" \
+               "\n\n<b>🆙 Введите сумму пополнения в USD цифрами сообщением!</b>" \
+               "\n\n💵 Минимальная сумма - <b>50 USD</b>" \
+               "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
+               "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
+        if language[4] == 'EN':
+            text = "🆙 Enter the replenishment amount in USD using digits.\n\n" \
+                   "💵Minimum amount - 50 USD" \
+                   "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
+                   "The commission amount is calculated based on the network used for the deposit."
         await state.set_state(SmallUser.amount.state)
         await call.message.answer(text)
     if status == "Successful":
-        text = await users.get_text('Статус Successful (thedex)', language[4])
+        text = "🥳 Payment was successful! " \
+               "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
+        if language[4] == "RU":
+            text = "🥳 Оплата прошла успешно! " \
+                   "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
         hold = await balance.get_hold(call.from_user.id)
         hold = hold[0] if hold is not None else None
         if not hold or hold < 30:
             await balance.update_hold(30, call.from_user.id)
         await balance.insert_deposit(call.from_user.id, data.get("amount"))
-        await balance.insert_balance_history(
-            call.from_user.id, data.get("amount"), data.get('invoiceId'), "Коллективный аккаунт")
+        await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'), "Коллекктивный аккаунт")
         await thedex_db.insert_status(call.from_user.id, data.get('invoiceId'), status)
         await state.finish()
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
@@ -160,10 +195,15 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
                               call.from_user.id, "Пополнение", data.get("amount")))
     if status == "Rejected":
-        text = await users.get_text('Статус Rejected (thedex)', language[4])
+        text = "Произошла ошибка. Деньги вернуться к вам на счет."
+        if language[4] == "EN":
+            text = "An error occurred. The money will be refunded to your account."
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
     else:
-        text = await users.get_text('Статус Waiting (thedex)', language[4])
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже. " \
+               "\n\n<em>Если вы не отправили нужную сумму, пожалуйста посмотрите Детали транзакции.</em>"
+        if language[4] == "EN":
+            text = "We need a little more time for verification. Please try again later"
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
 
 
@@ -171,16 +211,26 @@ async def smalluser_check(call: types.CallbackQuery, row):
     language = await users.user_data(call.from_user.id)
     status, title = await thedex.invoice_one(row[2])
     if status == "Waiting":
-        text = await users.get_text('Статус Waiting (thedex)', language[4])
+        text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
+        if language[4] == "EN":
+            text = "We need a little more time for verification. Please try again later."
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
+
     if status == "Unpaid":
-        text = await users.get_text('Статус Unpaid у NFT', language[4])
+        text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
+        if language[4] == "EN":
+            text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
         await call.message.answer(text)
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         call.data = "500"
         await registration_500(call)
+
     if status == "Successful":
-        text = await users.get_text('Статус Successful (thedex)', language[4])
+        text = "🥳 Оплата прошла успешно! " \
+               "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
+        if language[4] == "EN":
+            text = "🥳 Payment was successful! " \
+                   "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
         if title == "Стабилизационный пул":
             hold = await stabpool.get_hold(call.from_user.id)
             hold = hold[0] if hold is not None else None
@@ -207,7 +257,7 @@ async def smalluser_check(call: types.CallbackQuery, row):
             if not hold or hold < 30:
                 await balance.update_hold(30, call.from_user.id)
             await balance.insert_deposit(call.from_user.id, row[1])
-            await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллективный аккаунт")
+            await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллекктивный аккаунт")
             await thedex_db.insert_status(call.from_user.id, row[2], status)
             user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
             await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
@@ -221,7 +271,9 @@ async def smalluser_check(call: types.CallbackQuery, row):
                                         f'{row[1]} USDT!'
                                         f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
     if status == "Rejected":
-        text = await users.get_text('Статус Rejected (thedex)', language[4])
+        text = "Произошла ошибка. Деньги вернуться к вам на счет."
+        if language[4] == "EN":
+            text = "An error occurred. The money will be refunded to your account."
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
 
@@ -235,16 +287,21 @@ async def smalluser_check_2(call: types.CallbackQuery):
         language = await users.user_data(call.from_user.id)
         status, title = await thedex.invoice_one(row[2])
         if status == "Waiting":
-            text = await users.get_text('Статус Waiting (thedex)', language[4])
+            text = "Нужно еще немного времени на проверку, пожалуйста, повторите позже"
+            if language[4] == "EN":
+                text = "We need a little more time for verification. Please try again later."
             await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
         if status == "Unpaid":
-            text = await users.get_text('Статус Unpaid у NFT', language[4])
+            text = "Вы не успели оплатить. Процедуру необходимо провести заново\n\n"
+            if language[4] == "EN":
+                text = "You missed the payment deadline. The procedure needs to be repeated.\n\n"
             await call.message.answer(text)
             await thedex_db.insert_status(call.from_user.id, row[2], status)
             call.data = "500"
             await registration_500(call)
         if status == "Successful":
-            text = await users.get_text('Статус Successful (thedex)', language[4])
+            text = "🥳 Оплата прошла успешно! " \
+                   "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
             if language[4] == "EN":
                 text = "Payment was successful."
             if title == "Стабилизационный пул":
@@ -272,7 +329,7 @@ async def smalluser_check_2(call: types.CallbackQuery):
                 if not hold or hold < 30:
                     await balance.update_hold(30, call.from_user.id)
                 await balance.insert_deposit(call.from_user.id, row[1])
-                await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллективный аккаунт")
+                await balance.insert_balance_history(call.from_user.id, row[1], row[2], "Коллекктивный аккаунт")
                 await thedex_db.insert_status(call.from_user.id, row[2], status)
                 await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
                 sh = await sheets_connection()
@@ -285,12 +342,16 @@ async def smalluser_check_2(call: types.CallbackQuery):
                                             f'{row[1]} USDT!'
                                             f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
         if status == "Rejected":
-            text = await users.get_text('Статус Rejected (thedex)', language[4])
+            text = "Произошла ошибка. Деньги вернуться к вам на счет."
+            if language[4] == "EN":
+                text = "An error occurred. The money will be refunded to your account."
             await thedex_db.insert_status(call.from_user.id, row[2], status)
             await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
     except IndexError:
+        text = 'Вы уже отменили данную транзакцию!'
         language = await users.user_data(call.from_user.id)
-        text = await users.get_text('Ошибка отмены транзакции', language[4])
+        if language[4] == "EN":
+            text = "Operation has been cancelled!"
         message = await call.message.answer(text)
         await asyncio.sleep(5)
         await call.bot.delete_message(call.message.chat.id, message.message_id)
@@ -312,18 +373,22 @@ async def transaction_detail(call: types.CallbackQuery):
                    f"<b>Статус оплаты:</b><em> {status[0]}</em>\n" \
                    f"<b>Кошелек для оплаты:</b><em> {status[1]}</em>\n"
             if language[4] == "EN":
-                text = f"<b>Account type</b>: {status[4]}\n\n" \
+                text = f"<b>Acoount type</b>: {status[4]}\n\n" \
                        f"<b>Payment amount:</b><em> {count} {status[2]} </em>\n" \
                        f"<b>Payment status:</b><em> {status[0]}</em>\n" \
                        f"<b>Payment wallet:</b><em> {status[1]}</em>\n"
             await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
         except TypeError:
-            text = await users.get_text('Ошибка транзакции', language[4])
+            text = "Ошибка транзакции, попробуйте повторить еще раз!"
+            if language[4] == "EN":
+                text = f"Transaction error, please repeat one more time!"
             await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
             await thedex_db.delete_transaction(row[0])
     except IndexError:
+        text = 'Вы уже отменили данную транзакцию!'
         language = await users.user_data(call.from_user.id)
-        text = await users.get_text('Ошибка отмены транзакции', language[4])
+        if language[4] == "EN":
+            text = "Operation has been cancelled!"
         message = await call.message.answer(text)
         await asyncio.sleep(5)
         await call.bot.delete_message(call.message.chat.id, message.message_id)
