@@ -552,7 +552,10 @@ async def confirm_email_withdrawal(msg: types.Message, state: FSMContext):
             except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
                 pass
             await output.insert_new_output(msg.from_user.id, data.get('amount'), wallet[6])
-            await balance.save_withdrawal_amount(data.get('amount'), msg.from_user.id)
+            if data.get("status") == "Коллективный":
+                await balance.save_withdrawal_amount(data.get('amount'), msg.from_user.id)
+            else:
+                await stabpool.save_withdrawal_amount(data.get("amount"), msg.from_id)
             username = msg.from_user.username
             text = await users.get_text("Одобрение заявки на вывод", language[4])
             text = text.replace('{сумма}', f'{data.get("amount")}')
