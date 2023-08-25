@@ -537,14 +537,15 @@ async def email_message(msg: types.Message, state: FSMContext):
 
 async def ver_code(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
+        language = await users.user_data(msg.from_user.id)
         if msg.text == data.get("code"):
-            text = await users.get_text('Успешный код верификации', data.get('language'))
+            text = await users.get_text('Успешный код верификации', language[4])
             await msg.answer(text)
             await users.insert_email(msg.from_id, data.get('email'))
             await bot_start(msg, state)
         else:
-            text = await users.get_text('Ошибка кода верификации', data.get('language'))
-            await msg.answer(text, reply_markup=inline.email_verif(data.get('language')))
+            text = await users.get_text('Ошибка кода верификации', language[4])
+            await msg.answer(text, reply_markup=inline.email_verif(language[4]))
             await Email.next()
 
 

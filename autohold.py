@@ -39,7 +39,6 @@ async def get_first_transaction(tg_id):
         db.close()
 
 
-
 async def get_tg_id_all():
     db, cur = connect()
     try:

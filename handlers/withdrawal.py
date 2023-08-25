@@ -96,7 +96,6 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     except TypeError:
         stabpool_balance_user = 0
         withdrawal_date_st = None
-
     text = f"<em>[Коллективный аккаунт]</em> \n<b>Баланс, доступный к выводу:" \
            f"</b> {round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0} USDT"
     text += f"\n<b>Дата окончания холда:" \
@@ -106,7 +105,6 @@ async def withdraw_main_menu(call: types.CallbackQuery):
     text += f"\n<b>Дата окончания холда:" \
             f"</b> {withdrawal_date_st.strftime('%d.%m.%Y %H:%M')} GMT" if withdrawal_date_st else ""
     text += f"\n\n<b>Дата возможного перечисления:</b> {date_withdraw}"
-
     if language[4] == 'EN':
         photo = decouple.config("BANNER_WITHDRAWAL_EN")
         text = f"<b>Available withdrawal balance:</b>" \
@@ -127,23 +125,15 @@ async def change_wallet_new(call: types.CallbackQuery, state: FSMContext):
         domain = parts[1]
         masked_username = username[:3] + '*' * (len(username) - 3)
         masked_email = masked_username + '@' + domain
-        text = f'📧 Вам на почту {masked_email} отправлен код подтверждения смены кошелька, ' \
-               f'введите его в ответном сообщении:'
-        email_text = f"Вас приветствует команда DAO J2M!\n\n" \
-                     f"Для смены кошелька отправьте боту этот код: {code}" \
-                     f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по " \
-                     f"этой электронной почте ответным письмом, или напишите нам в телеграм: " \
-                     f"https://t.me/J2M_Support "
+        text = await users.get_text("Сообщение о смене кошелька", language[4])
+        text = text.replace('{почта}', f'{masked_email}')
+        email_text = await users.get_text("Сообщение о смене кошелька (email)", language[4])
+        email_text = email_text.replace('{код}', f'{code}')
         await google.send_email_message(to=email[0],
                                         subject="DAO J2M change wallet",
                                         message_text=email_text)
-        if language[4] == "EN":
-            text = f"You have been sent a confirmation code to your " \
-                   f"email {email[0]}. Please enter it in your reply message:"
     else:
-        text = 'Произошла ошибка, связанная с отсутствием email в вашем профиле. Обратитесь в тех.поддержку'
-        if language[4] == "EN":
-            text = "An error occurred due to the absence of an email in your profile. Please contact technical support."
+        text = await users.get_text("Ошибка email", language[4])
     await call.message.delete()
     email_message = await call.message.answer(text)
     await ChangeWallet.email.set()
@@ -164,9 +154,7 @@ async def change_wallet_step1(msg: types.Message, state: FSMContext):
                 await msg.bot.delete_message(msg.chat.id, data.get('email_message'))
             except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
                 pass
-            text = "👛 Пришлите новый адрес криптокошелька TRON TRC-20 для вывода:"
-            if language[4] == 'EN':
-                text = "👛 Please provide a new cryptocurrency wallet TRON TRC-20 address for withdrawal:"
+            text = await users.get_text("Смена кошелька", language[4])
             second_message = await msg.answer(text)
             data['second_message'] = second_message.message_id
             await ChangeWallet.next()
@@ -179,11 +167,8 @@ async def change_wallet_step1(msg: types.Message, state: FSMContext):
                 await msg.bot.delete_message(msg.chat.id, data.get('email_message'))
             except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
                 pass
-            text = f'🚫 Введённый код {msg.text} не совпадает с тем, который был отправлен на почту, попробуйте ' \
-                   f'еще раз!'
-            if language[4] == 'EN':
-                text = f"🚫 The entered code {msg.text} does not match the one that was " \
-                       f"sent to your email. Please try again!"
+            text = await users.get_text("Ошибка смены кошелька", language[4])
+            text = text.replace('{код}', f'{msg.text}')
             error_message = await msg.answer(text)
             data['error_message'] = error_message.message_id
 
@@ -192,9 +177,7 @@ async def change_wallet_step2(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         language = await users.user_data(msg.from_user.id)
         await users.save_wallet(msg.text, msg.from_id)
-        text = "Кошелек успешно обновлен!"
-        if language[4] == 'EN':
-            text = "Wallet successfully updated!"
+        text = await users.get_text("Успешная смена кошелька", language[4])
         try:
             await msg.delete()
         except MessageToDeleteNotFound:
@@ -215,10 +198,8 @@ async def change_percentage(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     reinvest = await balance.get_percentage(call.from_user.id)
     await call.message.delete()
-    text = "📈 Выберите процент, который вы хотите реинвестировать после каждой торговой недели:\n\n" \
-           f"<em>В данный момент вы реинвестируете: {reinvest}%</em>"
-    if language[4] == 'EN':
-        text = "Wallet successfully updated!"
+    text = await users.get_text("Смена процента реинвеста", language[4])
+    text = text.replace('{количество}', f'{reinvest}')
     await call.message.answer(text, reply_markup=inline.withdraw_percentage(language[4]))
     await ChangePercentage.percentage.set()
 
@@ -227,9 +208,8 @@ async def change_percentage_step2(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     await balance.update_percentage(call.from_user.id, int(call.data))
     await call.message.delete()
-    text = f"Процент реинвестирования успешно изменен на {call.data}%!"
-    if language[4] == 'EN':
-        text = "Reinvestment percentage successfully updated!"
+    text = await users.get_text("Успешная смена процента реинвеста", language[4])
+    text = text.replace('{количество}', f'{call.data}')
     await call.answer(text, show_alert=True)
     await withdraw_main_menu(call)
     username = call.from_user.username
@@ -248,9 +228,7 @@ async def withdrawal_handler(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     binance_balance = await binance_db.get_binance_ac(call.from_user.id)
     if binance_balance:
-        text = f"🔀 Выберите тип аккаунта для вывода средств:"
-        if language[4] == "EN":
-            text = "🔀 Select the account type for fund withdrawal:"
+        text = await users.get_text("Выбор типа аккаунта (вывод)", language[4])
         await call.message.answer(text, reply_markup=inline.withdrawal_account(language[4]))
     else:
         await withdrawal_handler_collective(call, state)
@@ -264,44 +242,30 @@ async def withdrawal_handler_personal(call: types.CallbackQuery, state: FSMConte
     binance_balance = await binance_db.get_binance_ac(call.from_user.id)
     wallet = await users.user_data(call.from_user.id)
     language = await users.user_data(call.from_user.id)
-
     if wallet[6]:
         if binance_balance[1] >= 50:
-            text = f"<b>Баланс, доступный к выводу:</b> {binance_balance[1]} USDT" \
-                   f"\nCумма минимального вывода 50 USDT" \
-                   f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
-            if language[4] == "EN":
-                text = f"The balance available for withdrawal: {binance_balance[1]} USDT" \
-                       f"\nMinimum withdrawal amount is 50 USDT." \
-                       f"\n\n💳 Please write the amount of USDT you want to withdraw:"
+            text = await users.get_text("Вывод (личный аккаунт)", language[4])
+            text = text.replace('{баланс}', f'{binance_balance[1]}')
             del_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
             await state.set_state(NewWallet.amount.state)
             await state.update_data({"del_msg": del_msg.message_id, "status": "Личный"})
         else:
-
             photo = decouple.config("BANNER_WITHDRAWAL")
-            text = f"<b>Баланс:</b> {binance_balance[1]} USDT" \
-                   f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
-            alert = "❗Cумма минимального вывода 50 USDT"
+            full_text = await users.get_text("Вывод (личный аккаунт) ошибка #1 + алерт", language[4])
+            text = full_text.split("/")[0]
+            text = text.replace('{баланс}', f'{binance_balance[1]}')
+            alert = full_text.split("/")[1]
             if language[4] == "EN":
                 photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                text = f"<b>Balance:</b> {binance_balance[1]} USDT" \
-                       f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
-                alert = "❗Minimum withdrawal amount is 50 USDT"
             await call.answer(alert, show_alert=True)
             await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
     else:
         photo = decouple.config("BANNER_WITHDRAWAL")
-        text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
-               "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
-               "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
-        alert = "❗️Для вывода средств необходимо добавить кошелек для вывода!"
+        full_text = await users.get_text("Вывод (личный аккаунт) ошибка #2 + алерт", language[4])
+        text = full_text.split("/")[0]
+        alert = full_text.split("/")[1]
         if language[4] == "EN":
             photo = decouple.config("BANNER_WITHDRAWAL_EN")
-            text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
-                   "\n\n<em>Click the button below to add a wallet!" \
-                   "You can always change the withdrawal wallet in this menu.</em>"
-            alert = "❗️To withdraw funds, you need to add a withdrawal wallet!"
         await call.answer(alert, show_alert=True)
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
@@ -337,54 +301,37 @@ async def withdrawal_handler_collective(call: types.CallbackQuery, state: FSMCon
         wallet = await users.user_data(call.from_user.id)
         if wallet[6]:
             if withdrawal_balance > 50:
-                text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2)} USDT" \
-                       f"\nCумма минимального вывода 50 USDT" \
-                       f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
-                if language[4] == "EN":
-                    text = f"<b>Available withdrawal balance:</b> {round(withdrawal_balance, 2)} USDT" \
-                           f"\nMinimum withdrawal amount: 50 USDT" \
-                           f"\n\n💳 Please enter the amount of USDT you want to withdraw:"
+                text = await users.get_text("Вывод (личный аккаунт)", language[4])
+                text = text.replace('{баланс}', f'{round(withdrawal_balance, 2)}')
                 del_msg = await call.message.answer(text)
                 await state.set_state(NewWallet.amount.state)
                 await state.update_data({"del_msg": del_msg.message_id, "status": "Коллективный"})
             else:
                 photo = decouple.config("BANNER_WITHDRAWAL")
-                text = f"<b>Баланс, доступный к выводу:" \
-                       f"</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
-                       f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
-                alert = "❗Cумма минимального вывода 50 USDT!"
+                full_text = await users.get_text("Вывод (личный аккаунт) ошибка #1 + алерт", language[4])
+                text = full_text.split("/")[0]
+                text = text.replace('{баланс}', f'{round(withdrawal_balance, 2) if withdrawal_balance>0 else 0}')
+                alert = full_text.split("/")[1]
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                    text = f"❗️<b>Available withdrawal balance:</b> " \
-                           f"{withdrawal_balance if withdrawal_balance>0 else 0} USDT" \
-                           f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
-                    alert = "❗Minimum withdrawal amount is 50 USDT!"
                 await call.answer(alert, show_alert=True)
                 await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
         else:
             photo = decouple.config("BANNER_WITHDRAWAL")
-            text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
-                   "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
-                   "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
-            alert = "❗️Для вывода средств необходимо добавить кошелек для вывода!"
+            full_text = await users.get_text("Вывод (личный аккаунт) ошибка #2 + алерт", language[4])
+            text = full_text.split("/")[0]
+            alert = full_text.split("/")[1]
             if language[4] == "EN":
                 photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
-                       "\n\n<em>Click the button below to add a wallet!" \
-                       "You can always change the withdrawal wallet in this menu.</em>"
-                alert = "❗️To withdraw funds, you need to add a withdrawal wallet!"
             await call.answer(alert, show_alert=True)
             await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
     else:
         photo = decouple.config("BANNER_WITHDRAWAL")
-        text = "❗️Для активации функции вывода средств <b>нужно пополнить Баланс.</b>" \
-               "\n\n<em>В данный момент у вас нет Истории Пополнений!</em>"
-        alert = "❗️Для активации функции вывода средств нужно пополнить Баланс."
+        full_text = await users.get_text("Вывод (личный аккаунт) ошибка #3 + алерт", language[4])
+        text = full_text.split("/")[0]
+        alert = full_text.split("/")[1]
         if language[4] == "EN":
             photo = decouple.config("BANNER_WITHDRAWAL_EN")
-            text = "❗To activate the withdrawal function, you need to replenish your balance." \
-                   "\n\n <em>Currently, you have no Deposit History!</em>"
-            alert = "❗To activate the withdrawal function, you need to replenish your balance!"
         await call.answer(alert, show_alert=True)
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
@@ -420,54 +367,37 @@ async def withdrawal_handler_stabpool(call: types.CallbackQuery, state: FSMConte
         wallet = await users.user_data(call.from_user.id)
         if wallet[6]:
             if withdrawal_balance > 50:
-                text = f"<b>Баланс, доступный к выводу:</b> {round(withdrawal_balance, 2)} USDT" \
-                       f"\nCумма минимального вывода 50 USDT" \
-                       f"\n\n💳 Напишите сумму USDT, которую хотите вывести:"
-                if language[4] == "EN":
-                    text = f"<b>Available withdrawal balance:</b> {round(withdrawal_balance, 2)} USDT" \
-                           f"\nMinimum withdrawal amount: 50 USDT" \
-                           f"\n\n💳 Please enter the amount of USDT you want to withdraw:"
+                text = await users.get_text("Вывод (личный аккаунт)", language[4])
+                text = text.replace('{баланс}', f'{round(withdrawal_balance, 2)}')
                 del_msg = await call.message.answer(text)
                 await state.set_state(NewWallet.amount.state)
                 await state.update_data({"del_msg": del_msg.message_id, "status": "Стабпул"})
             else:
                 photo = decouple.config("BANNER_WITHDRAWAL")
-                text = f"<b>Баланс, доступный к выводу:" \
-                       f"</b> {round(withdrawal_balance, 2) if withdrawal_balance>0 else 0} USDT" \
-                       f"\n\n<em>❗Cумма минимального вывода 50 USDT </em> "
-                alert = "❗Cумма минимального вывода 50 USDT!"
+                full_text = await users.get_text("Вывод (личный аккаунт) ошибка #1 + алерт", language[4])
+                text = full_text.split("/")[0]
+                text = text.replace('{баланс}', f'{round(withdrawal_balance, 2) if withdrawal_balance > 0 else 0}')
+                alert = full_text.split("/")[1]
                 if language[4] == "EN":
                     photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                    text = f"❗️<b>Available withdrawal balance:</b> " \
-                           f"{withdrawal_balance if withdrawal_balance > 0 else 0} USDT" \
-                           f"\n\n<em>❗Minimum withdrawal amount is 50 USDT</em>"
-                    alert = "❗Minimum withdrawal amount is 50 USDT!"
                 await call.answer(alert, show_alert=True)
                 await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
         else:
             photo = decouple.config("BANNER_WITHDRAWAL")
-            text = "❗️Для вывода средств <b>необходимо добавить кошелек для вывода.</b>" \
-                   "\n\n<em>Нажмите кнопку ниже для добавления кошелька! " \
-                   "Вы всегда можете изменить кошелек для вывода в этом меню.</em>"
-            alert = "❗️Для вывода средств необходимо добавить кошелек для вывода!"
+            full_text = await users.get_text("Вывод (личный аккаунт) ошибка #2 + алерт", language[4])
+            text = full_text.split("/")[0]
+            alert = full_text.split("/")[1]
             if language[4] == "EN":
                 photo = decouple.config("BANNER_WITHDRAWAL_EN")
-                text = "❗️To withdraw funds, <b>you need to add a withdrawal wallet.</b>" \
-                       "\n\n<em>Click the button below to add a wallet!" \
-                       "You can always change the withdrawal wallet in this menu.</em>"
-                alert = "❗️To withdraw funds, you need to add a withdrawal wallet!"
             await call.answer(alert, show_alert=True)
             await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
     else:
         photo = decouple.config("BANNER_WITHDRAWAL")
-        text = "❗️Для активации функции вывода средств <b>нужно пополнить Баланс.</b>" \
-               "\n\n<em>В данный момент у вас нет Истории Пополнений!</em>"
-        alert = "❗️Для активации функции вывода средств нужно пополнить Баланс."
+        full_text = await users.get_text("Вывод (личный аккаунт) ошибка #3 + алерт", language[4])
+        text = full_text.split("/")[0]
+        alert = full_text.split("/")[1]
         if language[4] == "EN":
             photo = decouple.config("BANNER_WITHDRAWAL_EN")
-            text = "❗To activate the withdrawal function, you need to replenish your balance." \
-                   "\n\n <em>Currently, you have no Deposit History!</em>"
-            alert = "❗To activate the withdrawal function, you need to replenish your balance!"
         await call.answer(alert, show_alert=True)
         await call.message.answer_photo(photo, text, reply_markup=inline.main_withdraw(language[4]))
 
@@ -481,10 +411,10 @@ async def handle_amount(msg: types.Message, state: FSMContext):
     except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
         pass
     if not msg.text.isdigit():
-        text = 'Пожалуйста, используйте только цифры!\n\n' \
-               '💳 Напишите сумму еще раз, минимальная сумма вывода - 50 USDT'
-        if language[4] == 'EN':
-            text = 'Please, use digits only!'
+        text = await users.get_text("Ошибка ввода цифр (вывод)", language[4])
+        await msg.answer(text)
+    if int(msg.text) <= 50:
+        text = await users.get_text("Ошибка суммы вывода #2", language[4])
         await msg.answer(text)
     else:
         personal_balance_user = await binance_db.get_binance_ac(msg.from_user.id)
@@ -544,16 +474,12 @@ async def handle_amount(msg: types.Message, state: FSMContext):
                 user_balance = stabpool_balance_user
             if user_balance >= int(msg.text):
                 wallet = await users.user_data(msg.from_user.id)
-                text = f"Вы заказываете вывод {data.get('amount')} USDT на TRC-20 кошелёк {wallet[6]}"
-                if language[4] == "EN":
-                    text = f"You are requesting a withdrawal of {data.get('amount')} USDT to TRC-20 wallet {wallet[6]}"
+                text = await users.get_text("Подтверждение заявки на вывод #2", language[4])
+                text = text.replace('{количество}', f'{data.get("amount")}').replace('{кошелек}', f'{wallet[6]}')
                 await msg.answer(text, reply_markup=inline.finish_withdrawal(language[4]))
             else:
-                text = f'❗️<b>Сумма, доступная к выводу:</b> {user_balance} USDT!\n\n' \
-                       '💳 Напишите сумму еще раз, минимальная сумма вывода - 50 USDT'
-                if language[4] == 'EN':
-                    text = f'❗️<b>Available withdrawal amount:</b> {user_balance} USDT!\n\n' \
-                           '💳 Please enter the amount again, the minimum withdrawal amount is 50 USDT.'
+                text = await users.get_text("Ошибка суммы вывода #1", language[4])
+                text = text.replace('{количество}', f'{user_balance}')
                 del_msg = await msg.answer(text)
                 await state.update_data({"del_msg": del_msg.message_id})
 
@@ -582,26 +508,18 @@ async def finish_withdrawal(call: types.CallbackQuery, state: FSMContext):
             masked_email = masked_username + '@' + domain
             if email:
                 data['code'] = code
-                text = f'🏧 Заявка на сумму: {data.get("amount")} USDT\n' \
-                       f'Кошелек вывода: {wallet[6]}' \
-                       f'\n\n📧Пришлите код, отправленный на почту {masked_email} для подтверждения вывода:'
-                if language[4] == 'EN':
-                    text = f'Your withdrawal request for the amount of: {data.get("amount")} USDT has been accepted.' \
-                           f'\nExpect a message regarding the results of your application review.'
-                email_text = f"Вы заказываете вывод средств {data.get('amount')} USDT на кошелек {wallet[6]} !\n\n" \
-                             f"Для подтверждения создания заявки отправьте боту этот код: {code}" \
-                             f"\n\nЕсли у вас возникли сложности, или вам нужна помощь, вы можете связаться с нами по" \
-                             f" этой электронной почте ответным письмом, или напишите нам в телеграм: " \
-                             f"https://t.me/J2M_Support "
+                text = await users.get_text("Подтверждение заявки на вывод", language[4])
+                text = text.replace('{сумма}', f'{data.get("amount")}').\
+                    replace('{кошелек}', f'{wallet[6]}').replace('{почта}', f'{masked_email}')
+                email_text = await users.get_text("Подтверждение заявки на вывод (email)", language[4])
+                email_text = email_text.replace('{сумма}', f'{data.get("amount")}'). \
+                    replace('{кошелек}', f'{wallet[6]}').replace('{код}', f'{code}')
                 await google.send_email_message(to=email[0],
                                                 subject="DAO J2M withdrawal",
                                                 message_text=email_text)
                 await NewWallet.next()
             else:
-                text = 'Произошла ошибка, связанная с отсутствием email в вашем профиле. Обратитесь в тех.поддержку'
-                if language[4] == "EN":
-                    text = "An error occurred due to the absence of an email in your profile. " \
-                           "Please contact technical support."
+                text = await users.get_text("Ошибка email", language[4])
                 await state.finish()
             email_message = await call.message.answer(text)
             data['email_message'] = email_message.message_id
@@ -639,8 +557,8 @@ async def confirm_email_withdrawal(msg: types.Message, state: FSMContext):
             else:
                 await stabpool.save_withdrawal_amount(data.get("amount"), msg.from_id)
             username = msg.from_user.username
-            text = f'Ваша заявка на сумму: {data.get("amount")} USDT принята к рассмотрению!\n\n' \
-                   f'<em>Ожидайте одобрения администратора!</em>'
+            text = await users.get_text("Одобрение заявки на вывод", language[4])
+            text = text.replace('{сумма}', f'{data.get("amount")}')
             await msg.bot.send_message(
                 decouple.config("GROUP_ID"),
                 f'Пользователь {"@" + username if username is not None else msg.from_user.id} '
@@ -663,11 +581,8 @@ async def confirm_email_withdrawal(msg: types.Message, state: FSMContext):
                 await msg.bot.delete_message(msg.chat.id, data.get('error_message'))
             except (MessageToDeleteNotFound, MessageIdentifierNotSpecified):
                 pass
-            text = f'🚫 Введённый код {msg.text} не совпадает с тем, который был отправлен на почту, попробуйте ' \
-                   f'еще раз!'
-            if language[4] == 'EN':
-                text = f"🚫 The entered code {msg.text} does not match the one that was " \
-                       f"sent to your email. Please try again!"
+            text = await users.get_text("Ошибка смены кошелька", language[4])
+            text = text.replace('{код}', f'{msg.text}')
             error_message = await msg.answer(text)
             data['error_message'] = error_message.message_id
 
