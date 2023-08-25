@@ -1,11 +1,10 @@
 import asyncio
-
 import aiogram.utils.exceptions
 import decouple
 
 from datetime import datetime, timedelta
 from binance.actions import get_balance_j2m
-from database import balance, binance_db, users, referral
+from database import balance, binance_db, users, referral, stabpool
 from aiogram import Bot, types
 
 
@@ -64,6 +63,39 @@ async def count_users_profit_collective():
                         await balance.update_referral_profit(line_3[0], referral_profit_3)
             except TypeError:
                 pass
+
+
+async def count_users_profit_stabpool():
+    tg_ids = await users.get_all_tg_id()
+    now = datetime.now().date() - timedelta(days=1)
+    profit_percentage = await binance_db.get_weekly_profit(now)
+    for tg_id in tg_ids:
+        deposit = await stabpool.get_balance_status(tg_id)
+        try:
+            deposit_ = deposit[2]
+        except TypeError:
+            deposit_ = 0
+        weekly_profit = deposit_ * (profit_percentage[0] / 100) * 0.6
+        await stabpool.add_weekly_profit(weekly_profit, tg_id)
+        bot = Bot(token=decouple.config("BOT_TOKEN"))
+        session = await bot.get_session()
+        try:
+            await bot.send_message(
+                chat_id=tg_id,
+                text=f"<b>📨 [Стабилизационный пул] Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
+                     f"\n\n<em>💰 Ваша доходность за торговую неделю:"
+                     f"</em> {round(weekly_profit, 2)} USDT"
+                     f"<em>\n\n📈 Общий профит J2M:</em> {round(profit_percentage[0], 2)} %"
+                     f"\n\n\n<em>Баланс будет обновлен в течение суток!"
+                     f"Возможны незначительные отличия партнерских начислений в отчете от реальных (в пределах 1%)</em>"
+                     f"\n\n<a href='https://telegra.ph/Kak-vyschityvaetsya-dohodnost-polzovatelya-J2M-07-21-2'>"
+                     f"Подробнее о правилах начисления доходности</a>",
+                parse_mode=types.ParseMode.HTML)
+            await session.close()
+        except aiogram.utils.exceptions.BotBlocked:
+            await bot.send_message(chat_id=decouple.config("GROUP_ID"),
+                                   text=f"Пользователь с ID {tg_id} заблокировал бота!")
+            await session.close()
 
 
 async def send_message_with_profit_collective():
@@ -145,7 +177,7 @@ async def send_message_with_profit_collective():
                     if tg_id in [340862178, 452517420]:
                         await bot.send_message(
                             chat_id=tg_id,
-                            text=f"<b>📨 Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
+                            text=f"<b>📨 [Коллективный аккаунт] Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
                                  f"\n\n<em>💰 Ваша доходность за торговую неделю:"
                                  f"</em> {round(weekly_profit, 2)} USDT"
                                  f"<em>\n\n📈 Общий профит J2M:</em> {round(profit_percentage[0], 2)} %"
@@ -189,10 +221,9 @@ async def send_message_with_profit_collective():
                     chat_id=tg_id,
                     text=f"<b>📨 Отчет на {datetime.now().date().strftime('%d.%m.%Y')}</b>"
                          f"\n\n<em>💰 Ваша доходность за торговую неделю:"
-                         f"</em> Вы не участвовали в торговой неделе. Измените процент реинвестирования!"
+                         f"</em> Вы не участвовали в торговой неделе. Измените процент реинвестирования и/или пополните баланс!"
                          f"<em>\n\n📈 Общий профит J2M:</em> {round(profit_percentage[0], 2)} %"
-                         f"\n\n\n<em>Баланс будет обновлен в течение суток!"
-                         f"Возможны незначительные отличия партнерских начислений в отчете от реальных (в пределах 1%)</em>"
+                         f"\n\n\n<em>Баланс будет обновлен в течение суток!</em>"
                          f"\n\n<a href='https://telegra.ph/Kak-vyschityvaetsya-dohodnost-polzovatelya-J2M-07-21-2'>"
                          f"Подробнее о правилах начисления доходности</a>",
                     parse_mode=types.ParseMode.HTML)
@@ -208,8 +239,11 @@ async def weekly_deposit_update():
     for tg_id in tg_ids:
         try:
             weekly_deposit = await balance.get_balance_status(tg_id)
+            weekly_deposit_stabpool = await stabpool.get_balance_status(tg_id)
             if weekly_deposit[8] != 0 and weekly_deposit[4] == 0:
                 await balance.update_weekly_deposit(tg_id, round(weekly_deposit[8], 2))
+            if weekly_deposit_stabpool[5] != 0:
+                await stabpool.update_weekly_deposit(tg_id, round(weekly_deposit_stabpool[8], 2))
         except TypeError:
             pass
 
@@ -271,3 +305,4 @@ async def deposit_to_balance():
 #
 # if __name__ == '__main__':
 #     asyncio.run(main())
+

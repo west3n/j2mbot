@@ -75,12 +75,32 @@ async def get_balance_line(tg_id):
         db.close()
 
 
-async def get_balance_line(tg_id):
+async def get_balance_status(tg_id):
     db, cur = connect()
     try:
-        cur.execute("SELECT balance, deposit FROM app_stabpool WHERE tg_id_id=%s", (tg_id,))
+        cur.execute("SELECT * FROM app_stabpool WHERE tg_id_id=%s", (tg_id,))
         result = cur.fetchone()
         return result
+    finally:
+        cur.close()
+        db.close()
+
+
+async def add_weekly_profit(weekly_profit, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_stabpool SET weekly_profit = %s WHERE tg_id_id = %s", (weekly_profit, tg_id, ))
+        db.commit()
+    finally:
+        db.close()
+        cur.close()
+
+
+async def update_weekly_deposit(tg_id, weekly_profit):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_stabpool SET deposit = deposit + %s WHERE tg_id_id = %s", (weekly_profit, tg_id,))
+        db.commit()
     finally:
         cur.close()
         db.close()
