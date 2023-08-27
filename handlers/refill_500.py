@@ -129,7 +129,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     await call.message.delete()
     async with state.proxy() as data:
-        status = await thedex.invoice_one(data.get('invoiceId'))
+        status, title = await thedex.invoice_one(data.get('invoiceId'))
     if status == "Waiting":
         text = await users.get_text('Статус Waiting (thedex)', language[4])
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))

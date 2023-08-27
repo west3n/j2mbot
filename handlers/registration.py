@@ -226,7 +226,7 @@ async def nft_refresh(call: types.CallbackQuery):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
     invoiceId = await nft.check_nft_status(call.from_user.id)
-    status = await thedex.invoice_one(invoiceId[5])
+    status, title = await thedex.invoice_one(invoiceId[5])
     ads = await nft.get_ad_status(call.from_user.id)
     try:
         ads = ads[0]
@@ -336,7 +336,7 @@ async def nft_detail(call: types.CallbackQuery):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
     invoiceId = await nft.check_nft_status(call.from_user.id)
-    status, purse, curr, amount = await thedex.invoice_one_2(invoiceId[5])
+    status, purse, curr, amount, title = await thedex.invoice_one_2(invoiceId[5])
     text = f"Cумма к оплате: {amount} USDT-20\n" \
            f"Кошелек для оплаты: {purse}"
     if language[4] == "EN":

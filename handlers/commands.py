@@ -111,7 +111,7 @@ async def bot_start(msg: types.Message, state: FSMContext):
                     text = "Loading main menu..."
                 start_message = await msg.answer(text)
                 invoiceId = await nft.check_nft_status(msg.from_user.id)
-                status = await thedex.invoice_one(invoiceId[5])
+                status, title = await thedex.invoice_one(invoiceId[5])
                 if status == "Waiting":
                     text = await users.get_text('Статус Waiting у NFT', language[4])
                     try:
@@ -316,7 +316,7 @@ async def bot_start_call(call: types.CallbackQuery):
         else:
             language = await users.user_data(call.from_user.id)
             invoiceId = await nft.check_nft_status(call.from_user.id)
-            status = await thedex.invoice_one(invoiceId[5])
+            status, title = await thedex.invoice_one(invoiceId[5])
             if status == "Waiting":
                 text = await users.get_text('Статус Waiting у NFT', language[4])
                 try:

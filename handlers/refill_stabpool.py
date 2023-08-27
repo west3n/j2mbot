@@ -36,7 +36,7 @@ async def registration_500(call: types.CallbackQuery):
             await call.answer(text, show_alert=True)
             await handlers.refill.handle_deposit_funds(call)
         else:
-            text = await users.get_text("Стабпул ошибка #1", language[4])
+            text = await users.get_text("Стабпул пополнение", language[4])
             text = text.replace('{сумма}', f'{20000 - sum_refill}')
             dep_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
             await StabPoolUser.amount.set()
@@ -132,7 +132,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     await call.message.delete()
     async with state.proxy() as data:
-        status = await thedex.invoice_one(data.get('invoiceId'))
+        status, title = await thedex.invoice_one(data.get('invoiceId'))
     if status == "Waiting":
         text = await users.get_text("Статус Waiting (thedex)", language[4])
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
