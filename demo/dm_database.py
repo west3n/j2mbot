@@ -6,8 +6,8 @@ from database.connection import connect
 async def insert_demo_mode(tg_id):
     db, cur = connect()
     try:
-        cur.execute("INSERT INTO demo_demouser (tg_id_id, balance_collective, deposit_collective, balance_personal, deposit_personal) "
-                    "VALUES (%s, 0.0, 0.0, 0.0, 0.0)", (tg_id,))
+        cur.execute("INSERT INTO demo_demouser (tg_id_id, balance_collective, deposit_collective, "
+                    "balance_personal, deposit_personal) VALUES (%s, 0.0, 0.0, 0.0, 0.0)", (tg_id,))
         db.commit()
     finally:
         db.close()
@@ -17,7 +17,8 @@ async def insert_demo_mode(tg_id):
 async def insert_demo_collective_balance(tg_id, deposit):
     db, cur = connect()
     try:
-        cur.execute("UPDATE demo_demouser SET balance_collective = balance_collective + %s WHERE tg_id_id = %s", (deposit, tg_id,))
+        cur.execute("UPDATE demo_demouser SET balance_collective = balance_collective + %s WHERE tg_id_id = %s",
+                    (deposit, tg_id,))
         db.commit()
     finally:
         cur.close()
@@ -77,9 +78,92 @@ async def insert_demo_balance_history(tg_id, amount, trans, descrip):
 async def get_balance_history(tg_id, transaction):
     db, cur = connect()
     try:
-        cur.execute("SELECT date, amount, description FROM demo_demobalancehistory WHERE tg_id_id=%s AND transaction=%s",
+        cur.execute("SELECT date, amount, description, transaction_type FROM demo_demobalancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, transaction))
         return cur.fetchall()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_balance(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit, withdrawal "
+                    "FROM demo_demostabpool WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        if result:
+            return result
+        else:
+            cur.execute("INSERT INTO demo_demostabpool (tg_id_id, balance, deposit, withdrawal) "
+                        "VALUES (%s, 0, 0, 0)", (tg_id,))
+            db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_stabpool_data(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit, withdrawal "
+                    "FROM demo_demostabpool WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        if result:
+            return result
+    finally:
+        cur.close()
+        db.close()
+
+
+async def insert_deposit(tg_id, deposit):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE demo_demostabpool SET balance = balance + %s WHERE tg_id_id = %s", (deposit, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_hold(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT hold FROM demo_demostabpool WHERE tg_id_id = %s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        cur.close()
+        db.close()
+
+
+async def update_hold(hold, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE demo_demostabpool SET hold = %s WHERE tg_id_id = %s", (hold, tg_id))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_balance_line(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit FROM demo_demostabpool WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
+    finally:
+        cur.close()
+        db.close()
+
+
+async def get_balance_status(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT * FROM demo_demostabpool WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        return result
     finally:
         cur.close()
         db.close()

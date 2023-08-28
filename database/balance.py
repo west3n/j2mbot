@@ -250,22 +250,6 @@ async def balance_to_deposit_autoreinvest():
         db.close()
 
 
-async def balance_to_deposit_invest():
-    db, cur = connect()
-    try:
-        cur.execute("SELECT tg_id_id FROM  app_balance WHERE settings = 50")
-        tg_ids = [user[0] for user in cur.fetchall()]
-        for tg_id in tg_ids:
-            balance = await get_my_balance(tg_id)
-            deposit = int(balance) / 2
-            cur.execute("UPDATE app_balance SET deposit = deposit + %s, balance = %s WHERE tg_id_id = %s",
-                        (deposit, deposit, tg_id,))
-            db.commit()
-    finally:
-        cur.close()
-        db.close()
-
-
 async def add_weekly_profit(weekly_profit, tg_id):
     db, cur = connect()
     try:

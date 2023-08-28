@@ -113,5 +113,3 @@ async def invoice_one_2(invoice_id):
         json.loads(resp_json)['payCurrency'], \
         json.loads(resp_json)['amountInPayCurrency'], \
         json.loads(resp_json)['title']
-
-

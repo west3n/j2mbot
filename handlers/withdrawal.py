@@ -200,6 +200,7 @@ async def change_percentage(call: types.CallbackQuery):
     await call.message.delete()
     text = await users.get_text("Смена процента реинвеста", language[4])
     text = text.replace('{количество}', f'{reinvest}')
+    text += "\n\n<a href='https://telegra.ph/Reinvestirovanie-08-25'>Как работает реинвестиция?</a>"
     await call.message.answer(text, reply_markup=inline.withdraw_percentage(language[4]))
     await ChangePercentage.percentage.set()
 

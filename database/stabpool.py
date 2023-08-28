@@ -1,5 +1,3 @@
-import datetime
-
 from database.connection import connect
 
 
@@ -100,6 +98,19 @@ async def update_weekly_deposit(tg_id, weekly_profit):
     db, cur = connect()
     try:
         cur.execute("UPDATE app_stabpool SET deposit = deposit + %s WHERE tg_id_id = %s", (weekly_profit, tg_id,))
+        db.commit()
+    finally:
+        cur.close()
+        db.close()
+
+
+async def save_withdrawal_amount(amount, tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("UPDATE app_balance SET withdrawal = withdrawal + %s WHERE tg_id_id = %s", (amount, tg_id,))
+        db.commit()
+        cur.execute("UPDATE app_balance SET balance = balance - %s WHERE tg_id_id = %s",
+                    (amount, tg_id,))
         db.commit()
     finally:
         cur.close()

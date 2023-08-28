@@ -12,7 +12,10 @@ async def balance_handler(call: types.CallbackQuery):
     referral = await balance.get_balance(call.from_user.id)
     photo = decouple.config("BANNER_BALANCE")
     dao = await nft.nft_id(call.from_user.id)
-
+    stabpool_data = await dm_database.get_stabpool_data(call.from_user.id)
+    stabpool_balance = round(stabpool_data[0], 2) if stabpool_data else None
+    stabpool_deposit = round(stabpool_data[1], 2) if stabpool_data else None
+    stabpool_withdrawal = round(stabpool_data[2], 2) if stabpool_data else None
     text = f"Ваш индивидуальный номер участника DAO, зафиксированный в смарт-контракте: {dao}" \
            f"\n\n💵 <em>Коллективный аккаунт</em>" \
            f"\n<b>Ваш баланс:</b> {round(user_balance[1], 2)} USDT" \
@@ -21,8 +24,15 @@ async def balance_handler(call: types.CallbackQuery):
             f"\n<b>Баланс Binance API:</b> {round(user_balance[5], 2) if user_balance[5] is not None else 0.0}" \
             f"\n<b>Баланс J2M:</b> {round(user_balance[6], 2)}" \
             f"\n<b>Активный депозит:</b> {round(user_balance[7], 2)}"
-    text += f"\n\n<b>Сумма зарезервированная на вывод:</b> 0.0 USDT " \
+    text += f"\n\n<b>Сумма зарезервированная на вывод:</b> 0.0 USDT"
+    text += f'\n\n<em>Стабилизационный пул</em>' \
+            f'\n<b>Баланс:</b> {stabpool_balance} USDT' if stabpool_balance else ''
+    text += f'\n<b>Активный депозит:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
+    text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(user_balance[3], 2)} USDT"
+    text += f"\n\n<b>Сумма зарезервированная на вывод (коллективный аккаунт):</b> 0,0 " \
             f"USDT" if int(user_balance[2]) > 0 else ""
+    text += f"\n\n<b>Сумма зарезервированная на вывод (стабилизационный пул):</b> 0,0 " \
+            f"USDT" if stabpool_withdrawal else ""
     text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>График работы " \
             "торгового бота</a>"
     if language[4] == "EN":
@@ -36,9 +46,17 @@ async def balance_handler(call: types.CallbackQuery):
                 f"\n<b>Active deposit:</b> {round(user_balance[7], 2)}"
         text += f"\n\n<b>Amount reserved for withdrawal:</b> {round(user_balance[2], 2)} USDT" if int(
             user_balance[2]) > 0 else ""
+        text += f'\n\n<em>Stabilization Pool</em>' \
+                f'\n<b>Balance:</b> {stabpool_balance} USDT' if stabpool_balance else ''
+        text += f'\n<b>Active Deposit:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
+        text += f"\n\n<b>👨‍👦‍👦 Partner Earnings:</b> {round(user_balance[3], 2)} USDT"
+        text += f"\n\n<b>Amount Reserved for Withdrawal (Collective Account):</b> 0.0 " \
+                f"USDT" if int(user_balance[2]) > 0 else ""
+        text += f"\n\n<b>Amount Reserved for Withdrawal (Stabilization Pool):</b> 0.0 " \
+                f"USDT" if stabpool_withdrawal else ""
+
         text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>" \
                 "Trading bot work schedule (RU)</a>"
-
         photo = decouple.config("BANNER_BALANCE_EN")
     await call.message.delete()
     await call.message.answer_photo(
@@ -62,12 +80,14 @@ async def withdrawal_refill_history(call: types.CallbackQuery):
     all_user_data = await dm_database.get_balance_history(call.from_user.id, history_type)
     for user_data in all_user_data:
         text = f"<b>Дата:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}\n<b>Cумма:</b> {user_data[1]}" \
-               f"\n<b>Хэш транзакции:</b> {user_data[2]}"
+               f"\n<b>Хэш транзакции:</b> {user_data[2]}" \
+               f"\n<b>Тип аккаунта:</b> {user_data[3]}"
         if language[4] == "EN":
             hash_ = user_data[2]
             hash_ = 'Personal Account' if hash_ == 'Личный аккаунт' else hash_
             text = f"<b>Date:</b> {user_data[0].strftime('%d.%m.%Y %H:%M:%S')}\n<b>Amount:</b> {user_data[1]}" \
-                   f"\n<b>Transaction Hash:</b> {hash_}"
+                   f"\n<b>Transaction Hash:</b> {hash_}" \
+                   f"\n<b>Account type:</b> {user_data[3]}"
         await call.message.answer(text)
     if not all_user_data:
         text = f'У вас нет истории {history_text}!'
