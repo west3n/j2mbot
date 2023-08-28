@@ -38,20 +38,26 @@ async def balance_handler(call: types.CallbackQuery):
     text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>График работы " \
             "торгового бота</a>"
     if language[4] == "EN":
-        text = f"Your individual DAO participant number recorded in the smart contract: {dao}" \
+        text = f"Your individual participant number in the DAO, recorded in the smart contract: {dao}" \
                f"\n\n💵 <em>Collective Account</em>" \
-               f"\n<b>Your balance:</b> {round(user_balance[0], 2)} USDT" \
-               f"\n<b>Active deposit:</b> {round(user_balance[1], 2)} USDT"
-        text += f"\n\n💰 <em>Personal Account</em>" \
-                f"\n<b>Binance API balance:</b> {round(binance_balance[0], 2)}" \
-                f"\n<b>J2M balance:</b> {round(binance_balance[1], 2)}" \
-                f"\n<b>Active deposit:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
-        text += f"\n\n<b>👨‍👦‍👦 Partner earnings:</b> {round(user_balance[3], 2)} USDT"
-        text += f"\n\n<b>Amount reserved for withdrawal:</b> {round(user_balance[2], 2)} USDT" if int(
-            user_balance[2]) > 0 else ""
-        text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>" \
-                "Trading bot work schedule (RU)</a>"
-
+               f"\n<b>Your Balance:</b> {round(user_balance[0], 2)} USDT" \
+               f"\n<b>Active Deposit:</b> {round(user_balance[1], 2)} USDT"
+        try:
+            text += f"\n\n💰 <em>Personal Account</em>" \
+                    f"\n<b>Binance API Balance:</b> {round(binance_balance[0], 2)}" \
+                    f"\n<b>J2M Balance:</b> {round(binance_balance[1], 2)}" \
+                    f"\n<b>Active Deposit:</b> {round(binance_balance[2], 2)}" if binance_balance is not None else ""
+        except TypeError:
+            pass
+        text += f'\n\n<em>Stabilization Pool</em>' \
+                f'\n<b>Balance:</b> {stabpool_balance} USDT' if stabpool_balance else ''
+        text += f'\n<b>Active Deposit:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
+        text += f"\n\n<b>👨‍👦‍👦 Partner Earnings:</b> {round(user_balance[3], 2)} USDT"
+        text += f"\n\n<b>Amount Reserved for Withdrawal (Collective Account):</b> {round(user_balance[2], 2)} " \
+                f"USDT" if int(user_balance[2]) > 0 else ""
+        text += f"\n\n<b>Amount Reserved for Withdrawal (Stabilization Pool):</b> {stabpool_withdrawal} " \
+                f"USDT" if stabpool_withdrawal else ""
+        text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>Trading Bot Work Schedule</a>"
         photo = decouple.config("BANNER_BALANCE_EN")
     await call.message.delete()
     try:

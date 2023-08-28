@@ -9,7 +9,6 @@ from database import users, balance, nft, binance_db
 async def balance_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_balance = await dm_database.get_demo_balance(call.from_user.id)
-    referral = await balance.get_balance(call.from_user.id)
     photo = decouple.config("BANNER_BALANCE")
     dao = await nft.nft_id(call.from_user.id)
     stabpool_data = await dm_database.get_stabpool_data(call.from_user.id)

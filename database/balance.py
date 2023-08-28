@@ -237,13 +237,35 @@ async def get_balance_line(tg_id):
 async def balance_to_deposit_autoreinvest():
     db, cur = connect()
     try:
-        cur.execute("SELECT tg_id_id FROM  app_balance WHERE settings is NULL OR settings = 100")
+        cur.execute("SELECT tg_id_id FROM app_balance WHERE settings is NULL OR settings = 100")
         tg_ids = [user[0] for user in cur.fetchall()]
         for tg_id in tg_ids:
             balance = await get_my_balance(tg_id)
-            print(f"{balance} - {tg_id}")
             cur.execute("UPDATE app_balance SET deposit = deposit + %s, "
                         "balance = %s WHERE tg_id_id = %s", (float(round(balance, 2)), 0.0, tg_id,))
+            db.commit()
+        cur.execute("SELECT tg_id_id FROM app_balance WHERE settings = 0")
+        tg_ids = [user[0] for user in cur.fetchall()]
+        for tg_id in tg_ids:
+            refill, out = await get_amount(tg_id, "Коллективный аккаунт")
+            body = refill - out
+            balance_, deposit_ = await get_balance_line(tg_id)
+            full_balance = float(balance_) + float(deposit_)
+            income = full_balance - body
+            cur.execute("UPDATE app_balance SET deposit = deposit + %s, "
+                        "balance = %s WHERE tg_id_id = %s", (float(round(body, 2)), income, tg_id,))
+            db.commit()
+        cur.execute("SELECT tg_id_id FROM app_balance WHERE settings = 50")
+        tg_ids = [user[0] for user in cur.fetchall()]
+        for tg_id in tg_ids:
+            refill, out = await get_amount(tg_id, "Коллективный аккаунт")
+            body = refill - out
+            balance_, deposit_ = await get_balance_line(tg_id)
+            full_balance = float(balance_) + float(deposit_)
+            income = (full_balance - body)/2
+            body = body + income
+            cur.execute("UPDATE app_balance SET deposit = deposit + %s, "
+                        "balance = %s WHERE tg_id_id = %s", (float(round(body, 2)), income, tg_id,))
             db.commit()
     finally:
         cur.close()
