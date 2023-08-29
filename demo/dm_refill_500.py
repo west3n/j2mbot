@@ -23,15 +23,7 @@ async def registration_500(call: types.CallbackQuery):
     except MessageToDeleteNotFound:
         pass
     if not rows:
-        text = "<b>🆙 Введите сумму пополнения в USDT цифрами сообщением!</b>" \
-               "\n\n💵 Минимальная сумма - <b>500 USDT</b>" \
-               "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
-               "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
-        if language[4] == 'EN':
-            text = "🆙 Enter the replenishment amount in USDT using digits.\n\n" \
-                   "💵Minimum amount - 500 USDT" \
-                   "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
-                   "The commission amount is calculated based on the network used for the deposit."
+        text = await users.get_text('Пополнение (коллективный аккаунт)', language[4])
         dep_msg = await call.message.answer(text, reply_markup=dm_inline.back_menu(language[4]))
         await DemoSmallUser.amount.set()
         state = Dispatcher.get_current().current_state()
@@ -44,15 +36,7 @@ async def registration_500(call: types.CallbackQuery):
 async def deposit_500(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     if call.data == 'dm_from_500':
-        text = "<b>🆙 Введите сумму пополнения в USDT цифрами сообщением!</b>" \
-               "\n\n💵 Минимальная сумма - <b>500 USDT</b>" \
-               "\n\n<em>При пополнении Вы также оплачиваете стоимость AML проверки. " \
-               "Сумма комиссии рассчитывается в зависимости от сети пополнения.</em>"
-        if language[4] == 'EN':
-            text = "🆙 Enter the replenishment amount in USDT using digits.\n\n" \
-                   "💵Minimum amount - 500 USDT" \
-                   "\n\nWhen making a deposit, you also cover the cost of AML verification. " \
-                   "The commission amount is calculated based on the network used for the deposit."
+        text = await users.get_text('Пополнение (коллективный аккаунт)', language[4])
         dep_msg = await call.message.edit_text(text, reply_markup=dm_inline.back_menu(language[4]))
         await DemoSmallUser.amount.set()
         state = Dispatcher.get_current().current_state()
@@ -79,7 +63,7 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
             pass
     language = await users.user_data(msg.from_user.id)
     if msg.text.isdigit():
-        if 500 <= int(msg.text) < 1000:
+        if 50 <= int(msg.text):
             summary = int(msg.text)
             response = await thedex.create_invoice(summary, msg.from_id, "ДЕМО")
             await state.update_data({'status': 500, 'amount': int(msg.text), 'invoiceId': response})
@@ -90,21 +74,8 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
             await msg.answer(text, reply_markup=inline.return_currencies())
             await thedex_db.insert_transaction(msg.from_id, int(msg.text), response)
             await DemoSmallUser.next()
-        elif int(msg.text) >= 1000:
-            summary = int(msg.text)
-            response = await thedex.create_invoice(summary, msg.from_id, "ДЕМО")
-            await state.update_data({'status': 1000, 'amount': int(msg.text), 'invoiceId': response})
-            await thedex_db.insert_transaction(msg.from_id, int(msg.text), response)
-            await users.set_status(status="1000", tg_id=msg.from_id)
-            text = "⏳ Выберите длительность холда:"
-            if language[4] == "EN":
-                text = "⏳ Select hold time:"
-            await msg.answer(text, reply_markup=inline.hold_kb(language[4]))
-            await state.set_state(DemoSmallUser.hold.state)
-        elif int(msg.text) < 500:
-            text = "Сумма пополнения должна быть не менее 500 USDT, введите сумму пополнения еще раз!"
-            if language[4] == "EN":
-                text = "The deposit amount must be at least 500 USDT, please enter the deposit amount again!"
+        elif int(msg.text) < 50:
+            text = await users.get_text('Ошибка пополнения #6', language[4])
             dep_msg = await msg.answer(text)
             await state.update_data({"dep_msg": dep_msg.message_id})
     else:
@@ -115,14 +86,9 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
 async def smalluser_hold(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
     language = await users.user_data(call.from_user.id)
-    async with state.proxy() as data:
-        data['hold'] = int(call.data)
-        await balance.update_hold(int(call.data), call.from_user.id)
-        text = "🌐 Выберите сеть пополнения:"
-        if language[4] == "EN":
-            text = "🌐 Select deposit cryptocurrency:"
-        await call.message.answer(text, reply_markup=dm_inline.return_currencies())
-        await state.set_state(DemoSmallUser.currency.state)
+    text = await users.get_text('Выбор сети пополнения', language[4])
+    await call.message.answer(text, reply_markup=dm_inline.return_currencies())
+    await state.set_state(DemoSmallUser.currency.state)
 
 
 async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):

@@ -326,3 +326,4 @@ def dm_partners_kb(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"📖 {button_2}", callback_data="dm_deposit_funds")],
     ])
     return kb
+

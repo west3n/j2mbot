@@ -133,11 +133,11 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     if status == "Waiting":
         text = await users.get_text('Статус Waiting (thedex)', language[4])
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-    if status == "Unpaid":
+    elif status == "Unpaid":
         text = await users.get_text('Статус Unpaid (thedex)', language[4])
         await state.set_state(SmallUser.amount.state)
         await call.message.answer(text)
-    if status == "Successful":
+    elif status == "Successful":
         text = await users.get_text('Статус Successful (thedex)', language[4])
         hold = await balance.get_hold(call.from_user.id)
         hold = hold[0] if hold is not None else None
@@ -159,7 +159,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         worksheet = sh.worksheet(worksheet_name)
         worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
                               call.from_user.id, "Пополнение", data.get("amount")))
-    if status == "Rejected":
+    elif status == "Rejected":
         text = await users.get_text('Статус Rejected (thedex)', language[4])
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
     else:
@@ -173,13 +173,13 @@ async def smalluser_check(call: types.CallbackQuery, row):
     if status == "Waiting":
         text = await users.get_text('Статус Waiting (thedex)', language[4])
         await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-    if status == "Unpaid":
+    elif status == "Unpaid":
         text = await users.get_text('Статус Unpaid у NFT', language[4])
         await call.message.answer(text)
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         call.data = "500"
         await registration_500(call)
-    if status == "Successful":
+    elif status == "Successful":
         text = await users.get_text('Статус Successful (thedex)', language[4])
         if title == "Стабилизационный пул":
             hold = await stabpool.get_hold(call.from_user.id)
@@ -220,7 +220,7 @@ async def smalluser_check(call: types.CallbackQuery, row):
                                         f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
                                         f'{row[1]} USDT!'
                                         f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
-    if status == "Rejected":
+    elif status == "Rejected":
         text = await users.get_text('Статус Rejected (thedex)', language[4])
         await thedex_db.insert_status(call.from_user.id, row[2], status)
         await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
@@ -237,13 +237,13 @@ async def smalluser_check_2(call: types.CallbackQuery):
         if status == "Waiting":
             text = await users.get_text('Статус Waiting (thedex)', language[4])
             await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-        if status == "Unpaid":
+        elif status == "Unpaid":
             text = await users.get_text('Статус Unpaid у NFT', language[4])
             await call.message.answer(text)
             await thedex_db.insert_status(call.from_user.id, row[2], status)
             call.data = "500"
             await registration_500(call)
-        if status == "Successful":
+        elif status == "Successful":
             text = await users.get_text('Статус Successful (thedex)', language[4])
             if language[4] == "EN":
                 text = "Payment was successful."
@@ -284,7 +284,7 @@ async def smalluser_check_2(call: types.CallbackQuery):
                                             f'Пользователь {user_name} успешно пополнил коллективный аккаунт на '
                                             f'{row[1]} USDT!'
                                             f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
-        if status == "Rejected":
+        elif status == "Rejected":
             text = await users.get_text('Статус Rejected (thedex)', language[4])
             await thedex_db.insert_status(call.from_user.id, row[2], status)
             await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))

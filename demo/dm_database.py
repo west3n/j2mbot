@@ -170,3 +170,18 @@ async def get_balance_status(tg_id):
         db.close()
 
 
+async def get_balance_stabpool(tg_id):
+    db, cur = connect()
+    try:
+        cur.execute("SELECT balance, deposit, withdrawal "
+                    "FROM demo_demostabpool WHERE tg_id_id=%s", (tg_id,))
+        result = cur.fetchone()
+        if result:
+            return result
+        else:
+            cur.execute("INSERT INTO demo_demostabpool (tg_id_id, balance, deposit, withdrawal) "
+                        "VALUES (%s, 0, 0, 0)", (tg_id,))
+            db.commit()
+    finally:
+        cur.close()
+        db.close()

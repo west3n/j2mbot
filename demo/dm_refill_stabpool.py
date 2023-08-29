@@ -5,14 +5,14 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.utils.exceptions import MessageToDeleteNotFound
 
-from database import users, balance, thedex_db, stabpool
-from handlers.google import sheets_connection
+from database import users, thedex_db
+from demo import dm_inline, dm_database
 from handlers.refill_500 import smalluser_check
 from keyboards import inline
 from binance import thedex
 
 
-class StabPoolUser(StatesGroup):
+class DemoStabPoolUser(StatesGroup):
     hold = State()
     amount = State()
     currency = State()
@@ -22,8 +22,8 @@ class StabPoolUser(StatesGroup):
 async def registration_500(call: types.CallbackQuery):
     rows = await thedex_db.get_transaction(call.from_user.id)
     language = await users.user_data(call.from_user.id)
-    await stabpool.get_balance(call.from_user.id)
-    sum_refill = await balance.get_stabpool_refill_sum(call.from_user.id)
+    await dm_database.get_balance_stabpool(call.from_user.id)
+    sum_refill = 0
     try:
         await call.message.delete()
     except MessageToDeleteNotFound:
@@ -34,10 +34,10 @@ async def registration_500(call: types.CallbackQuery):
             await call.answer(text, show_alert=True)
             await handlers.refill.handle_deposit_funds(call)
         else:
-            text = await users.get_text("Стабпул ошибка #1", language[4])
+            text = await users.get_text("Стабпул пополнение", language[4])
             text = text.replace('{сумма}', f'{20000 - sum_refill}')
-            dep_msg = await call.message.answer(text, reply_markup=inline.back_menu(language[4]))
-            await StabPoolUser.amount.set()
+            dep_msg = await call.message.answer(text, reply_markup=dm_inline.back_menu(language[4]))
+            await DemoStabPoolUser.amount.set()
             state = Dispatcher.get_current().current_state()
             await state.update_data({"dep_msg": dep_msg.message_id})
     if len(rows) == 1:
@@ -55,7 +55,7 @@ async def back_menu(call: types.CallbackQuery, state: FSMContext):
     if language[4] == "EN":
         text = 'Select at least one option:'
     await call.message.delete()
-    await call.message.answer(text, reply_markup=inline.refill_account_2(language[4]))
+    await call.message.answer(text, reply_markup=dm_inline.dm_refill_account_2(language[4]))
 
 
 async def smalluser_step1(msg: types.Message, state: FSMContext):
@@ -67,17 +67,15 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
         except MessageToDeleteNotFound:
             pass
     language = await users.user_data(msg.from_user.id)
-    sum_refill = await balance.get_stabpool_refill_sum(msg.from_user.id)
+    sum_refill = 0
     if msg.text.isdigit():
         if 1000 <= int(msg.text) <= (20000 - sum_refill):
             summary = int(msg.text)
-            response = await thedex.create_invoice(summary, msg.from_id, "Стабилизационный пул")
+            response = await thedex.create_invoice(summary, msg.from_id, "[DEMO] Стабилизационный пул")
             await state.update_data({'status': 500, 'amount': int(msg.text), 'invoiceId': response})
-            await users.set_status(status="500", tg_id=msg.from_id)
             text = await users.get_text("Выбор сети пополнения", language[4])
             await msg.answer(text, reply_markup=inline.return_currencies())
-            await thedex_db.insert_transaction(msg.from_id, int(msg.text), response)
-            await StabPoolUser.next()
+            await DemoStabPoolUser.next()
         elif int(msg.text) > 20000:
             text = await users.get_text("Стабпул ошибка #2", language[4])
             text = text.replace('{сумма}', f'{20000 - sum_refill}')
@@ -123,54 +121,24 @@ async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):
                    f" Both values should match the ones in the message."
         await call.message.answer(text, reply_markup=inline.finish_transaction(language[4]),
                                   parse_mode=types.ParseMode.MARKDOWN_V2)
-    await StabPoolUser.next()
+    await DemoStabPoolUser.next()
 
 
 async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
     language = await users.user_data(call.from_user.id)
     await call.message.delete()
     async with state.proxy() as data:
-        status = await thedex.invoice_one(data.get('invoiceId'))
-    if status == "Waiting":
-        text = await users.get_text("Статус Waiting (thedex)", language[4])
-        await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
-    if status == "Unpaid":
-        text = await users.get_text("Статус Unpaid (thedex) (стабпул)", language[4])
-        await state.set_state(StabPoolUser.amount.state)
-        await call.message.answer(text)
-    if status == "Successful":
         text = await users.get_text("Статус Successful (thedex)", language[4])
-        hold = await stabpool.get_hold(call.from_user.id)
-        hold = hold[0] if hold is not None else None
-        if not hold or hold < 90:
-            await stabpool.update_hold(90, call.from_user.id)
-        await stabpool.insert_deposit(call.from_user.id, data.get("amount"))
-        await balance.insert_balance_history(call.from_user.id, data.get("amount"), data.get('invoiceId'),
-                                             "Стабилизационный пул")
-        await thedex_db.insert_status(call.from_user.id, data.get('invoiceId'), status)
+        await dm_database.insert_deposit(call.from_user.id, data.get("amount"))
+        await dm_database.insert_demo_balance_history(
+            call.from_user.id, data.get("amount"), "IN", data.get('invoiceId'))
         await state.finish()
-        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-        user_name = "@" + call.from_user.username if call.from_user.username is not None else call.from_user.full_name
-        await call.bot.send_message(decouple.config("GROUP_ID"),
-                                    f'Пользователь {user_name} успешно пополнил стабпул на '
-                                    f'{data.get("amount")} USDT!'
-                                    f'\n\n Подробнее: http://89.223.121.160:8000/admin/app/balance/')
-        sh = await sheets_connection()
-        worksheet_name = "Сумма пополнения пула"
-        worksheet = sh.worksheet(worksheet_name)
-        worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
-                              call.from_user.id, "Пополнение", data.get("amount")))
-    if status == "Rejected":
-        text = await users.get_text("Статус Rejected (thedex)", language[4])
-        await call.message.answer(text, reply_markup=await inline.main_menu(language[4], call.from_user.id))
-    else:
-        text = await users.get_text("Статус Waiting (thedex)", language[4])
-        await call.message.answer(text, reply_markup=inline.transaction_status(language[4]))
+        await call.message.answer(text, reply_markup=await dm_inline.dm_main_menu(language[4]))
 
 
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(registration_500, text='dm_stabpool')
-    dp.register_message_handler(smalluser_step1, state=StabPoolUser.amount)
-    dp.register_callback_query_handler(back_menu, state=StabPoolUser.amount)
-    dp.register_callback_query_handler(smalluser_step2, state=StabPoolUser.currency)
-    dp.register_callback_query_handler(smalluser_finish, state=StabPoolUser.finish)
+    dp.register_message_handler(smalluser_step1, state=DemoStabPoolUser.amount)
+    dp.register_callback_query_handler(back_menu, state=DemoStabPoolUser.amount)
+    dp.register_callback_query_handler(smalluser_step2, state=DemoStabPoolUser.currency)
+    dp.register_callback_query_handler(smalluser_finish, state=DemoStabPoolUser.finish)

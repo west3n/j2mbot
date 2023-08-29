@@ -45,6 +45,20 @@ async def get_balance_history(tg_id, transaction):
         db.close()
 
 
+async def count_balance_history_7_days():
+    db, cur = connect()
+    try:
+        seven_days_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+        formatted_date = seven_days_ago
+        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE date >= %s AND transaction = 'IN'", (formatted_date,))
+        sum_in = cur.fetchone()[0]
+        cur.execute("SELECT SUM(amount) FROM app_balancehistory WHERE date >= %s AND transaction = 'OUT'", (formatted_date,))
+        sum_out = cur.fetchone()[0]
+        return round(float(sum_in-sum_out), 2)
+    finally:
+        cur.close()
+        db.close()
+
 async def get_stabpool_refill_sum(tg_id):
     db, cur = connect()
     try:
@@ -326,6 +340,19 @@ async def get_balance_(tg_id):
         cur.execute("SELECT balance, deposit FROM app_balance WHERE tg_id_id=%s", (tg_id,))
         result = cur.fetchone()
         return result
+    finally:
+        cur.close()
+        db.close()
+
+
+async def count_pool():
+    db, cur = connect()
+    try:
+        cur.execute("SELECT SUM(deposit) FROM app_balance")
+        result = cur.fetchone()[0]
+        cur.execute("SELECT SUM(deposit) FROM app_stabpool")
+        result = result + cur.fetchone()[0]
+        return round(float(result), 2)
     finally:
         cur.close()
         db.close()

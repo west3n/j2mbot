@@ -25,6 +25,18 @@ async def check_nft_count():
         cur.close()
 
 
+async def check_nft_count_last_7_days():
+    db, cur = connect()
+    try:
+        seven_days_ago = datetime.datetime.now() - datetime.timedelta(days=7)
+        formatted_date = seven_days_ago
+        cur.execute("SELECT COUNT(*) FROM app_nft WHERE address NOTNULL AND date >= %s", (formatted_date,))
+        result = cur.fetchone()[0]
+        return result
+    finally:
+        db.close()
+        cur.close()
+
 async def create_nft(tg_id, invoiceId):
     db, cur = connect()
     try:

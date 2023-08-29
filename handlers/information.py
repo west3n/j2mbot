@@ -4,7 +4,6 @@ from aiogram import Dispatcher, types
 from aiogram.utils.exceptions import MessageToDeleteNotFound
 from database import users, nft, balance
 from keyboards import inline
-from database import users
 
 
 async def information_handler(call: types.CallbackQuery):
@@ -75,11 +74,18 @@ async def info_collaboration(call: types.CallbackQuery):
 
 async def info_news(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
-    text = 'Раздел "Новости" находится в разработке!'
-    if language[4] == 'EN':
-        text = 'The "News" section is currently under development!'
+    count_nft = await nft.check_nft_count()
+    count_nft_7days = await nft.check_nft_count_last_7_days()
+    common_pool = await balance.count_pool()
+    common_pool_7days = await balance.count_balance_history_7_days()
+    text = await users.get_text("Новости (информация)", language[4])
+    text = text.replace("{участники}", str(count_nft))
+    text = text.replace("{пул}", str(common_pool))
+    text = text.replace("{участники 7 дней}", str(count_nft_7days))
+    text = text.replace("{пул 7 дней}",
+                        f"🆙 +{str(common_pool_7days)}" if common_pool_7days > 0 else f"🔽 {str(common_pool_7days)}")
     await call.message.delete()
-    await call.message.answer(text, reply_markup=inline.information_back(language))
+    await call.message.answer(text, reply_markup=inline.info_news_kb(language[4]))
 
 
 async def info_marketing(call: types.CallbackQuery):
