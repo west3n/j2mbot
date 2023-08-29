@@ -9,6 +9,7 @@ from database import users, balance, nft, binance_db
 async def balance_handler(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     user_balance = await dm_database.get_demo_balance(call.from_user.id)
+    print(user_balance)
     photo = decouple.config("BANNER_BALANCE")
     dao = await nft.nft_id(call.from_user.id)
     stabpool_data = await dm_database.get_stabpool_data(call.from_user.id)
@@ -27,7 +28,6 @@ async def balance_handler(call: types.CallbackQuery):
     text += f'\n\n<em>Стабилизационный пул</em>' \
             f'\n<b>Баланс:</b> {stabpool_balance} USDT' if stabpool_balance else ''
     text += f'\n<b>Активный депозит:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
-    text += f"\n\n<b>👨‍👦‍👦 Партнерские начисления:</b> {round(user_balance[3], 2)} USDT"
     text += f"\n\n<b>Сумма зарезервированная на вывод (коллективный аккаунт):</b> 0,0 " \
             f"USDT" if int(user_balance[2]) > 0 else ""
     text += f"\n\n<b>Сумма зарезервированная на вывод (стабилизационный пул):</b> 0,0 " \
@@ -48,12 +48,10 @@ async def balance_handler(call: types.CallbackQuery):
         text += f'\n\n<em>Stabilization Pool</em>' \
                 f'\n<b>Balance:</b> {stabpool_balance} USDT' if stabpool_balance else ''
         text += f'\n<b>Active Deposit:</b> {stabpool_deposit} USDT' if stabpool_deposit else ''
-        text += f"\n\n<b>👨‍👦‍👦 Partner Earnings:</b> {round(user_balance[3], 2)} USDT"
         text += f"\n\n<b>Amount Reserved for Withdrawal (Collective Account):</b> 0.0 " \
                 f"USDT" if int(user_balance[2]) > 0 else ""
         text += f"\n\n<b>Amount Reserved for Withdrawal (Stabilization Pool):</b> 0.0 " \
                 f"USDT" if stabpool_withdrawal else ""
-
         text += "\n\n<a href='https://telegra.ph/Grafik-raboty-bota-vysokochastotnoj-torgovli-07-13'>" \
                 "Trading bot work schedule (RU)</a>"
         photo = decouple.config("BANNER_BALANCE_EN")

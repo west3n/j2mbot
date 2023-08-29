@@ -55,14 +55,15 @@ def dm_refill_main_menu(lang) -> InlineKeyboardMarkup:
 
 
 def dm_refill_account_2(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, back = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT", \
-        "Назад"
+    first_button, second_button, stabpool, back = "Личный аккаунт от 25 000 USD", "Коллективный аккаунт от 50 USDT", \
+        "Стабилизационный пул", "Назад"
     if lang == "EN":
-        first_button, second_button, back = "Personal account starting from 15,000 USDT", \
-            "Collective account starting from 500 USDT.", "Go back"
+        first_button, second_button, stabpool, back = "Personal account starting from 25,000 USD", \
+            "Collective account starting from 50 USD.", "Stab Pool", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💰 {first_button}", callback_data="dm_15000")],
         [InlineKeyboardButton(f"💵 {second_button}", callback_data="dm_500")],
+        [InlineKeyboardButton(f"💵 {stabpool}", callback_data="dm_stabpool")],
         [InlineKeyboardButton(f'◀️ {back}', callback_data='dm_refill')]
     ])
     return kb
@@ -79,14 +80,16 @@ def dm_distribution(lang) -> InlineKeyboardMarkup:
 
 
 def dm_refill_account_3(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, back = "Личный аккаунт от 15 000 USDT", "Коллективный аккаунт от 500 USDT", \
-        "Назад"
+    first_button, second_button, third_button, stabpool, back = "Категория 1 (от 50 USDT до 4999 USDT)", \
+        "Категория 2 (от 5000 USDT до 14 999 USDT)", "Категория 3 (от 15000 USDT)", "Стабилизационный пул", "Назад"
     if lang == "EN":
-        first_button, second_button, back = "Personal account starting from 15,000 USDT", \
-            "Collective account starting from 500 USDT.", "Go back"
+        first_button, second_button, third_button, stabpool, back = "Category 1 (from 50 USDT to 4999 USDT)", \
+            "Category 2 (from 5000 USDT to 14,999 USDT)", "Category 3 (from 15000 USDT)", "Stabilization Pool", "Back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(f"💰 {first_button}", callback_data="dm_active_15000")],
-        [InlineKeyboardButton(f"💵 {second_button}", callback_data="dm_active_500")],
+        [InlineKeyboardButton(f"💰 {first_button}", callback_data="dm_active_50")],
+        [InlineKeyboardButton(f"💵 {second_button}", callback_data="dm_active_5000")],
+        [InlineKeyboardButton(f"💵 {third_button}", callback_data='dm_active_15000')],
+        [InlineKeyboardButton(f"💵 {stabpool}", callback_data='dm_stabpool_terms')],
         [InlineKeyboardButton(f'◀️ {back}', callback_data='dm_review_terms')]
     ])
     return kb

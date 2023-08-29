@@ -78,7 +78,8 @@ async def insert_demo_balance_history(tg_id, amount, trans, descrip):
 async def get_balance_history(tg_id, transaction):
     db, cur = connect()
     try:
-        cur.execute("SELECT date, amount, description, transaction_type FROM demo_demobalancehistory WHERE tg_id_id=%s AND transaction=%s",
+        cur.execute("SELECT date, amount, description, transaction_type "
+                    "FROM demo_demobalancehistory WHERE tg_id_id=%s AND transaction=%s",
                     (tg_id, transaction))
         return cur.fetchall()
     finally:

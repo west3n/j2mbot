@@ -10,7 +10,10 @@ from database import nft, users
 
 
 async def j2mdemo_handler(msg: types.Message):
-    await msg.delete()
+    try:
+        await msg.delete()
+    except MessageToDeleteNotFound:
+        pass
     nft_status = nft.check_nft_status(msg.from_id)
     language = await users.user_data(msg.from_user.id)
     name = msg.from_user.first_name
@@ -19,13 +22,13 @@ async def j2mdemo_handler(msg: types.Message):
             await dm_database.insert_demo_mode(msg.from_id)
         except psycopg2.Error:
             pass
-        text_1 = 'В демо-режиме для вас доступен Баланс, Пополнение и Вывод. ' \
+        text_1 = 'В демо-режиме для вас доступен Баланс и Пополнение. ' \
                  'При нажатии на остальные кнопки демо-режим закончится. ' \
                  '\n\nЭто сообщение будет автоматически удалено через 10 секунд.'
         text = f"{name}, выберите интересующий Вас раздел, нажав одну из кнопок ниже"
         photo = decouple.config("BANNER_MAIN")
         if language[4] == 'EN':
-            text_1 = 'In demo mode, you have access to balance, deposit, and withdrawal. ' \
+            text_1 = 'In demo mode, you have access to Balance and Deposit. ' \
                      'Pressing other buttons will end the demo mode.' \
                      '\n\nThis message will be automatically deleted in 10 seconds.'
             text = f"{name}, please select the section of interest by clicking one of the buttons below:"

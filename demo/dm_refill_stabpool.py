@@ -1,5 +1,3 @@
-import datetime
-import decouple
 import handlers.refill
 
 from aiogram import Dispatcher, types
@@ -71,7 +69,7 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
     language = await users.user_data(msg.from_user.id)
     sum_refill = await balance.get_stabpool_refill_sum(msg.from_user.id)
     if msg.text.isdigit():
-        if 1000 <= int(msg.text) <= (20000-sum_refill):
+        if 1000 <= int(msg.text) <= (20000 - sum_refill):
             summary = int(msg.text)
             response = await thedex.create_invoice(summary, msg.from_id, "Стабилизационный пул")
             await state.update_data({'status': 500, 'amount': int(msg.text), 'invoiceId': response})

@@ -2,7 +2,6 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.utils.exceptions import MessageToDeleteNotFound
-
 from database import users, balance, thedex_db
 from keyboards import inline
 from binance import thedex
@@ -38,8 +37,7 @@ async def registration_500(call: types.CallbackQuery):
         state = Dispatcher.get_current().current_state()
         await state.update_data({"dep_msg": dep_msg.message_id})
     else:
-        text = "У вас несколько незакрытых транзакций, пожалуйста, напишите в " \
-               "поддержку для решения вашей проблемы!"
+        text = await users.get_text('Ошибка пополнения #5', language[4])
         await call.message.answer(text)
 
 
@@ -110,9 +108,7 @@ async def smalluser_step1(msg: types.Message, state: FSMContext):
             dep_msg = await msg.answer(text)
             await state.update_data({"dep_msg": dep_msg.message_id})
     else:
-        text = "Введите желаемую сумму пополнения числом, без запятых, букв и прочего!"
-        if language[4] == "EN":
-            text = "Please enter the desired deposit amount as a number, without commas, letters, or other symbols!"
+        text = await users.get_text('Ошибка пополнения #3', language[4])
         await msg.answer(text)
 
 
@@ -149,7 +145,7 @@ async def smalluser_step2(call: types.CallbackQuery, state: FSMContext):
         count = wallet[1]
         if "." in count:
             count = count.replace(".", ",")
-        text = f"DEMO\!\n\nОтправьте `{count}` {currency_str} на указанный адрес:\n\n`{wallet[0]}`\n\n" \
+        text = f"Отправьте `{count}` {currency_str} на указанный адрес:\n\n`{wallet[0]}`\n\n" \
                f"Перед совершением транзакции внимательно проверьте адрес получателя и сумму перевода, оба значения " \
                f"должны совпадать со значениями в сообщении" \
                f"\n\n*Срок действия кошелька для пополнения \- 60 минут, " \
@@ -169,11 +165,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         language = await users.user_data(call.from_user.id)
         if call.data == "dm_finish_payment":
             await call.message.delete()
-            text = "🥳 Оплата прошла успешно! " \
-                   "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
-            if language[4] == "EN":
-                text = "🥳 Payment was successful! " \
-                       "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
+            text = await users.get_text('Статус Successful (thedex)', language[4])
             await dm_database.insert_demo_collective_balance(call.from_user.id, data.get("amount"))
             await dm_database.insert_demo_balance_history(call.from_user.id, data.get("amount"), "IN",
                                                           data.get("invoiceId"))
@@ -191,12 +183,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
 
 async def smalluser_check(call: types.CallbackQuery, row):
     language = await users.user_data(call.from_user.id)
-    text = "🥳 Оплата прошла успешно! " \
-           "\n\n<em>Успешную транзакцию вы сможете увидеть в Балансе -> История пополнений</em>"
-    if language[4] == "EN":
-        text = "🥳 Payment was successful! " \
-               "\n\n<em>You can see the successful transaction in Balance -> Deposit History</em>"
-
+    text = await users.get_text('Статус Successful (thedex)', language[4])
     await dm_database.insert_demo_collective_balance(call.from_user.id, row[1])
     await dm_database.insert_demo_balance_history(call.from_user.id, row[2], "IN", row[1])
     await thedex_db.insert_status(call.from_user.id, row[2], "ДЕМО")
