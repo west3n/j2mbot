@@ -12,6 +12,7 @@ from handlers.information import register as reg_information
 from handlers.registration import register as reg_registration
 from handlers.refill_500 import register as reg_refill_500
 from handlers.refill_stabpool import register as reg_stabpool
+from handlers.autoposting import register as reg_autoposting
 
 from demo.dm_commands import register as reg_demo_commands
 from demo.dm_balance import register as reg_demo_balance
@@ -39,9 +40,11 @@ def register_handlers(dp: Dispatcher):
     reg_information(dp)
     reg_registration(dp)
     reg_refill_500(dp)
+    reg_stabpool(dp)
+    reg_stabpool_dm(dp)
+    reg_autoposting(dp)
     reg_demo_commands(dp)
     reg_demo_balance(dp)
     reg_demo_refill(dp)
     reg_demo_refill_500(dp)
-    reg_stabpool(dp)
-    reg_stabpool_dm(dp)
+    

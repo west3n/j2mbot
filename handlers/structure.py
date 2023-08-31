@@ -230,7 +230,7 @@ async def structure_handler_msg(msg: types.Message):
     except TypeError:
         ref_line_1 = 0
     balance_line_2 = 0
-    ref_line_2 = await referral.get_line_2(call.from_user.id)
+    ref_line_2 = await referral.get_line_2(msg.from_user.id)
     for ref_user in ref_line_2[1]:
         try:
             ref_user_balance = await balance.get_balance_(ref_user)
@@ -249,7 +249,7 @@ async def structure_handler_msg(msg: types.Message):
     except TypeError:
         ref_line_2 = 0
     balance_line_3 = 0
-    ref_line_3 = await referral.get_line_3(call.from_user.id)
+    ref_line_3 = await referral.get_line_3(msg.from_user.id)
     for ref_user in ref_line_3[1]:
         try:
             ref_user_balance = await balance.get_balance_(ref_user)

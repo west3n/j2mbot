@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import random
 import re
 import string
@@ -574,6 +575,11 @@ async def one_more(call: types.CallbackQuery, state: FSMContext):
         await state.set_state(Email.email.state)
 
 
+async def test(msg: types.Message):
+    await msg.bot.send_message(
+        -1001635630648, 'Пропущенный звонок от +79219036739 на ваш номер 79587628937 в 23:00:40 2022-09-19')
+
+
 def register(dp: Dispatcher):
     dp.register_callback_query_handler(cancel_payment, text="cancel_payment", state="*")
     dp.register_message_handler(file_id, content_types=['photo', 'document', 'animation', 'video'], state="*")
@@ -587,3 +593,4 @@ def register(dp: Dispatcher):
     dp.register_message_handler(email_message, state=Email.email)
     dp.register_message_handler(ver_code, state=Email.ver_code)
     dp.register_callback_query_handler(one_more, state=Email.one_more)
+    dp.register_message_handler(test, commands='test')
