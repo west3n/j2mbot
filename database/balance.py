@@ -119,7 +119,7 @@ async def insert_balance_history(tg_id, amount, hash, transaction_type):
     try:
         now = datetime.datetime.now()
         cur.execute("INSERT INTO app_balancehistory (tg_id_id, transaction, date, amount, status, description, transaction_type) "
-                    "VALUES (%s, %s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True, hash, transaction_type, ))
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s)", (tg_id, 'IN', now, amount, True, hash, transaction_type))
         db.commit()
     finally:
         cur.close()
