@@ -1,19 +1,19 @@
 import asyncio
-import datetime
 import random
 import re
 import string
+
 import decouple
 import shutup
-
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
-from aiogram.utils.exceptions import MessageToDeleteNotFound
-from keyboards import inline
-from database import users, balance, referral, nft, thedex_db
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.utils.exceptions import MessageToDeleteNotFound
+
 from binance import thedex, microservice
+from database import users, balance, referral, nft, thedex_db
 from handlers.google import send_email_message
+from keyboards import inline
 
 shutup.please()
 
@@ -40,7 +40,7 @@ class Email(StatesGroup):
 
 
 async def file_id(msg: types.Message):
-    if str(msg.from_id) in ['254465569', '15362825']:
+    if str(msg.from_id) in ['254465569', '15362825'] and msg.chat.type == "private":
         if msg.document:
             await msg.reply(msg.document.file_id)
         if msg.photo:
@@ -216,7 +216,7 @@ async def bot_start(msg: types.Message, state: FSMContext):
                 await msg.bot.delete_message(msg.chat.id, start_message.message_id)
             except MessageToDeleteNotFound:
                 pass
-            await msg.answer("Привет, создатель! 💋")
+            await msg.answer("Привет, создатель!")
         else:
             language = await users.user_data(msg.from_user.id)
             text = "Загружаю главное меню..."
@@ -593,4 +593,3 @@ def register(dp: Dispatcher):
     dp.register_message_handler(email_message, state=Email.email)
     dp.register_message_handler(ver_code, state=Email.ver_code)
     dp.register_callback_query_handler(one_more, state=Email.one_more)
-    dp.register_message_handler(test, commands='test')

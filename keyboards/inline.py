@@ -27,7 +27,8 @@ async def main_menu(lang, tg_id) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f' {refill}', callback_data='refill')],
         [InlineKeyboardButton(f'⬇️ {withdrawal}', callback_data='withdrawal')],
         [InlineKeyboardButton(f'🧑‍💻 {support}', callback_data='support'),
-         InlineKeyboardButton(f'📒 {information}', callback_data='information')]
+         InlineKeyboardButton(f'📒 {information}', callback_data='information')],
+        [InlineKeyboardButton(f'🤖 J2MGPT BETA', url='https://t.me/j2m_gptbot')]
     ])
     return kb
 
@@ -667,7 +668,7 @@ def info_collaboration_kb(lang) -> InlineKeyboardMarkup:
 
 def info_marketing_kb(lang) -> InlineKeyboardMarkup:
     gloss, product_pres, partners_pres, instructions, online_resources, webinars, visuals, back = "Глоссарий", \
-        "Презентация продукта", "Презентация партнерской программы", 'Инструкции', 'Ссылки на онлайн-ресурсы DAO J2M', \
+        "Как заработать с DAO J2M", "Финансовый инструмент", 'Инструкции', 'О сообществе', \
         'Ссылки на ролики и записи вебинаров', 'Визуалы и креативы', 'Назад'
     if lang == "EN":
         gloss, product_pres, partners_pres, instructions, online_resources, webinars, visuals, back = "Glossary", \

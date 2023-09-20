@@ -3,6 +3,6 @@
 *.docx
 *.doc
 *.png
-*.txt
 /test.py
 /handlers/j2m-project.json
+/logs.log

@@ -160,7 +160,7 @@ async def smalluser_finish(call: types.CallbackQuery, state: FSMContext):
         sh = await sheets_connection()
         worksheet_name = "Сумма пополнения пула"
         worksheet = sh.worksheet(worksheet_name)
-        worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+        worksheet.append_row((datetime.datetime.now().date().strftime("%d.%m.%Y"),
                               call.from_user.id, "Пополнение", data.get("amount")))
     elif status == "Rejected":
         text = await users.get_text("Статус Rejected (thedex)", language[4])

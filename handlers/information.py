@@ -89,8 +89,9 @@ async def info_news(call: types.CallbackQuery):
 
 
 async def info_marketing(call: types.CallbackQuery):
-    if call.data in ['gloss', 'product_pres', 'partners_pres', 'instructions',
-                     'online_resources', 'webinars', 'visuals']:
+    if call.data in ['product_pres', 'partners_pres', 'online_resources']:
+        await call.message.answer_document(decouple.config(call.data.upper()))
+    elif call.data in ['gloss', 'instructions', 'webinars', 'visuals']:
         await call.answer('Раздел находится в разработке.')
     else:
         language = await users.user_data(call.from_user.id)

@@ -1,17 +1,18 @@
-import datetime
-import decouple
 import asyncio
+import datetime
 import re
+import decouple
 
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import MessageToDeleteNotFound
-from database import users, referral, nft
+
 from binance import thedex, microservice
+from database import users, referral, nft
 from handlers import commands
-from keyboards import inline
-from handlers.commands import Registration, SmartContract, Email, generate_random_code
+from handlers.commands import Registration, SmartContract, generate_random_code
 from handlers.google import send_email_message, sheets_connection
+from keyboards import inline
 
 
 async def language_handler(call: types.CallbackQuery, state: FSMContext):
@@ -270,7 +271,7 @@ async def nft_refresh(call: types.CallbackQuery):
             sh = await sheets_connection()
             worksheet_name = "NFT"
             worksheet = sh.worksheet(worksheet_name)
-            worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+            worksheet.append_row((datetime.datetime.now().date().strftime("%d.%m.%Y"),
                                   call.from_user.id, "РЕКЛАМА"))
         else:
             text = await users.get_text('Ошибка покупки NFT', language[4])
@@ -321,7 +322,7 @@ async def nft_refresh(call: types.CallbackQuery):
                 sh = await sheets_connection()
                 worksheet_name = "NFT"
                 worksheet = sh.worksheet(worksheet_name)
-                worksheet.append_row((datetime.datetime.now().date().strftime("%Y-%m-%d"),
+                worksheet.append_row((datetime.datetime.now().date().strftime("%d.%m.%Y"),
                                       call.from_user.id, "Successful"))
             else:
                 text = await users.get_text('Ошибка покупки NFT', language[4])
