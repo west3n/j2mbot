@@ -302,10 +302,10 @@ async def count_refill(msg: types.Message, state: FSMContext):
         x = [25380, 25621, 25342, 26100, 25432]
         balance_binance = random.choice(x)
         if msg.text.isdigit():
-            if int(msg.text) >= 25000:
+            if int(msg.text) >= 15000:
                 async with state.proxy() as data:
                     data['count'] = msg.text
-                if balance_binance >= 25000 and balance_binance > int(msg.text):
+                if balance_binance >= 15000 and balance_binance > int(msg.text):
                     await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                     deposit = await balance.get_balance(msg.from_id)
                     await users.set_status("25000", msg.from_id)
@@ -319,7 +319,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                     await msg.answer(text)
             else:
                 deposit = await balance.get_balance(msg.from_id)
-                if int(deposit[1]) + int(msg.text) >= 25000:
+                if int(deposit[1]) + int(msg.text) >= 15000:
                     if int(balance_binance) >= int(msg.text):
                         await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                         await users.set_status("25000", msg.from_id)
@@ -331,8 +331,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
                         await msg.answer(text)
                     else:
                         x = int(msg.text)
-                        if 25000 > int(msg.text):
-                            x = 25000
+                        if 15000 > int(msg.text):
+                            x = 15000
                         text = await users.get_text('Ошибка пополнения #1', language[4])
                         text = text.replace('{сумма}', f"{x - int(balance_binance)}")
                         await msg.answer(text)
@@ -349,10 +349,10 @@ async def count_refill(msg: types.Message, state: FSMContext):
             balance_binance = None
         if balance_binance:
             if msg.text.isdigit():
-                if int(msg.text) >= 25000:
+                if int(msg.text) >= 15000:
                     async with state.proxy() as data:
                         data['count'] = msg.text
-                    if balance_binance[0] >= 25000:
+                    if balance_binance[0] >= 15000:
                         await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                         deposit = await balance.get_balance(msg.from_id)
                         await users.set_status("25000", msg.from_id)
@@ -367,7 +367,7 @@ async def count_refill(msg: types.Message, state: FSMContext):
                         await msg.answer(text)
                 else:
                     deposit = await balance.get_balance(msg.from_id)
-                    if int(deposit[1]) + int(msg.text) >= 25000:
+                    if int(deposit[1]) + int(msg.text) >= 15000:
                         if int(balance_binance[0]) >= int(msg.text):
                             await binance_db.update_balance(msg.from_id, balance_binance, float(msg.text))
                             await users.set_status("25000", msg.from_id)
@@ -380,8 +380,8 @@ async def count_refill(msg: types.Message, state: FSMContext):
                             await msg.answer(text)
                         else:
                             x = int(msg.text)
-                            if 25000 > int(msg.text):
-                                x = 25000
+                            if 15000 > int(msg.text):
+                                x = 15000
                             text = await users.get_text('Ошибка пополнения #1', language[4])
                             text = text.replace('{сумма}', f"{x - int(balance_binance[0])}")
                             await msg.answer(text)

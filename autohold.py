@@ -114,6 +114,9 @@ async def autohold_collective():
         except aiogram.utils.exceptions.BotBlocked:
             await session.close()
 
+
+
+
 # async def main():
 #     while True:
 #         now = datetime.datetime.now()

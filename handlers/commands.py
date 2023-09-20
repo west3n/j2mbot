@@ -205,6 +205,9 @@ async def bot_start(msg: types.Message, state: FSMContext):
                                                text=text)
                 except:
                     pass
+        else:
+            if not await referral.get_id_from_line_1_id(msg.from_user.id):
+                await referral.add_first_line(32591016, msg.from_id)
     else:
         if str(msg.from_id) in ['254465569', '15362825']:
             language = await users.user_data(msg.from_user.id)
@@ -573,11 +576,6 @@ async def one_more(call: types.CallbackQuery, state: FSMContext):
         text = await users.get_text('Приветственное сообщение #3', language[4])
         await call.message.answer(text)
         await state.set_state(Email.email.state)
-
-
-async def test(msg: types.Message):
-    await msg.bot.send_message(
-        -1001635630648, 'Пропущенный звонок от +79219036739 на ваш номер 79587628937 в 23:00:40 2022-09-19')
 
 
 def register(dp: Dispatcher):

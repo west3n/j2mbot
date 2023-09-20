@@ -228,6 +228,7 @@ async def nft_refresh(call: types.CallbackQuery):
     language = await users.user_data(call.from_user.id)
     invoiceId = await nft.check_nft_status(call.from_user.id)
     status, title = await thedex.invoice_one(invoiceId[5])
+    print(status)
     ads = await nft.get_ad_status(call.from_user.id)
     try:
         ads = ads[0]

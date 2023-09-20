@@ -196,10 +196,10 @@ def yesno_refill(lang) -> InlineKeyboardMarkup:
 
 
 def refill_account(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, stabpool = "Личный аккаунт от 25 000 USD", "Коллективный аккаунт от 50 USD", \
+    first_button, second_button, stabpool = "Личный аккаунт от 15 000 USD", "Коллективный аккаунт от 50 USD", \
         "Стабилизационный пул"
     if lang == "EN":
-        first_button, second_button = "Personal account starting from 25 000 USDT", \
+        first_button, second_button = "Personal account starting from 15 000 USDT", \
             "Collective account starting from 500 USDT."
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💰 {first_button}", callback_data="active_15000")],
@@ -210,10 +210,10 @@ def refill_account(lang) -> InlineKeyboardMarkup:
 
 
 def refill_account_2(lang) -> InlineKeyboardMarkup:
-    first_button, second_button, stabpool, back = "Личный аккаунт от 25 000 USD", "Коллективный аккаунт от 50 USDT", \
+    first_button, second_button, stabpool, back = "Личный аккаунт от 15 000 USD", "Коллективный аккаунт от 50 USDT", \
         "Стабилизационный пул", "Назад"
     if lang == "EN":
-        first_button, second_button, stabpool, back = "Personal account starting from 25,000 USD", \
+        first_button, second_button, stabpool, back = "Personal account starting from 15,000 USD", \
             "Collective account starting from 50 USD.", "Stab Pool", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💰 {first_button}", callback_data="15000")],
@@ -238,7 +238,7 @@ def refill_500_choice(lang) -> InlineKeyboardMarkup:
     button, button_2, button_3, back = "от 500 до 1000 USDT", "от 1000 USDT", "Личный аккаунт от 25 000 USDT", "Назад"
     if lang == "EN":
         button, button_2, button_3, back = "from 500 to 1000 USDT", "from 1000 USDT", \
-            "Personal account from 25 000 USDT", "Go back"
+            "Personal account from 15 000 USDT", "Go back"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(f"💵 {button}", callback_data="from_500")],
         [InlineKeyboardButton(f"💰 {button_2}", callback_data="from_1000")],
