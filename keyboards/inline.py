@@ -686,3 +686,4 @@ def info_marketing_kb(lang) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(f"{back}", callback_data="information")]
     ])
     return kb
+

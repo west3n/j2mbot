@@ -18,6 +18,7 @@ from handlers.refill_stabpool import register as reg_stabpool
 from handlers.registration import register as reg_registration
 from handlers.structure import register as reg_structure
 from handlers.withdrawal import register as reg_withdrawal
+from promo.welcome import register as reg_promo
 
 bot_token = config("BOT_TOKEN")
 logger = logging.getLogger(__name__)
@@ -46,4 +47,4 @@ def register_handlers(dp: Dispatcher):
     reg_demo_balance(dp)
     reg_demo_refill(dp)
     reg_demo_refill_500(dp)
-    
+    reg_promo(dp)

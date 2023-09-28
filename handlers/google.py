@@ -1,4 +1,6 @@
 import base64
+import datetime
+
 import decouple
 import gspread
 
@@ -49,3 +51,10 @@ async def send_message(service, user_id, message):
         return sent_message
     except Exception as e:
         print(e)
+
+
+async def add_new_transfer_data(tg_id, amount):
+    sh = await sheets_connection()
+    worksheet = sh.worksheet("Сумма пополнения пула")
+    worksheet.append_row((datetime.datetime.now().date().strftime("%d.%m.%Y"),
+                          tg_id, "Трансфер", amount, "Перевод из медиа в коллективный"))

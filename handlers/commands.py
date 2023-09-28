@@ -2,9 +2,9 @@ import asyncio
 import random
 import re
 import string
-
 import decouple
 import shutup
+
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
