@@ -687,3 +687,9 @@ def info_marketing_kb(lang) -> InlineKeyboardMarkup:
     ])
     return kb
 
+
+def media_program() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton("Перевести баланс на коллективный аккаунт", callback_data="media_transfer")]
+    ])
+    return kb
